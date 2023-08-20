@@ -1,0 +1,5 @@
+Name,Birthday,Age,Has_Birthday,Mail,Date_2,Date_3
+##!!text,##!!date,##!!number,##!!text,##!!text,##!!date,##!!date
+##!!patterninput,,,##!!strictinput,##!!mail,,
+a,,,yes,##!!notempty,,
+,,,no,,,
