@@ -4,7 +4,7 @@
 \alias{check_column_names}
 \title{Check for Column Names}
 \usage{
-check_column_names(check_table, validity_table, check_order = FALSE)
+check_column_names(check_table, validity_table, check_type = "presence")
 }
 \description{
 Check for Column Names

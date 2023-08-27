@@ -4,7 +4,15 @@
 \alias{align_column_classes}
 \title{Align Column Classes with Validity Table}
 \usage{
-align_column_classes(check_table, validity_table)
+align_column_classes(check_table, validity_table, date_origin = "1899-12-30")
+}
+\arguments{
+\item{check_table}{Data table. A table that will be will have its classes aligned specified in the validity table}
+
+\item{validity_table}{Data table. A validity table that holds the class information for alignment}
+
+\item{date_origin}{Character. A date string for date conversion giving the number of days since e.g. "1900-01-01". This
+is only necessary if the excel date is stored as numeric: (32768, 35981). For more information see: ?as.Date}
 }
 \description{
 This function changes the column classes according to the data types of the validity table

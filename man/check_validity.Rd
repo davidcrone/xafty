@@ -2,31 +2,46 @@
 % Please edit documentation in R/main_check_validity.R
 \name{check_validity}
 \alias{check_validity}
-\title{Main Function to Check Validity of a Table}
+\title{Main Function to Check a Table for its Validity}
 \usage{
 check_validity(
-  path_table,
-  path_validity,
-  file_ending = "xlsx",
-  check_number = TRUE,
-  check_names = TRUE,
-  check_classes = TRUE
+  check_table,
+  validity_table,
+  column_number = TRUE,
+  column_names = "presence",
+  column_classes = TRUE,
+  values_notempty = TRUE,
+  values_exact = TRUE,
+  values_pattern = "##!!strictpattern"
 )
 }
 \arguments{
-\item{path_table}{Character. A file path to the table will be checked for validity}
+\item{check_table}{Data Frame. The table that will be checked against the information in the validity table
+Important: You will need to make sure that empty values are correctly identified with NA.}
 
-\item{file_ending}{Character. Valid input: "xlsx", "csv_comma", "csv_semicolon". You need to make sure that the file ending
-matches the actual file.}
+\item{validity_table}{Data Frame. A table that stores the rules by which the check table is compared to.}
 
-\item{check_number}{Boolean. Should the number of columns be checked?}
+\item{values_notempty}{Boolean. Should columns be checked for NA entries?}
 
-\item{check_classes}{Boolean. Should the column's classes be checked?}
+\item{values_exact}{Boolean. Should columns be checked for the exact value rules?}
 
-\item{path_valid}{Character. A file path to a special csv file that contains the valid syntax}
+\item{values_pattern}{Boolean. Should columns be checked for the pattern value rules?}
 
-\item{check_name}{Boolean. Should the column names be checked?}
+\item{col_number}{Boolean. Should the number of columns be checked?}
+
+\item{col_names}{´Character. Following parameters are allowed:
+\itemize{
+ \item "presence": If the simple presence of each column suffices.
+ \item "order": If the columns should be present as well as in the specified order within the validity table.
+ \item FALSE: If column names should not be checked
+}}
+
+\item{col_classes}{Boolean. Should the column's classes be checked?}
+}
+\value{
+Data Frame. A table that stores the check results.
 }
 \description{
-Main Function to Check Validity of a Table
+The function checks a table (the check table) for its validity using a table (the validity table)
+that is crafted with xafty rules to specify the expected column names and column values.
 }

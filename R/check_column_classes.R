@@ -7,7 +7,7 @@
 check_column_classes <- function(check_table, validity_table) {
 
   xafty_syntax <- "##!!"
-  possible_classes <- c("text", "date", "number")
+  possible_classes <- c("text", "date", "number", "factor")
   xafty_data_types <- paste0(xafty_syntax, possible_classes)
   col_names_check_table <- colnames(check_table)
   list_result <- list()
@@ -21,10 +21,11 @@ check_column_classes <- function(check_table, validity_table) {
       xafty_data_type <- xafty_data_types[logical_data_type]
 
       list_result[[i]] <- switch (xafty_data_type,
-                                  "##!!text" = is.character(check_table[[i]]),
-                                  "##!!date" = lubridate::is.Date(check_table[[i]]),
-                                  "##!!number" = is.numeric(check_table[[i]])
-                                    )
+                          "##!!text" = is.character(check_table[[i]]),
+                          "##!!date" = inherits(check_table[[i]], "Date"),
+                          "##!!number" = is.numeric(check_table[[i]]),
+                          "##!!factor" = is.factor(check_table[[i]])
+                            )
 
     }
 

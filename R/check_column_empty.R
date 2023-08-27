@@ -37,7 +37,7 @@ check_column_notempty <- function(check_table, validity_table) {
     result <- FALSE
     wrong_columns <- names(results_unlisted)[results_unlisted]
     wrong_columns_collapsed <- paste0(wrong_columns, collapse = ", ")
-    message <- paste0("Rule Broken: Column Not Empty. Following columns have NA entries: ", wrong_columns_collapsed)
+    message <- paste0("Rule Broken: Column Not Empty. Following columns '##!!notempty' have NA entries: ", wrong_columns_collapsed)
   } else {
 
     result <- TRUE

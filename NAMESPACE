@@ -3,6 +3,7 @@
 export(align_column_classes)
 export(check_column_classes)
 export(check_column_names)
+export(check_column_notempty)
+export(check_column_number)
 export(check_validity)
 importFrom(lubridate,is.Date)
-importFrom(readxl,read_xlsx)

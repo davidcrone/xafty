@@ -1,7 +1,7 @@
 
 #' @title Check for Correct Number of Columns
 #'
-
+#' @export
 check_column_number <- function(check_table, validity_table) {
 
   n_cols_check_table <- ncol(check_table)
@@ -15,6 +15,6 @@ check_column_number <- function(check_table, validity_table) {
     message <- paste("ALL GOOD!")
   }
 
-  data.frame("Check" = "Column Number", "Check_Result" = result, "Message" = message)
+  data.frame("Check" = "Column Number", "Check_Result" = result, "Message" = message, "Columns" = NA)
 
 }
