@@ -12,36 +12,44 @@ check_validity(
   column_classes = TRUE,
   values_notempty = TRUE,
   values_exact = TRUE,
-  values_pattern = "##!!strictpattern"
+  values_pattern = TRUE
 )
 }
 \arguments{
-\item{check_table}{Data Frame. The table that will be checked against the information in the validity table
-Important: You will need to make sure that empty values are correctly identified with NA.}
+\item{check_table}{Data Frame. The table that will be checked against the specified rules in the validity table.}
 
 \item{validity_table}{Data Frame. A table that stores the rules by which the check table is compared to.}
 
-\item{values_notempty}{Boolean. Should columns be checked for NA entries?}
+\item{column_number}{Boolean. Should the count of columns be checked?}
 
-\item{values_exact}{Boolean. Should columns be checked for the exact value rules?}
-
-\item{values_pattern}{Boolean. Should columns be checked for the pattern value rules?}
-
-\item{col_number}{Boolean. Should the number of columns be checked?}
-
-\item{col_names}{´Character. Following parameters are allowed:
+\item{column_names}{Character. Following parameters are allowed:
 \itemize{
- \item "presence": If the simple presence of each column suffices.
- \item "order": If the columns should be present as well as in the specified order within the validity table.
+ \item "presence": If the simple presence of each column suffices
+ \item "order": If the columns should be present as well as in the specified order
  \item FALSE: If column names should not be checked
 }}
 
-\item{col_classes}{Boolean. Should the column's classes be checked?}
+\item{column_classes}{Boolean. Should the column's classes be checked?}
+
+\item{values_notempty}{Boolean. Should columns be checked for NA entries?}
+
+\item{values_exact}{Boolean. Should columns be checked for exact value rules?}
+
+\item{values_pattern}{Boolean. Should columns be checked for pattern value rules?}
 }
 \value{
-Data Frame. A table that stores the check results.
+A data frame that stores the check results.
+The data frame will contain the following columns:
+\itemize{
+ \item Check: Contains the names of the rule
+ \item Check_Result: Boolean values representing the result of the check. Check passed: TRUE, check failed: FALSE
+ \item Message: Detailed information about the check result
+ \item Columns: Name of the column(s) where the respective rule was broken
+}
 }
 \description{
 The function checks a table (the check table) for its validity using a table (the validity table)
-that is crafted with xafty rules to specify the expected column names and column values.
+that contains the xafty rules to specify the expected column names and values.
+
+\strong{!! Important:} You will need to make sure that empty values are correctly identified as NA.
 }

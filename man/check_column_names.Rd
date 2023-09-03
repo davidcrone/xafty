@@ -6,6 +6,18 @@
 \usage{
 check_column_names(check_table, validity_table, check_type = "presence")
 }
+\arguments{
+\item{check_table}{Data Frame. The table that will be checked against the information in the validity table}
+
+\item{validity_table}{Data Frame. A table that stores the column names in the first row}
+
+\item{check_type}{Character: Following parameters are allowed:
+\itemize{
+ \item "presence": If the mere presence of each column suffices
+ \item "order": If the columns should be present in the specified order given in the validity table
+ \item FALSE: If column names should not be checked
+}}
+}
 \description{
-Check for Column Names
+Checks a table if all columns by name are present.
 }

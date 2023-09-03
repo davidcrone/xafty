@@ -6,6 +6,11 @@
 \usage{
 check_column_number(check_table, validity_table)
 }
+\arguments{
+\item{check_table}{Data Frame. The table that will be checked against the specified rules in the validity table.}
+
+\item{validity_table}{Data Frame. A table that stores the rules by which the check table is compared to.}
+}
 \description{
 Check for Correct Number of Columns
 }

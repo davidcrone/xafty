@@ -1,6 +1,7 @@
 
 #' @title Check for Correct Number of Columns
-#'
+#' @param check_table Data Frame. The table that will be checked against the specified rules in the validity table.
+#' @param validity_table Data Frame. A table that stores the rules by which the check table is compared to.
 #' @export
 check_column_number <- function(check_table, validity_table) {
 
