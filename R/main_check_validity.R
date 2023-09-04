@@ -8,7 +8,7 @@
 #' \strong{!! Important:} You will need to make sure that empty values are correctly identified as NA.
 #'
 #' @param check_table Data Frame. The table that will be checked against the specified rules in the validity table.
-#' @param validity_table Data Frame. A table that stores the rules by which the check table is compared to.
+#' @param validity_table Data Frame. A validation table that stores the rules that the check table will be checked against.
 #' @param column_number Boolean. Should the count of columns be checked?
 #' @param column_names Character. Following parameters are allowed:
 #' \itemize{

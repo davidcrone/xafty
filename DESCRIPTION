@@ -5,7 +5,7 @@ Version: 1.0.0
 Author: David Crone
 Maintainer: The package maintainer <davidjvcrone@gmail.com>
 Description: The package is designed to facilitate task automation for tasks that are often completed in Excel. 
-    After reading in data from Excel, values and columns often do not align with the assumptions of the code. 
+    After reading in data from Excel, values and columns usually do not align with the assumptions of the code. 
     The xafty package offers a lightweight solution to check whether the Excel data adheres to the specified 
     rules stored in a validation table (referred to as "validity table"). 
     The package aims to achieve the following goals
@@ -20,3 +20,6 @@ Imports:
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.2.3
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3

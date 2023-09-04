@@ -64,7 +64,7 @@ check_column_names <- function(check_table, validity_table, check_type = "presen
     } else {
 
       result <-  FALSE
-      message <- "All columns are present but not in the specified order as given in the validity table"
+      message <- "All columns are present but not in the specified order"
       columns <- NA
 
     }
