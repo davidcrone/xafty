@@ -41,6 +41,7 @@ check_column_classes <- function(check_table, validity_table) {
     columns <- NA
 
   } else {
+    # TODO: Add expected data type and found data tabe
     result <- FALSE
     wrong_classes_names <- names(result_unlisted)[!result_unlisted]
     wrong_classes_collapsed <- paste0(wrong_classes_names, collapse = ", ")
@@ -66,7 +67,7 @@ check_column_classes <- function(check_table, validity_table) {
 align_column_classes <- function(check_table, validity_table, date_origin = "1899-12-30") {
 
   xafty_syntax <- "##!!"
-  possible_classes <- c("text", "date", "number", "factor")
+  possible_classes <- c("text", "date", "number", "factor", "datetime")
   xafty_data_types <- paste0(xafty_syntax, possible_classes)
 
   for (i in colnames(check_table)) {
@@ -85,7 +86,8 @@ align_column_classes <- function(check_table, validity_table, date_origin = "189
               "##!!date" = check_table[, i] <- tryCatch(as.Date(check_table[[i]], tryFormats = c("%d.%m.%Y", "%d/%m/%Y", "%Y-%m-%d", "%Y/%m/%d")),
                                                        error = function(e) as.Date(as.numeric(check_table[[i]]), origin = date_origin)),
               "##!!number" = check_table[, i] <- as.numeric(check_table[[i]]),
-              "##!!factor" = check_table[, i] <- as.factor(check_table[[i]])
+              "##!!factor" = check_table[, i] <- as.factor(check_table[[i]]),
+              "##!!datetime" = check_table[, i] <- as.POSIXct(check_table[[i]])
       )
 
     }

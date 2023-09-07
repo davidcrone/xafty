@@ -9,6 +9,10 @@ check_column_notempty <- function(check_table, validity_table) {
 
   check_for_syntax <- as.data.frame(sapply(validity_table, grepl, pattern = xafty_data_types))
 
+  # TODO: Add modern approach
+  xafty_notempty <- "##!!notempty"
+  column_with_syntax <- obtain_columns_in_validity(validity_table = validity_table, xafty_syntax = xafty_notempty)
+
   if (!any(check_for_syntax)) {
     result <- FALSE
     message <- "Warning: Checked for not empty, but no entry with '##!!notempty' in validity table!"
@@ -41,7 +45,7 @@ check_column_notempty <- function(check_table, validity_table) {
     } else {
 
       result <- FALSE
-      wrong_columns <- names(results_unlisted)[results_unlisted]
+      wrong_columns <- names(results_unlisted)[!results_unlisted]
       wrong_columns_collapsed <- paste0(wrong_columns, collapse = ", ")
       columns <- wrong_columns_collapsed
       message <- paste0("Rule Broken: Column Not Empty. Following columns '##!!notempty' have NA entries: ")
