@@ -5,15 +5,17 @@
 check_column_exactinput <- function(check_table, validity_table) {
 
   xafty_syntax <- "##!!"
-  possible_checks <- c("presenceexact", "strictexact")
+  possible_checks <- c("anyexact", "strictexact", "eachexact")
   xafty_data_types <- paste0(xafty_syntax, possible_checks)
 
   columns_with_syntax <- obtain_columns_in_validity(validity_table = validity_table, xafty_syntax = xafty_data_types)
 
   if (any(is.na(columns_with_syntax))) {
     result <- FALSE
-    message <- paste0("Warning: Checked for strict input, but no entry with '", xafty_data_types, "' in validity table!")
-    return(data.frame("Check" = "Column Classes", "Check_Result" = result, "Message" = message))
+    message <- paste0("Warning: Checked for exact input, but no entry with '", paste0(xafty_data_types, collapse = ", "),
+                      "' in validity table!")
+    columns <- NA
+    return(data.frame("Check" = "Column Classes", "Check_Result" = result, "Message" = message, "columns" = columns))
   }
 
   list_result <- list()
@@ -31,7 +33,8 @@ check_column_exactinput <- function(check_table, validity_table) {
 
     switch (names(syntax),
             "##!!strictexact" = list_result[[syntax]] <-  sum(check_table_na_removed %in% exact_values) == length(check_table_na_removed),
-            "##!!presenceexact" = list_result[[syntax]] <- any(sum(check_table_na_removed %in% exact_values))
+            "##!!anyexact" = list_result[[syntax]] <- any(check_table_na_removed %in% exact_values),
+            "##!!eachexact" = list_result[[syntax]] <- all(exact_values %in% check_table_na_removed)
     )
 
   }
@@ -64,7 +67,7 @@ check_column_exactinput <- function(check_table, validity_table) {
 check_column_patterninput <- function(check_table, validity_table) {
 
   xafty_syntax <- "##!!"
-  possible_checks <- c("strictpattern", "rowpattern", "anypattern")
+  possible_checks <- c("strictpattern", "rowpattern", "anypattern", "eachpattern")
   xafty_data_types <- paste0(xafty_syntax, possible_checks)
 
   columns_with_syntax <- obtain_columns_in_validity(validity_table = validity_table, xafty_syntax = xafty_data_types)
@@ -104,7 +107,8 @@ check_column_patterninput <- function(check_table, validity_table) {
     switch (names(syntax),
            "##!!strictpattern" = list_result[[syntax]] <-  all(presence_vector),
            "##!!rowpattern" = list_result[[syntax]] <- all(apply(presence_vector, 1, \(row) any(row))),
-           "##!!anypattern" = list_result[[syntax]] <-  any(presence_vector)
+           "##!!anypattern" = list_result[[syntax]] <-  any(presence_vector),
+           "##!!eachpattern" = list_result[[syntax]] <- all(apply(presence_vector, 2, \(col) any(col)))
     )
 
   }
