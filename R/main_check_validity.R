@@ -16,7 +16,7 @@
 #'  \item "order": If the columns should be present as well as in the specified order
 #'  \item FALSE: If column names should not be checked
 #' }
-#' @param column_classes Boolean. Should the column's classes be checked?
+#' @param column_types Boolean. Should the column's data types be checked?
 #' @param values_notempty Boolean. Should columns be checked for NA entries?
 #' @param values_exact Boolean. Should columns be checked for exact value rules?
 #' @param values_pattern Boolean. Should columns be checked for pattern value rules?
@@ -34,7 +34,7 @@
 check_validity <- function(check_table, validity_table,
                            column_number = TRUE,
                            column_names = "presence",
-                           column_classes = TRUE,
+                           column_types = TRUE,
                            values_notempty = TRUE,
                            values_exact = TRUE,
                            values_pattern = TRUE) {
@@ -49,8 +49,8 @@ check_validity <- function(check_table, validity_table,
     df_result_out[df_result_out$Check == "Column Names", ] <- check_column_names(check_table, validity_table, check_type = column_names)
   }
 
-  if(column_classes) {
-    df_result_out[df_result_out$Check == "Column Classes", ] <- check_column_classes(check_table, validity_table)
+  if(column_types) {
+    df_result_out[df_result_out$Check == "Column Types", ] <- check_column_types(check_table, validity_table)
   }
 
   if(values_notempty) {

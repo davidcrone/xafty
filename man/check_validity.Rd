@@ -9,7 +9,7 @@ check_validity(
   validity_table,
   column_number = TRUE,
   column_names = "presence",
-  column_classes = TRUE,
+  column_types = TRUE,
   values_notempty = TRUE,
   values_exact = TRUE,
   values_pattern = TRUE
@@ -18,7 +18,7 @@ check_validity(
 \arguments{
 \item{check_table}{Data Frame. The table that will be checked against the specified rules in the validity table.}
 
-\item{validity_table}{Data Frame. A table that stores the rules by which the check table is compared to.}
+\item{validity_table}{Data Frame. A validation table that stores the rules that the check table will be checked against.}
 
 \item{column_number}{Boolean. Should the count of columns be checked?}
 
@@ -29,7 +29,7 @@ check_validity(
  \item FALSE: If column names should not be checked
 }}
 
-\item{column_classes}{Boolean. Should the column's classes be checked?}
+\item{column_types}{Boolean. Should the column's data types be checked?}
 
 \item{values_notempty}{Boolean. Should columns be checked for NA entries?}
 

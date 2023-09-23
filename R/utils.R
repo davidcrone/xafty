@@ -5,11 +5,12 @@
 #' @param path_validity Path to the validity table that stores the accompanying xafty rules
 #' @param file_ending Character. Valid input: "xlsx", "csv_comma", "csv_semicolon". You need to make sure that the file ending
 #' matches the actual file.
+#' @importFrom utils read.csv read.csv2
 
 read_check_and_validity <- function(path_check = "inst/extdata/example_data.xlsx",
                                     path_validity = "inst/extdata/example_validity.csv", file_ending = "xlsx") {
 
-  validity_table <- read.csv(path_validity, na.strings = "")
+  validity_table <- utils::read.csv(path_validity, na.strings = "")
 
   check_table <- switch(file_ending,
                         "xlsx" = readxl::read_xlsx(path_check, col_types = "text"),
@@ -73,6 +74,8 @@ create_result_row <- function(check_name, default_result = TRUE, default_message
 #' @title Checks Validity Table for Presence of Xafty Syntax
 #' @param validity_table A validity table that will be checked for xafty rules
 #' @param xafty_syntax The xafty rules which presence will be checked in the validity table
+#'
+#' @importFrom stats setNames
 #' @return Returns a named vector that has the column name as value and the rule as the name. This named vector is also
 #' referred to as "xafty pair".
 obtain_columns_in_validity <- function(validity_table, xafty_syntax) {
@@ -94,7 +97,7 @@ obtain_columns_in_validity <- function(validity_table, xafty_syntax) {
     presence_vector <- presence_list[[syntax]]
     presence_columns <- names(presence_vector)[presence_vector]
 
-    list_out[[i]] <- setNames(object = presence_columns, rep(syntax, length(presence_columns)))
+    list_out[[i]] <- stats::setNames(object = presence_columns, rep(syntax, length(presence_columns)))
 
   }
 
@@ -137,4 +140,85 @@ obtain_values_in_validity <- function(validity_table, xafty_pair) {
     }
 
     values_return
+}
+
+
+#' @title Obtain the Column Names Separately
+#' @param column_string Column names as a single string that have been separated by ", "
+#' @return The column names in a vector
+obtain_invalid_columns <- function(column_string) {
+
+  strsplit(column_string, split = ", ")[[1]]
+
+}
+
+#' @title Check if Passed Values can be Parsed as Date
+#' @param dates Character vector of Dates to be Parsed
+#' @param date_origin Character. The date from which numeric dates will be conversed into ISO-Date format
+#' @return An equally length boolean vector whether the value can be parsed as a Date given the specified formats and origin
+is.Date_xafty <- function(dates, date_origin = "1899-12-30") {
+
+ xafty_column <-  sapply(dates, \(date) {
+
+      tryCatch({
+        as.Date(date, tryFormats = c("%Y-%m-%d", "%d.%m.%Y", "%d/%m/%Y", "%Y/%m/%d"))
+
+        TRUE
+        },
+           error = function(e) {
+
+               numeric_date <- suppressWarnings(as.numeric(date))
+               if(is.na(numeric_date)) return(FALSE)
+               as.Date(numeric_date, origin = date_origin)
+
+               TRUE
+             }
+      )
+    }
+  )
+
+ names(xafty_column) <- NULL
+
+ xafty_column
+
+}
+
+#' @title Check if Passed Values can be Parsed as Numeric
+#' @param numbers Character vector of Numbers to be Parsed
+#' @return An equally length Boolean vector whether the values can be parsed as numbers
+is.numeric_xafty <- function(numbers) {
+
+  xafty_column <- rep(TRUE, length(numbers))
+
+  position_na <- which(is.na(numbers))
+  position_na_conversion <- which(is.na(suppressWarnings(as.numeric(numbers))))
+
+  position_not_numbers <- setdiff(position_na_conversion, position_na)
+
+  xafty_column[position_not_numbers] <- FALSE
+
+  xafty_column
+
+}
+
+#' @title Check if Passed Values can be Parsed as POSIXct
+#' @param datetimes Character vector of date time values to be parsed
+#' @return An equally length Boolean vector whether the values can be parsed as POSIXct
+is.POSIXct_xafty <- function(datetimes) {
+
+  xafty_column <- sapply(datetimes, \(datetime) {
+
+    tryCatch({
+      as.POSIXct(datetime)
+      TRUE
+    }, error = function(e){
+      FALSE
+    })
+  }
+  )
+
+  names(xafty_column) <- NULL
+
+  xafty_column
+
 }

@@ -4,7 +4,7 @@
 #' @param check_table Data Frame. The table that will be checked against the specified rules in the validity table.
 #' @param validity_table Data Frame. A table that stores the rules by which the check table is compared to.
 #' @export
-check_column_classes <- function(check_table, validity_table) {
+check_column_types <- function(check_table, validity_table) {
 
   xafty_syntax <- "##!!"
   possible_classes <- c("text", "date", "number", "factor", "datetime")
@@ -20,13 +20,14 @@ check_column_classes <- function(check_table, validity_table) {
       logical_data_type <-  xafty_data_types %in% values_column
       xafty_data_type <- xafty_data_types[logical_data_type]
 
-      list_result[[i]] <- switch (xafty_data_type,
-                          "##!!text" = is.character(check_table[[i]]),
-                          "##!!date" = inherits(check_table[[i]], "Date"),
-                          "##!!number" = is.numeric(check_table[[i]]),
-                          "##!!factor" = is.factor(check_table[[i]]),
-                          "##!!datetime" = inherits(check_table[[i]], "POSIXct")
-                            )
+      list_result[[i]] <- switch (
+        xafty_data_type,
+        "##!!text" = is.character(check_table[[i]]),
+        "##!!date" = inherits(check_table[[i]], "Date"),
+        "##!!number" = is.numeric(check_table[[i]]),
+        "##!!factor" = is.factor(check_table[[i]]),
+        "##!!datetime" = inherits(check_table[[i]], "POSIXct")
+        )
 
     }
 
@@ -46,10 +47,10 @@ check_column_classes <- function(check_table, validity_table) {
     wrong_classes_names <- names(result_unlisted)[!result_unlisted]
     wrong_classes_collapsed <- paste0(wrong_classes_names, collapse = ", ")
     columns <- wrong_classes_collapsed
-    message <- paste0("Rule Broken: Column Classes. Following columns have the wrong class type: ")
+    message <- paste0("Rule Broken: Column Types. Following columns have the wrong data type: ")
   }
 
-  data.frame("Check" = "Column Classes", "Check_Result" = result, "Message" = message, "Columns" = columns)
+  data.frame("Check" = "Column Types", "Check_Result" = result, "Message" = message, "Columns" = columns)
 
 }
 
