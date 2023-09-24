@@ -2,13 +2,14 @@
 % Please edit documentation in R/filter_column_type.R
 \name{filter_column_type}
 \alias{filter_column_type}
-\title{Filter a Column by its Data Type given the Validity}
+\title{Filter a Column by its Data Type given the Validity Table}
 \usage{
 filter_column_type(
   check_table,
   validity_table,
   filter_column,
-  date_origin = "1899-12-30"
+  date_origin = "1899-12-30",
+  tryFormats = c("\%Y-\%m-\%d", "\%d.\%m.\%Y", "\%d/\%m/\%Y", "\%Y/\%m/\%d")
 )
 }
 \arguments{
@@ -20,10 +21,12 @@ filter_column_type(
 as well as the validity table}
 
 \item{date_origin}{Character. The date from which numeric dates will be conversed into ISO-Date format}
+
+\item{tryFormats}{Character vector. Date formats that should be use to try to convert to date}
 }
 \value{
 A Boolean vector. TRUE when the value is in line with the specified data type; FALSE when it is not
 }
 \description{
-Filter a Column by its Data Type given the Validity
+Filter a Column by its Data Type given the Validity Table
 }

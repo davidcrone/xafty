@@ -4,12 +4,18 @@
 \alias{is.Date_xafty}
 \title{Check if Passed Values can be Parsed as Date}
 \usage{
-is.Date_xafty(dates, date_origin = "1899-12-30")
+is.Date_xafty(
+  dates,
+  date_origin = "1899-12-30",
+  tryFormats = c("\%Y-\%m-\%d", "\%d.\%m.\%Y", "\%d/\%m/\%Y", "\%Y/\%m/\%d")
+)
 }
 \arguments{
 \item{dates}{Character vector of Dates to be Parsed}
 
 \item{date_origin}{Character. The date from which numeric dates will be conversed into ISO-Date format}
+
+\item{tryFormats}{Character vector. Date formats that should be use to try to convert to date}
 }
 \value{
 An equally length boolean vector whether the value can be parsed as a Date given the specified formats and origin

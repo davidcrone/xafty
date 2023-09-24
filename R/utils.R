@@ -155,24 +155,25 @@ obtain_invalid_columns <- function(column_string) {
 #' @title Check if Passed Values can be Parsed as Date
 #' @param dates Character vector of Dates to be Parsed
 #' @param date_origin Character. The date from which numeric dates will be conversed into ISO-Date format
+#' @param tryFormats Character vector. Date formats that should be use to try to convert to date
 #' @return An equally length boolean vector whether the value can be parsed as a Date given the specified formats and origin
-is.Date_xafty <- function(dates, date_origin = "1899-12-30") {
+is.Date_xafty <- function(dates, date_origin = "1899-12-30", tryFormats = c("%Y-%m-%d", "%d.%m.%Y", "%d/%m/%Y", "%Y/%m/%d")) {
 
  xafty_column <-  sapply(dates, \(date) {
 
       tryCatch({
-        as.Date(date, tryFormats = c("%Y-%m-%d", "%d.%m.%Y", "%d/%m/%Y", "%Y/%m/%d"))
+        as.Date(date, tryFormats = tryFormats)
 
         TRUE
         },
            error = function(e) {
 
-               numeric_date <- suppressWarnings(as.numeric(date))
-               if(is.na(numeric_date)) return(FALSE)
-               as.Date(numeric_date, origin = date_origin)
+             numeric_date <- suppressWarnings(as.numeric(date))
+             if(is.na(numeric_date)) return(FALSE)
+             as.Date(numeric_date, origin = date_origin)
 
-               TRUE
-             }
+             TRUE
+          }
       )
     }
   )
@@ -180,6 +181,38 @@ is.Date_xafty <- function(dates, date_origin = "1899-12-30") {
  names(xafty_column) <- NULL
 
  xafty_column
+
+}
+
+#' @title Convert Values to Date Types
+#' @param dates Character vector of Dates to be Converted
+#' @param date_origin Character. The date from which numeric dates will be converted into ISO-Date format
+#' @param tryFormats Character vector. Date formats that should be use to try to convert to date
+#' @return An equally length date vector, \code{NA} when the value could not be converted to date
+as.Date_xafty <- function(dates, date_origin = "1899-12-30", tryFormats = c("%Y-%m-%d", "%d.%m.%Y", "%d/%m/%Y", "%Y/%m/%d")) {
+
+  xafty_column <-  sapply(dates, \(date) {
+
+    tryCatch({
+
+      as.Date(date, tryFormats = tryFormats)
+
+    },
+     error = function(e) {
+
+       numeric_date <- suppressWarnings(as.numeric(date))
+       if(is.na(numeric_date)) return(NA)
+
+       as.Date(numeric_date, origin = date_origin)
+
+      }
+    )
+   }
+  )
+
+  names(xafty_column) <- NULL
+
+  as.Date(xafty_column)
 
 }
 
@@ -203,16 +236,21 @@ is.numeric_xafty <- function(numbers) {
 
 #' @title Check if Passed Values can be Parsed as POSIXct
 #' @param datetimes Character vector of date time values to be parsed
+#' @param tz Timezone for the POSIXct values. Default is UTC
 #' @return An equally length Boolean vector whether the values can be parsed as POSIXct
-is.POSIXct_xafty <- function(datetimes) {
+is.POSIXct_xafty <- function(datetimes, tz = "") {
 
   xafty_column <- sapply(datetimes, \(datetime) {
 
     tryCatch({
-      as.POSIXct(datetime)
+      as.POSIXct(datetime, tz = tz)
+
       TRUE
+
     }, error = function(e){
+
       FALSE
+
     })
   }
   )

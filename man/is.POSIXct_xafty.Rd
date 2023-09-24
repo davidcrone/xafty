@@ -4,10 +4,12 @@
 \alias{is.POSIXct_xafty}
 \title{Check if Passed Values can be Parsed as POSIXct}
 \usage{
-is.POSIXct_xafty(datetimes)
+is.POSIXct_xafty(datetimes, tz = "")
 }
 \arguments{
 \item{datetimes}{Character vector of date time values to be parsed}
+
+\item{tz}{Timezone for the POSIXct values. Default is UTC}
 }
 \value{
 An equally length Boolean vector whether the values can be parsed as POSIXct

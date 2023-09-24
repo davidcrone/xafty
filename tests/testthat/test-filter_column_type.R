@@ -39,3 +39,53 @@ test_that("Filter for type 'character' works", {
   expect_equal(xafty_column_false, rep(FALSE, 3))
 
 })
+
+test_that("Filter for type 'date' works", {
+
+  check_table <- data.frame("Birthday" = as.character(c("2000-12-24", "1993-09-06",
+                                                   "2022-01-01", "01.02.2023",
+                                                   "12/01/1993, 2000/12/01")),
+                            "Birthday_m" = as.character(c("2000-412-24", "1993/09-06",
+                                                        "2022-xx01-01", "01..02.2023",
+                                                        "12/01//1993, 20000/12/01")),
+                            "Arrival_Date" = as.character(c("2003/12/24", "Christmas", "50404",
+                                                            "20.12.12", NA))
+  )
+
+  validity_table <- data.frame("Birthday_m" = "##!!date", "Age" = "##!!text",
+                               "Birthday" = "##!!date", "Has_Birthday" = "##!!text",
+                               "Arrival_Date" = "##!!date")
+
+  xafty_column_true <- filter_column_type(check_table = check_table, validity_table = validity_table, filter_column = "Birthday")
+  xafty_column_false <- filter_column_type(check_table = check_table, validity_table = validity_table, filter_column = "Birthday_m")
+  xafty_column_mix <- filter_column_type(check_table = check_table, validity_table = validity_table, filter_column = "Arrival_Date")
+
+
+  expect_equal(xafty_column_true, rep(TRUE, 5))
+  expect_equal(xafty_column_false, rep(FALSE, 5))
+
+})
+
+test_that("Filter for type 'numeric' works", {
+
+  check_table <- data.frame("Name" = as.factor(c("David", "Diana", "Marcel")),
+                            "Age" = as.numeric(c(22, 18, 25)),
+                            "Birthday" = as.character(c("2000-12-24", "1993-09-06", "2022-01-01")),
+                            "Has_Birthday" = as.character(c("no", "yes", "no")),
+                            "Arrival_Time" = as.character(c(NA, "20", "Afternoon"))
+  )
+
+  validity_table <- data.frame("Name" = "##!!factor", "Age" = "##!!number",
+                               "Birthday" = "##!!date", "Has_Birthday" = "##!!number",
+                               "Arrival_Time" = "##!!number")
+
+  xafty_column_true <- filter_column_type(check_table = check_table, validity_table = validity_table, filter_column = "Age")
+  xafty_column_false <- filter_column_type(check_table = check_table, validity_table = validity_table, filter_column = "Has_Birthday")
+  xafty_column_mix <- filter_column_type(check_table = check_table, validity_table = validity_table, filter_column = "Arrival_Time")
+
+
+  expect_equal(xafty_column_true, rep(TRUE, 3))
+  expect_equal(xafty_column_false, rep(FALSE, 3))
+  expect_equal(xafty_column_mix, c(TRUE, TRUE, FALSE))
+
+})
