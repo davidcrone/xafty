@@ -6,7 +6,6 @@
 #' @param file_ending Character. Valid input: "xlsx", "csv_comma", "csv_semicolon". You need to make sure that the file ending
 #' matches the actual file.
 #' @importFrom utils read.csv read.csv2
-
 read_check_and_validity <- function(path_check = "inst/extdata/example_data.xlsx",
                                     path_validity = "inst/extdata/example_validity.csv", file_ending = "xlsx") {
 
@@ -80,8 +79,13 @@ create_result_row <- function(check_name, default_result = TRUE, default_message
 #' referred to as "xafty pair".
 obtain_columns_in_validity <- function(validity_table, xafty_syntax) {
 
+  # If the number of rows of validity table are exactly 1 the behavior of the function is incorrect since sapply
+  # creates a logical vector instead of a logical matrix if the validity table has only one row
+  # Hope this doesn't introduce unforeseen consequences!
+  if (nrow(validity_table) == 1) validity_table <- rbind(validity_table, validity_table)
+
   presence_list <- sapply(xafty_syntax, \(syntax){
-    sapply(validity_table, grepl, pattern = syntax, fixed = TRUE)
+    sapply(validity_table, \(column) column == syntax)
   }, simplify = FALSE)
 
   presence_list <- lapply(presence_list, \(item){
@@ -101,7 +105,10 @@ obtain_columns_in_validity <- function(validity_table, xafty_syntax) {
 
   }
 
+
  result <- do.call(c, list_out)
+
+ result <- result[!is.na(result)]
 
  if(length(result) <= 0) {
 
@@ -258,5 +265,27 @@ is.POSIXct_xafty <- function(datetimes, tz = "") {
   names(xafty_column) <- NULL
 
   xafty_column
+
+}
+
+as.POSIXct_xafty <- function(datetimes, tz = "") {
+
+  xafty_column <- sapply(datetimes, \(datetime) {
+
+    tryCatch({
+
+      as.POSIXct(datetime, tz = tz)
+
+    }, error = function(e){
+
+      NA
+
+    })
+  }
+  )
+
+  names(xafty_column) <- NULL
+
+  as.POSIXct(xafty_column)
 
 }
