@@ -9,7 +9,8 @@ filter_column_type(
   validity_table,
   filter_column,
   date_origin = "1899-12-30",
-  tryFormats = c("\%Y-\%m-\%d", "\%d.\%m.\%Y", "\%d/\%m/\%Y", "\%Y/\%m/\%d")
+  tryFormats = c("\%Y-\%m-\%d", "\%d.\%m.\%Y", "\%d/\%m/\%Y", "\%Y/\%m/\%d"),
+  tz = ""
 )
 }
 \arguments{
@@ -23,6 +24,8 @@ as well as the validity table}
 \item{date_origin}{Character. The date from which numeric dates will be conversed into ISO-Date format}
 
 \item{tryFormats}{Character vector. Date formats that should be use to try to convert to date}
+
+\item{tz}{Character. Timezone for the POSIXct values. Default is "" which translates to UTC}
 }
 \value{
 A Boolean vector. TRUE when the value is in line with the specified data type; FALSE when it is not

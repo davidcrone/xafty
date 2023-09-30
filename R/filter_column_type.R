@@ -8,6 +8,7 @@
 #' @param tryFormats Character vector. Date formats that should be use to try to convert to date
 #' @param tz Character. Timezone for the POSIXct values. Default is "" which translates to UTC
 #' @return A Boolean vector. TRUE when the value is in line with the specified data type; FALSE when it is not
+#' @export
 filter_column_type <- function(check_table, validity_table, filter_column,
                                date_origin = "1899-12-30",
                                tryFormats = c("%Y-%m-%d", "%d.%m.%Y", "%d/%m/%Y", "%Y/%m/%d"),

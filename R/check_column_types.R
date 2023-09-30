@@ -42,7 +42,7 @@ check_column_types <- function(check_table, validity_table) {
     columns <- NA
 
   } else {
-    # TODO: Add expected data type and found data tabe
+    # TODO: Add expected data type
     result <- FALSE
     wrong_classes_names <- names(result_unlisted)[!result_unlisted]
     wrong_classes_collapsed <- paste0(wrong_classes_names, collapse = ", ")
@@ -64,11 +64,12 @@ check_column_types <- function(check_table, validity_table) {
 #' @param date_origin Character. A date string for date conversion giving the number of days since e.g. "1900-01-01". This
 #' is only necessary if the excel date is stored as numeric: (32768, 35981). For more information see: ?as.Date
 #' @param tryFormats Character vector. Date formats that should be use to try to convert to date
-#'
+#' @param tz Timezone for the POSIXct values. Default is UTC
 #' @export
-align_column_classes <- function(check_table, validity_table,
+align_column_types <- function(check_table, validity_table,
                                  date_origin = "1899-12-30",
-                                 tryFormats = c("%d.%m.%Y", "%d/%m/%Y", "%Y-%m-%d", "%Y/%m/%d")) {
+                                 tryFormats = c("%d.%m.%Y", "%d/%m/%Y", "%Y-%m-%d", "%Y/%m/%d"),
+                                 tz = "") {
 
   xafty_syntax <- "##!!"
   possible_classes <- c("text", "date", "number", "factor", "datetime")
@@ -91,7 +92,7 @@ align_column_classes <- function(check_table, validity_table,
                                                              date_origin = date_origin, tryFormats = tryFormats),
               "##!!number" = check_table[, i] <- as.numeric(check_table[[i]]),
               "##!!factor" = check_table[, i] <- as.factor(check_table[[i]]),
-              "##!!datetime" = check_table[, i] <- as.POSIXct(check_table[[i]])
+              "##!!datetime" = check_table[, i] <- as.POSIXct_xafty(check_table[[i]], tz = tz)
       )
 
     }

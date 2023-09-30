@@ -5,34 +5,26 @@
 #' @export
 check_column_notempty <- function(check_table, validity_table) {
 
-  xafty_data_types <- "##!!notempty"
-
-  check_for_syntax <- as.data.frame(sapply(validity_table, grepl, pattern = xafty_data_types))
-
-  # TODO: Add modern approach
   xafty_notempty <- "##!!notempty"
-  column_with_syntax <- obtain_columns_in_validity(validity_table = validity_table, xafty_syntax = xafty_notempty)
+  columns_with_syntax <- obtain_columns_in_validity(validity_table = validity_table, xafty_syntax = xafty_notempty)
 
-  if (!any(check_for_syntax)) {
+  if (any(is.na(columns_with_syntax))) {
     result <- FALSE
     message <- "Warning: Checked for not empty, but no entry with '##!!notempty' in validity table!"
     return(data.frame("Check" = "Column Classes", "Check_Result" = result, "Message" = message))
   }
 
-  not_empty_columns <- sapply(check_for_syntax, any)
-  not_empty_columns <- names(not_empty_columns)[not_empty_columns]
-
   list_result <- list()
 
-  for (i in not_empty_columns) {
+  for (i in seq(length(columns_with_syntax))) {
 
-    if (i %in% colnames(check_table)) {
+    column_name <- columns_with_syntax[i]
 
-      list_result[[i]] <- all(!is.na(check_table[[i]]))
-
-    }
+    list_result[[i]] <- all(!filter_column_empty(check_table = check_table, filter_column = column_name))
 
   }
+
+  names(list_result) <- columns_with_syntax
 
   results_unlisted <- unlist(list_result)
 

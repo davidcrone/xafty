@@ -28,7 +28,7 @@ read_check_and_validity <- function(path_check = "inst/extdata/example_data.xlsx
 test_main_functions <- function() {
 
   data <- read_check_and_validity()
-  data_check_aligned <- align_column_classes(data$check_table, data$validity_table)
+  data_check_aligned <- align_column_types(data$check_table, data$validity_table)
   check_validity(data_check_aligned, data$validity_table)
 
 }
@@ -268,6 +268,9 @@ is.POSIXct_xafty <- function(datetimes, tz = "") {
 
 }
 
+#' @title Convert Passed Values as POSIXct
+#' @param datetimes Character vector of date time values to be parsed
+#' @param tz Timezone for the POSIXct values. Default is UTC
 as.POSIXct_xafty <- function(datetimes, tz = "") {
 
   xafty_column <- sapply(datetimes, \(datetime) {
