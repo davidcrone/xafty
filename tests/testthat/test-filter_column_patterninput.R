@@ -66,7 +66,23 @@ test_that("Several rules in one column throws an error", {
   validity_table <- data.frame("Name" = c("##!!text", "##!!strictpattern", "a", NA),
                                "Has_Birthday" = c("##!!factor", "##!!strictpattern", "n", "##!!eachpattern"))
 
- expect_error(check_result <- filter_column_patterninput(check_table = check_table, validity_table = validity_table,
+ expect_error(filter_column_patterninput(check_table = check_table, validity_table = validity_table,
                                                          filter_column = "Has_Birthday"))
+
+})
+
+test_that("All values NA returns FALSE", {
+
+  check_table <- data.frame("Name" = as.character(c("David", "Diana", "Marcel")),
+                            "Has_Birthday" = factor(c(NA, NA, NA)))
+
+  validity_table <- data.frame("Name" = c("##!!text", "##!!strictpattern", "a", NA),
+                               "Has_Birthday" = c("##!!factor", "##!!strictpattern", "n", "##!!eachpattern"))
+
+  check_result <- filter_column_patterninput(check_table = check_table, validity_table = validity_table,
+                                                          filter_column = "Has_Birthday")
+
+  expect_equal(check_result, c(FALSE, FALSE, FALSE))
+  expect_equal(length(check_result), 3)
 
 })

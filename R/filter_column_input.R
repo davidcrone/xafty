@@ -17,13 +17,16 @@ filter_column_patterninput <- function(check_table, validity_table, filter_colum
   xafty_data_types <- paste0(xafty_syntax, possible_checks)
 
   check_column <- as.character(check_table[, filter_column, drop = TRUE])
+
+  if (all(is.na(check_column))) return(rep(FALSE, length(check_column)))
+
   validity_column <- validity_table[, filter_column, drop = FALSE]
 
   result_out <- rep(TRUE, length(check_column))
 
   xafty_pairs <- obtain_columns_in_validity(validity_table = validity_column, xafty_syntax = xafty_data_types)
 
-  # TODO: Sensible behavior with several rules needs to be implemented
+  # TODO: Sensible behavior with several rules in the same column needs to be implemented
   if(length(xafty_pairs) > 1) stop("Several pattern rules in the same column are currently not supported")
 
   list_xafty_values <- list()
@@ -87,7 +90,9 @@ filter_column_exactinput <- function(check_table, validity_table, filter_column)
   possible_checks <- c("anyexact", "strictexact", "eachexact")
   xafty_data_types <- paste0(xafty_syntax, possible_checks)
 
-  check_column <- check_table[, filter_column, drop = TRUE]
+  check_column <- as.character(check_table[, filter_column, drop = TRUE])
+  if (all(is.na(check_column))) return(rep(FALSE, length(check_column)))
+
   validity_column <- validity_table[, filter_column, drop = FALSE]
 
   result_out <- rep(TRUE, length(check_column))

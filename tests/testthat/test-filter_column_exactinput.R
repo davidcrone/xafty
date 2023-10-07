@@ -77,3 +77,19 @@ test_that("Filter with all broken values work", {
 
 
 })
+
+test_that("All values NA returns FALSE", {
+
+  check_table <- data.frame("Name" = as.character(c("David", "Diana", "Marcel")),
+                            "Has_Birthday" = factor(c(NA, NA, NA)))
+
+  validity_table <- data.frame("Name" = c("##!!text", NA, NA, NA),
+                               "Has_Birthday" = c("##!!factor", "##!!anyexact", "no", "yes"))
+
+  filter_result <- filter_column_exactinput(check_table = check_table, validity_table = validity_table, filter_column = "Has_Birthday")
+
+  expect_equal(filter_result, c(FALSE, FALSE, FALSE))
+  expect_equal(length(filter_result), 3)
+
+
+})
