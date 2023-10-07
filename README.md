@@ -6,14 +6,20 @@
 <!-- badges: start -->
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+[![codecov](https://codecov.io/gh/davidcrone/xafty/branch/main/graph/badge.svg)](https://codecov.io/gh/davidcrone/xafty)
+[![R CMD
+Check](https://github.com/davidcrone/xafty/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/davidcrone/xafty/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
-The package is designed to facilitate task automation for tasks that are
-often completed in Excel. After reading in data from Excel, values and
-columns usually do not align with the assumptions of the code. The xafty
-package offers a lightweight solution to check whether the Excel data
-adheres to the specified rules stored in a validation table (referred to
-as “validity table”). The package aims to achieve the following goals:
+The package is designed to help with creating automation for tasks that
+are based on a Spreadsheet document (like Excel). After reading in data
+from a spreadsheet, values and columns usually do not align with the
+assumptions of the code if the document is edited by hand.
+
+Xafty offers a lightweight solution to check whether the spreadsheet
+data adheres to the specified rules stored in a validation table
+(referred to as “validity table”). The package aims to achieve the
+following goals:
 
 1.  Facilitate communication between the developer and user by agreeing
     on rules detailing how the data should be structured.
