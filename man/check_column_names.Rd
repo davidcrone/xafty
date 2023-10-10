@@ -11,11 +11,11 @@ check_column_names(check_table, validity_table, check_type = "presence")
 
 \item{validity_table}{Data Frame. A table that stores the column names in the first row}
 
-\item{check_type}{Character: Following parameters are allowed:
+\item{check_type}{Character.
+Following parameters are allowed:
 \itemize{
- \item "presence": If the mere presence of each column suffices
- \item "order": If the columns should be present in the specified order given in the validity table
- \item FALSE: If column names should not be checked
+ \item "presence": If the simple presence of each column suffices
+ \item "order": If the columns should be present as well as in the specified order
 }}
 }
 \description{

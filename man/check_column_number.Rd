@@ -4,12 +4,19 @@
 \alias{check_column_number}
 \title{Check for Correct Number of Columns}
 \usage{
-check_column_number(check_table, validity_table)
+check_column_number(check_table, validity_table, check_type = "equal")
 }
 \arguments{
 \item{check_table}{Data Frame. The table that will be checked against the specified rules in the validity table.}
 
 \item{validity_table}{Data Frame. A table that stores the rules by which the check table is compared to.}
+
+\item{check_type}{Character.
+Following Parameters are allowed:
+\itemize{
+ \item "equal": If number of columns in both tables should be equal
+ \item "larger": If number of columns in both tables should be equal or larger
+}}
 }
 \description{
 Check for Correct Number of Columns

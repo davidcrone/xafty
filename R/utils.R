@@ -6,7 +6,8 @@
 #' @param file_ending Character. Valid input: "xlsx", "csv_comma", "csv_semicolon". You need to make sure that the file ending
 #' matches the actual file.
 #' @importFrom utils read.csv read.csv2
-read_check_and_validity <- function(path_check = "inst/extdata/example_data.xlsx",
+#' @export
+read_example_data <- function(path_check = "inst/extdata/example_data.xlsx",
                                     path_validity = "inst/extdata/example_validity.csv", file_ending = "xlsx") {
 
   validity_table <- utils::read.csv(path_validity, na.strings = "")
@@ -27,7 +28,7 @@ read_check_and_validity <- function(path_check = "inst/extdata/example_data.xlsx
 #' @title Test Core Function of check_validity()
 test_main_functions <- function() {
 
-  data <- read_check_and_validity()
+  data <- read_example_data()
   data_check_aligned <- align_column_types(data$check_table, data$validity_table)
   check_validity(data_check_aligned, data$validity_table)
 

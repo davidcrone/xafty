@@ -9,8 +9,15 @@
 #'
 #' @param check_table Data Frame. The table that will be checked against the specified rules in the validity table.
 #' @param validity_table Data Frame. A validation table that stores the rules that the check table will be checked against.
-#' @param column_number Boolean. Should the count of columns be checked?
-#' @param column_names Character. Following parameters are allowed:
+#' @param column_number Character or Boolean. Should the count of columns be checked?
+#' Following Parameters are allowed:
+#' \itemize{
+#'  \item "equal": If number of columns in both tables should be equal
+#'  \item "larger": If number of columns in both tables should be equal or larger
+#'  \item FALSE: If column number should not be checked
+#' }
+#' @param column_names Character or Boolean. Should the column names be checked
+#' Following parameters are allowed:
 #' \itemize{
 #'  \item "presence": If the simple presence of each column suffices
 #'  \item "order": If the columns should be present as well as in the specified order
@@ -32,21 +39,23 @@
 #'
 #' @export
 check_validity <- function(check_table, validity_table,
-                           column_number = TRUE,
+                           column_number = "equal",
                            column_names = "presence",
-                           column_types = TRUE,
+                           column_types =    TRUE,
                            values_notempty = TRUE,
-                           values_exact = TRUE,
-                           values_pattern = TRUE) {
+                           values_exact =    TRUE,
+                           values_pattern =  TRUE) {
 
   df_result_out <- create_result_table()
 
-  if(column_number) {
-    df_result_out[df_result_out$Check == "Column Number", ] <- check_column_number(check_table, validity_table)
+  if(!isFALSE(column_number)) {
+    df_result_out[df_result_out$Check == "Column Number", ] <- check_column_number(check_table, validity_table,
+                                                                                   check_type = column_number)
   }
 
   if(!isFALSE(column_names)) {
-    df_result_out[df_result_out$Check == "Column Names", ] <- check_column_names(check_table, validity_table, check_type = column_names)
+    df_result_out[df_result_out$Check == "Column Names", ] <- check_column_names(check_table, validity_table,
+                                                                                 check_type = column_names)
   }
 
   if(column_types) {

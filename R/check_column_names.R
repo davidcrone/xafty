@@ -6,11 +6,11 @@
 #'
 #' @param check_table Data Frame. The table that will be checked against the information in the validity table
 #' @param validity_table Data Frame. A table that stores the column names in the first row
-#' @param check_type Character: Following parameters are allowed:
+#' @param check_type Character.
+#' Following parameters are allowed:
 #' \itemize{
-#'  \item "presence": If the mere presence of each column suffices
-#'  \item "order": If the columns should be present in the specified order given in the validity table
-#'  \item FALSE: If column names should not be checked
+#'  \item "presence": If the simple presence of each column suffices
+#'  \item "order": If the columns should be present as well as in the specified order
 #' }
 #'
 #' @export

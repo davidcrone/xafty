@@ -7,7 +7,7 @@
 check_validity(
   check_table,
   validity_table,
-  column_number = TRUE,
+  column_number = "equal",
   column_names = "presence",
   column_types = TRUE,
   values_notempty = TRUE,
@@ -20,9 +20,16 @@ check_validity(
 
 \item{validity_table}{Data Frame. A validation table that stores the rules that the check table will be checked against.}
 
-\item{column_number}{Boolean. Should the count of columns be checked?}
+\item{column_number}{Character or Boolean. Should the count of columns be checked?
+Following Parameters are allowed:
+\itemize{
+ \item "equal": If number of columns in both tables should be equal
+ \item "larger": If number of columns in both tables should be equal or larger
+ \item FALSE: If column number should not be checked
+}}
 
-\item{column_names}{Character. Following parameters are allowed:
+\item{column_names}{Character or Boolean. Should the column names be checked
+Following parameters are allowed:
 \itemize{
  \item "presence": If the simple presence of each column suffices
  \item "order": If the columns should be present as well as in the specified order

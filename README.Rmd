@@ -48,13 +48,13 @@ You can install the development version of xafty like so:
 remotes::install_github("davidcrone/xafty")
 ```
 
-## xafty Rules (WIP)
+## xafty Rules
 
-### The Validity Table
+### The Check Table
 
-A validity table consists of column names and column rules that will then be compared 
-to the corresponding columns in the check table. In order to explain all the possible rules and their variants, we will
-use a reduced 'mtcars' data set as an example.
+The check table contains the data that will be checked. Usually, it is data read in from a spreadsheet. 
+
+In order to explain all the possible rules and their variants, we will use a reduced 'mtcars' data set as an example.
 
 ``` r 
 data(mtcars)
@@ -65,7 +65,12 @@ mtcars$cyl <- factor(mtcars$cyl)
 
 mtcars
 ```
-Our example data set now consists of three columns which will each have their own representation in the validity table.
+
+### The Validity Table
+
+A validity table consists of column names and column rules that will then be compared 
+to the corresponding columns in the check table. 
+
 To start of building the validity table we set the column names without any rules:
 
 ``` r
@@ -76,12 +81,12 @@ validity_table <- data.frame("name" = NA, "cyl" = NA, "wt" = NA)
 ### Check Number of Columns
 
 Checks if the number (count) of columns of the check table is equal to that of the validity table. Use this check
-if the number of columns is a good predictor whether all columns are present for downstream code.
+if the number of columns is important for downstream code.
 
 **Rule syntax:** The number of columns in the validity table
 
 ``` r
-check_column_number(check_table = mtcars, validity_table = validity_table)
+check_column_number(check_table = mtcars, validity_table = validity_table, check_type = "equal")
 ```
 
 ### Check Column Names
@@ -103,14 +108,14 @@ the validity table must have data type rules under each column.
 
 **Rule syntax:**
 
-| Data Type | Rule         |
-|-----------|--------------|
-| integer   | ##!!number   | 
-| double    | ##!!number   | 
-| character | ##!!text     |
-| factor    | ##!!factor   | 
-| Date      | ##!!date     |
-| POSIXct   | ##!!datetime |
+| Rule        | Data Type |
+|-------------|-----------|
+| ##!!number  | integer   | 
+| ##!!number  | double    |
+| ##!!text    | character |
+| ##!!factor  | factor    | 
+| ##!!date    | Date      |
+| ##!!datetime| POSIXct   |
 
 ``` r
 validity_table <- data.frame("name" = "##!!text", "cyl" = "##!!factor", "wt" = "##!!number")
@@ -119,9 +124,53 @@ check_column_types(check_table = mtcars, validity_table = validity_table)
 
 ### Check for Empty Values
 
+Checks for empty (NA) column values. Use this check when a column should not have any NA values. Consequently, NA values must be correctly identified before being able to use this check correctly.
+
+**Rule syntax:** ##!!notempty
+
+``` r
+validity_table <- data.frame("name" = c("##!!text", "##!!notempty"), "cyl" = c("##!!factor", "##!!notempty"), "wt" = c("##!!number", "##!!notempty"))
+check_column_notempty(check_table = mtcars, validity_table = validity_table)
+```
+
 ### Check for Exact Values
 
+Checks whether the provided values in the validity table match exactly the data in the check table. To provide values to match for in the validity, we simply add the desired rule followed by the values the algorithm should look for.
+
+**Rule syntax:**
+
+| Rule           | Explanation                                                                                       |
+|----------------|---------------------------------------------------------------------------------------------------|
+| ##!!strictexact| All values in the check table must match the provided values in the validity table                | 
+| ##!!anyexact   | At least one value in the check table must match any of the provided values in the validity table |
+| ##!!eachexact  | All provided values in the validity table must be matched at least once in the check table        |
+
+``` r
+validity_table <- data.frame("name" = c("##!!text", "##!!notempty", "##!!anyexact", "Mazda RX4"), 
+                             "cyl" = c("##!!factor", "##!!notempty", NA, NA), 
+                             "wt" = c("##!!number", "##!!notempty", NA, NA))
+check_column_exactinput(check_table = mtcars, validity_table = validity_table)
+```
+
 ### Check for Pattern Values
+
+Checks whether the provided patterns in the validity table match the data in the check table. Several variant rules exist for this check. 
+
+**Rule syntax:**
+
+| Rule             | Explanation                                                                                |
+|------------------|--------------------------------------------------------------------------------------------|
+| ##!!strictpattern| All values in the check table must match the provided patterns in the validity table       | 
+| ##!!rowpattern   | Every row of the column in the check table must match to at least to one pattern in the validity table |
+| ##!!anypattern   | At least one value in the check table must match to a pattern in the validity table        |
+| ##!!eachpattern  | Every pattern provided in the validity table must match at least once in the check table   |
+
+``` r
+validity_table <- data.frame("name" = c("##!!text", "##!!notempty", "##!!rowpattern", "Mazda", "Datsun", "Hornet"), 
+                             "cyl" = c("##!!factor", "##!!notempty", NA, NA, NA, NA), 
+                             "wt" = c("##!!number", "##!!notempty", NA, NA, NA, NA))
+check_column_patterninput(check_table = mtcars, validity_table = validity_table)
+```
 
 ## Example
 
@@ -131,7 +180,7 @@ Basic workflow to check a table for its 'validity' before using it in downstream
 library(xafty)
 
 # Load example data
-data <- read_check_and_validity() 
+data <- read_example_data() 
 check_table <- data$check_table
 validity_table <- data$validity_table
 
