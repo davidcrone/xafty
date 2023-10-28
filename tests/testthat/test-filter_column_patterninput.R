@@ -18,7 +18,7 @@ test_that("Filter for values are correctly identified", {
   check_table <- data.frame("Name" = as.character(c("David", "Diana", "Marcel")),
                             "Has_Birthday" = factor(c("no", "maybe", "no")))
 
-  validity_table <- data.frame("Name" = c("##!!text", "##!!strictpattern", "a", NA),
+  validity_table <- data.frame("Name" = c("##!!text", "##!!strictpattern", "a", "i"),
                                "Has_Birthday" = c("##!!factor", "##!!strictpattern", "n", "o"))
 
   check_result <- filter_column_patterninput(check_table = check_table, validity_table = validity_table, filter_column = "Has_Birthday")

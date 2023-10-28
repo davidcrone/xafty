@@ -4,7 +4,12 @@
 \alias{check_column_number}
 \title{Check for Correct Number of Columns}
 \usage{
-check_column_number(check_table, validity_table, check_type = "equal")
+check_column_number(
+  check_table,
+  validity_table,
+  check_type = "equal",
+  simply = FALSE
+)
 }
 \arguments{
 \item{check_table}{Data Frame. The table that will be checked against the specified rules in the validity table.}
@@ -17,6 +22,11 @@ Following Parameters are allowed:
  \item "equal": If number of columns in both tables should be equal
  \item "larger": If number of columns in both tables should be equal or larger
 }}
+
+\item{simply}{Boolean. Changes the return value of the function to TRUE or FALSE, whether the test passes.}
+}
+\value{
+A data.frame if simply is FALSE and a Boolean of length 1 if simply is TRUE
 }
 \description{
 Check for Correct Number of Columns

@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{as.POSIXct_xafty}
 \alias{as.POSIXct_xafty}
-\title{Convert Passed Values as POSIXct}
+\title{Convert Passed Values to POSIXct}
 \usage{
 as.POSIXct_xafty(datetimes, tz = "")
 }
@@ -12,5 +12,5 @@ as.POSIXct_xafty(datetimes, tz = "")
 \item{tz}{Timezone for the POSIXct values. Default is UTC}
 }
 \description{
-Convert Passed Values as POSIXct
+Convert Passed Values to POSIXct
 }

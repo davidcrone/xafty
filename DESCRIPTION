@@ -1,7 +1,7 @@
 Type: Package
 Package: xafty
-Title: Lightweight package to validate a table
-Version: 1.0.0
+Title: Lightweight package to easily validate a table
+Version: 1.1.0
 Author: David Crone
 Maintainer: The package maintainer <davidjvcrone@gmail.com>
 Description: The package is designed to facilitate task automation for

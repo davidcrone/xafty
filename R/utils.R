@@ -5,8 +5,8 @@
 #' @param path_validity Path to the validity table that stores the accompanying xafty rules
 #' @param file_ending Character. Valid input: "xlsx", "csv_comma", "csv_semicolon". You need to make sure that the file ending
 #' matches the actual file.
+#' @importFrom readxl read_xlsx
 #' @importFrom utils read.csv read.csv2
-#' @export
 read_example_data <- function(path_check = "inst/extdata/example_data.xlsx",
                                     path_validity = "inst/extdata/example_validity.csv", file_ending = "xlsx") {
 
@@ -269,7 +269,7 @@ is.POSIXct_xafty <- function(datetimes, tz = "") {
 
 }
 
-#' @title Convert Passed Values as POSIXct
+#' @title Convert Passed Values to POSIXct
 #' @param datetimes Character vector of date time values to be parsed
 #' @param tz Timezone for the POSIXct values. Default is UTC
 as.POSIXct_xafty <- function(datetimes, tz = "") {

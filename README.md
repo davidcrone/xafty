@@ -45,8 +45,8 @@ remotes::install_github("davidcrone/xafty")
 The check table contains the data that will be checked. Usually, it is
 data read in from a spreadsheet.
 
-In order to explain all the possible rules and their variants, we will
-use a reduced ‘mtcars’ data set as an example.
+In order to introduce all possible rules and their variants, we will use
+a reduced ‘mtcars’ data set as an example.
 
 ``` r
 data(mtcars)
@@ -155,17 +155,18 @@ check_column_exactinput(check_table = mtcars, validity_table = validity_table)
 
 ### Check for Pattern Values
 
-Checks whether the provided patterns in the validity table match the
-data in the check table. Several variant rules exist for this check.
+Checks whether the provided patterns in a column of the validity table
+matches to the corresponding column in the check table. Several variant
+rules exist for the pattern check.
 
 **Rule syntax:**
 
-| Rule               | Explanation                                                                                            |
-|--------------------|--------------------------------------------------------------------------------------------------------|
-| \##!!strictpattern | All values in the check table must match the provided patterns in the validity table                   |
-| \##!!rowpattern    | Every row of the column in the check table must match to at least to one pattern in the validity table |
-| \##!!anypattern    | At least one value in the check table must match to a pattern in the validity table                    |
-| \##!!eachpattern   | Every pattern provided in the validity table must match at least once in the check table               |
+| Rule               | Explanation                                                                                           |
+|--------------------|-------------------------------------------------------------------------------------------------------|
+| \##!!strictpattern | All values in the column must match to every pattern provided in the validity table                   |
+| \##!!rowpattern    | All values of the column must match at least to one pattern in the validity table                     |
+| \##!!anypattern    | At least one value in the column must match to any pattern provided in the validity table             |
+| \##!!eachpattern   | Every pattern provided in the validity table must match at least once to any value in the check table |
 
 ``` r
 validity_table <- data.frame("name" = c("##!!text", "##!!notempty", "##!!rowpattern", "Mazda", "Datsun", "Hornet"), 
@@ -183,11 +184,13 @@ downstream code:
 library(xafty)
 
 # Load example data
-data <- read_example_data() 
-check_table <- data$check_table
-validity_table <- data$validity_table
+data(Indometh)
+check_table <- Indometh
+validity_table <- data.frame("Subject" = c("##!!factor", "##!!notempty", "##!!strictexact", 1:6),
+                             "time" = c("##!!number", "##!!notempty", "##!!anypattern", "8", rep(NA, 5)),
+                             "conc" = c("##!!number", "##!!notempty", rep(NA, 7)))
 
-# Aligns the data type of the check table as specified in the validity table
+# Aligns the data type of the check table as specified data types in the validity table
 check_table <- align_column_types(check_table = check_table, validity_table = validity_table)
 
 # Check if the check table is valid
