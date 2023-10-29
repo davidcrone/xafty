@@ -139,7 +139,7 @@ obtain_values_in_validity <- function(validity_table, xafty_pair) {
       values_between <- values_below_rule[seq(first_xafty_syntax - 1)]
       values_return <- values_between[!is.na(values_between)]
 
-      if(length(values_return) <= 0) stop(paste("No values found for", names(xafty_pair)))
+      if(length(values_return) <= 0) return(character(0))
 
     } else {
 
@@ -291,5 +291,101 @@ as.POSIXct_xafty <- function(datetimes, tz = "") {
   names(xafty_column) <- NULL
 
   as.POSIXct(xafty_column)
+
+}
+
+build_xafty_list <- function(check_table, validity_table, xafty_rules_table) {
+
+  colnames_validity <- colnames(validity_table)
+  n_col <- length(colnames_validity)
+
+  xafty_syntax <- xafty_rules_table$syntax
+
+  xafty_pairs <- obtain_columns_in_validity(validity_table = validity_table, xafty_syntax = xafty_syntax)
+
+  base_column_list <- list()
+
+  for (col in colnames_validity) {
+
+    # TODO: What should happens when a column in the validity table is not present in the check table?
+    if(!(col %in% colnames(check_table))) {
+      warning(paste(col, "is not present in check_table"))
+      next
+    }
+
+    base_column_list[[col]] <- list()
+
+    xafty_rules_col <- names(xafty_pairs)[col == xafty_pairs]
+    n_xafty_rules_col <- length(xafty_rules_col)
+
+    single_col_check_table <- check_table[, col, drop = FALSE]
+    single_col_validity_table <- validity_table[, col, drop = FALSE]
+
+    for (i in seq(n_xafty_rules_col)) {
+
+      single_rule <- xafty_rules_col[i]
+      single_xafty_pair <- xafty_pairs[names(xafty_pairs) == single_rule & xafty_pairs == col]
+
+
+      xafty_type <- xafty_rules_table$type[xafty_rules_table$syntax == single_rule]
+      xafty_check_function <- xafty_rules_table$check_function[xafty_rules_table$syntax == single_rule]
+      xafty_values <- NULL
+
+      if (xafty_type == "value") {
+        xafty_values <- obtain_values_in_validity(validity_table = validity_table,
+                                                  xafty_pair = single_xafty_pair)
+      }
+
+      test_result <- xafty_check_function[[1]](check_table = single_col_check_table,
+                                               validity_table = single_col_validity_table)$Check_Result
+
+      base_column_list[[col]][[single_rule]] <- list(
+                                           rule = single_rule,
+                                           values = xafty_values,
+                                           test_result = test_result,
+                                           check_function = xafty_check_function,
+                                           filter_function = NULL)
+
+    }
+
+  }
+
+  base_column_list
+
+
+}
+
+build_xafty_test_table <- function(xafty_list) {
+
+  colnames <- names(xafty_list)
+  n_colnames <- length(colnames)
+
+  list_tmp <- list()
+
+  for (i in seq(n_colnames)) {
+
+    col <- colnames[i]
+
+    n_xafty_rules <- length(xafty_list[[col]])
+
+    array_tmp <- array(dim = c(n_xafty_rules, 2), dimnames = list(NULL, c("rule", "test_result")))
+
+    for (j in seq(n_xafty_rules)) {
+
+      array_tmp[j, "rule"] <- xafty_list[[col]][[j]]$rule
+      array_tmp[j, "test_result"] <- xafty_list[[col]][[j]]$test_result
+
+    }
+
+    list_tmp[[i]] <- data.frame("column" = rep(col, n_xafty_rules), "rule" = array_tmp[, "rule"],
+                                "test_result" = as.logical(array_tmp[, "test_result"]))
+
+  }
+
+  df <- do.call(rbind, list_tmp)
+
+  row.names(df) <- NULL
+
+  df
 
 }
