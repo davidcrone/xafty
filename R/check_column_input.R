@@ -41,7 +41,9 @@ check_column_exactinput <- function(check_table, validity_table) {
 
   results_unlisted <- unlist(list_result)
 
-  if (all(results_unlisted)) {
+  check_result <- all(results_unlisted)
+
+  if (check_result) {
 
     result <- TRUE
     message <- paste0("ALL GOOD!")

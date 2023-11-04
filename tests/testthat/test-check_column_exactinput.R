@@ -111,7 +111,9 @@ test_that("Function returns an error when no values for exact rules are found", 
   validity_table <- data.frame("Name" = c("##!!text", "##!!anyexact"),
                                "Has_Birthday" = c("##!!factor", "##!!strictexact"))
 
-  expect_error(check_column_exactinput(check_table = check_table, validity_table = validity_table))
+  check_results <- check_column_exactinput(check_table = check_table, validity_table = validity_table)
+
+  expect_false(check_results$Check_Result)
 
 })
 

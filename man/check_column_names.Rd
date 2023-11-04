@@ -4,7 +4,12 @@
 \alias{check_column_names}
 \title{Check for Column Names}
 \usage{
-check_column_names(check_table, validity_table, check_type = "presence")
+check_column_names(
+  check_table,
+  validity_table,
+  check_type = "presence",
+  simply = FALSE
+)
 }
 \arguments{
 \item{check_table}{Data Frame. The table that will be checked against the information in the validity table}
@@ -17,6 +22,11 @@ Following parameters are allowed:
  \item "presence": If the simple presence of each column suffices
  \item "order": If the columns should be present as well as in the specified order
 }}
+
+\item{simply}{Boolean. Changes the return value of the function to TRUE or FALSE, whether the test passes.}
+}
+\value{
+A data.frame if simply is FALSE and a Boolean of length 1 if simply is TRUE
 }
 \description{
 Checks a table if all columns by name are present.

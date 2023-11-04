@@ -60,4 +60,7 @@ test_that("Parameter 'larger' works as expected", {
   expect_true(checK_result$Check_Result)
   expect_equal(checK_result$Columns, NA)
 
+  expect_true(check_column_number(check_table = check_table, validity_table = validity_table,
+                                  check_type = "larger", simply = TRUE))
+
 })

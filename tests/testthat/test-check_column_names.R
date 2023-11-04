@@ -9,6 +9,10 @@ test_that("Presence of all column names is correctly detected", {
   expect_true(checK_result$Check_Result)
   expect_equal(checK_result$Columns, NA)
 
+  expect_true(check_column_names(check_table = check_table, validity_table = validity_table,
+                                 check_type = "presence", simply = TRUE))
+
+
 })
 
 test_that("Non presence of a column is correctly detected", {
@@ -22,6 +26,9 @@ test_that("Non presence of a column is correctly detected", {
   expect_false(checK_result$Check_Result)
   expect_equal("Birthday", checK_result$Columns)
 
+  expect_false(check_column_names(check_table = check_table, validity_table = validity_table,
+                                 check_type = "presence", simply = TRUE))
+
 })
 
 test_that("Non presence of several columns is correctly detected", {
@@ -33,6 +40,9 @@ test_that("Non presence of several columns is correctly detected", {
 
   expect_false(checK_result$Check_Result)
   expect_equal("Age, Birthday", checK_result$Columns)
+
+  expect_false(check_column_names(check_table = check_table, validity_table = validity_table,
+                                  check_type = "presence", simply = TRUE))
 
 })
 
@@ -48,6 +58,9 @@ test_that("Correct order of columns is correctly detected", {
 
   expect_true(checK_result$Check_Result)
   expect_equal(checK_result$Columns, NA)
+
+  expect_true(check_column_names(check_table = check_table, validity_table = validity_table,
+                                 check_type = "order", simply = TRUE))
 
 })
 
@@ -78,5 +91,8 @@ test_that("Incorrect order of columns is correctly detected", {
 
   expect_false(checK_result$Check_Result)
   expect_equal(checK_result$Message, "All columns are present but not in the specified order")
+
+  expect_false(check_column_names(check_table = check_table, validity_table = validity_table,
+                                 check_type = "order", simply = TRUE))
 
 })

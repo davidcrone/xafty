@@ -10,6 +10,7 @@ A data frame with 3 columns:
   \item{syntax}{A character vector with xafty rules.}
   \item{type}{A character vector of rule types.}
   \item{description}{A character vector of rule description in prosa.}
+  \item{check_function}{A list of functions for check purposes.}
 }
 }
 \source{

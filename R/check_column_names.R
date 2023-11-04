@@ -12,9 +12,10 @@
 #'  \item "presence": If the simple presence of each column suffices
 #'  \item "order": If the columns should be present as well as in the specified order
 #' }
-#'
+#' @param simply Boolean. Changes the return value of the function to a single logical vector of length 1.
+#' @return A data.frame if simply is FALSE and a Boolean of length 1 if simply is TRUE
 #' @export
-check_column_names <- function(check_table, validity_table, check_type = "presence") {
+check_column_names <- function(check_table, validity_table, check_type = "presence", simply = FALSE) {
 
   colnames_check_table <- colnames(check_table)
   colnames_validity_table <- colnames(validity_table)
@@ -25,21 +26,29 @@ check_column_names <- function(check_table, validity_table, check_type = "presen
 
   if(!all_present) {
 
-    missing_column_names <- colnames_validity_table[!logical_vector_no_order]
-    missing_column_names <- paste(missing_column_names, collapse = ", ")
-    result <-  FALSE
-    message <- paste("Rule Broken: Column names. Following columns are missing:")
-    columns <- missing_column_names
+    if (simply) {
 
-    return(data.frame("Check" = "Column Names", "Check_Result" = result, "Message" = message, "Columns" = columns))
+      return(FALSE)
 
+    } else {
+
+      missing_column_names <- colnames_validity_table[!logical_vector_no_order]
+      missing_column_names <- paste(missing_column_names, collapse = ", ")
+      result <-  FALSE
+      message <- paste("Rule Broken: Column names. Following columns are missing:")
+      columns <- missing_column_names
+
+      return(data.frame("Check" = "Column Names", "Check_Result" = result, "Message" = message, "Columns" = columns))
+
+    }
   }
 
   if (check_type == "presence") {
 
-    result <-  TRUE
-    message <- paste("ALL GOOD!")
-    columns <- NA
+      result <-  TRUE
+      message <- paste("ALL GOOD!")
+      columns <- NA
+
 
   }
 
@@ -71,6 +80,16 @@ check_column_names <- function(check_table, validity_table, check_type = "presen
 
   }
 
-  data.frame("Check" = "Column Names", "Check_Result" = result, "Message" = message, "Columns" = columns)
+  if (simply) {
+
+    return(result)
+
+  } else {
+
+    return(data.frame("Check" = "Column Names", "Check_Result" = result, "Message" = message, "Columns" = columns))
+
+  }
+
+
 
 }
