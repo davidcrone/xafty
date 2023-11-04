@@ -136,7 +136,11 @@ obtain_values_in_validity <- function(validity_table, xafty_pair) {
     if(any(grepl("##!!", values_below_rule))) {
 
       first_xafty_syntax <- min(which(grepl("##!!", values_below_rule)))
-      values_between <- values_below_rule[seq(first_xafty_syntax - 1)]
+      position_minus <- first_xafty_syntax - 1
+
+      if (position_minus <= 0) return(character(0))
+
+      values_between <- values_below_rule[seq(position_minus)]
       values_return <- values_between[!is.na(values_between)]
 
       if(length(values_return) <= 0) return(character(0))

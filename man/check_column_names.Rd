@@ -23,7 +23,7 @@ Following parameters are allowed:
  \item "order": If the columns should be present as well as in the specified order
 }}
 
-\item{simply}{Boolean. Changes the return value of the function to TRUE or FALSE, whether the test passes.}
+\item{simply}{Boolean. Changes the return value of the function to a single logical vector of length 1.}
 }
 \value{
 A data.frame if simply is FALSE and a Boolean of length 1 if simply is TRUE

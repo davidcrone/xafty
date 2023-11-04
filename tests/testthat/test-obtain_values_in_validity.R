@@ -44,8 +44,8 @@ test_that("Can obtain all values under a specified rule", {
 
   xafty_pair <- obtain_columns_in_validity(validity_table = validity_table, xafty_syntax = "##!!factor")
 
-  # TODO BUG: should also return character(0)
-  # expect_equal(obtain_values_in_validity(validity_table = validity_table, xafty_pair = xafty_pair),
-  #              character(0))
+
+  expect_equal(obtain_values_in_validity(validity_table = validity_table, xafty_pair = xafty_pair),
+               character(0))
 
 })
