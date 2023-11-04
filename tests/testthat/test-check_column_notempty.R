@@ -10,6 +10,10 @@ test_that("Function returns true when no empty values are found", {
   expect_true(check_result$Check_Result)
   expect_equal(check_result$Columns, NA)
 
+  check_result <- check_column_notempty(check_table = check_table, validity_table = validity_table, simply = TRUE)
+
+  expect_true(check_result)
+
 })
 
 test_that("Function correctly detects empty values for one column", {
@@ -23,6 +27,10 @@ test_that("Function correctly detects empty values for one column", {
 
   expect_false(check_result$Check_Result)
   expect_equal(check_result$Columns, "Name")
+
+  check_result <- check_column_notempty(check_table = check_table, validity_table = validity_table, simply = TRUE)
+
+  expect_false(check_result)
 
 })
 
@@ -38,5 +46,9 @@ test_that("Function correctly detects empty values for two column", {
 
   expect_false(check_result$Check_Result)
   expect_equal(check_result$Columns, "Name, Age")
+
+  check_result <- check_column_notempty(check_table = check_table, validity_table = validity_table, simply = TRUE)
+
+  expect_false(check_result)
 
 })

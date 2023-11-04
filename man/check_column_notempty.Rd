@@ -4,12 +4,14 @@
 \alias{check_column_notempty}
 \title{Checks for Empty Entries}
 \usage{
-check_column_notempty(check_table, validity_table)
+check_column_notempty(check_table, validity_table, simply = FALSE)
 }
 \arguments{
 \item{check_table}{Data Frame. The table that will be checked against the specified rules in the validity table.}
 
 \item{validity_table}{Data Frame. A table that stores the rules by which the check table is compared to.}
+
+\item{simply}{Boolean. Changes the return value of the function to a single logical vector of length 1.}
 }
 \description{
 Checks for Empty Entries

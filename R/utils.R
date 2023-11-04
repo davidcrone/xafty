@@ -82,7 +82,7 @@ obtain_columns_in_validity <- function(validity_table, xafty_syntax) {
 
   # If the number of rows of validity table are exactly 1 the behavior of the function is incorrect since sapply
   # creates a logical vector instead of a logical matrix if the validity table has only one row
-  # Hope this doesn't introduce unforeseen consequences!
+  # Hope this doesn't introduce unforeseen consequences! :)
   if (nrow(validity_table) == 1) validity_table <- rbind(validity_table, validity_table)
 
   presence_list <- sapply(xafty_syntax, \(syntax){

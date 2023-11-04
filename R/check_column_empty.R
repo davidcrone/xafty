@@ -2,16 +2,26 @@
 #' @title Checks for Empty Entries
 #' @param check_table Data Frame. The table that will be checked against the specified rules in the validity table.
 #' @param validity_table Data Frame. A table that stores the rules by which the check table is compared to.
+#' @param simply Boolean. Changes the return value of the function to a single logical vector of length 1.
 #' @export
-check_column_notempty <- function(check_table, validity_table) {
+check_column_notempty <- function(check_table, validity_table, simply = FALSE) {
 
+  # TODO: check column empty works with values that indicate non empty strings.
   xafty_notempty <- "##!!notempty"
   columns_with_syntax <- obtain_columns_in_validity(validity_table = validity_table, xafty_syntax = xafty_notempty)
 
   if (any(is.na(columns_with_syntax))) {
     result <- FALSE
     message <- "Warning: Checked for not empty, but no entry with '##!!notempty' in validity table!"
-    return(data.frame("Check" = "Column Classes", "Check_Result" = result, "Message" = message))
+
+    if (simply) {
+      return(result)
+
+    } else {
+      return(data.frame("Check" = "Column Classes", "Check_Result" = result, "Message" = message))
+
+    }
+
   }
 
   list_result <- list()
@@ -42,8 +52,14 @@ check_column_notempty <- function(check_table, validity_table) {
       columns <- wrong_columns_collapsed
       message <- paste0("Rule Broken: Column Not Empty. Following columns '##!!notempty' have NA entries: ")
 
-  }
+    }
 
-  data.frame("Check" = "Column Not Empty", "Check_Result" = result, "Message" = message, "Columns" = columns)
+  if (simply) {
+    return(result)
+
+  } else {
+    return(data.frame("Check" = "Column Not Empty", "Check_Result" = result, "Message" = message, "Columns" = columns))
+
+  }
 
 }

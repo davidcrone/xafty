@@ -8,7 +8,7 @@
 #'  \item "equal": If number of columns in both tables should be equal
 #'  \item "larger": If number of columns in both tables should be equal or larger
 #' }
-#' @param simply Boolean. Changes the return value of the function to TRUE or FALSE, whether the test passes.
+#' @param simply Boolean. Changes the return value of the function to a single logical vector of length 1.
 #' @return A data.frame if simply is FALSE and a Boolean of length 1 if simply is TRUE
 #' @export
 check_column_number <- function(check_table, validity_table, check_type = "equal", simply = FALSE) {
