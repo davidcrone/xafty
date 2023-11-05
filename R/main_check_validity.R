@@ -1,4 +1,3 @@
-
 #' @title Main Function to Check a Table for its Validity
 #'
 #' @description
@@ -41,40 +40,39 @@
 check_validity <- function(check_table, validity_table,
                            column_number = "equal",
                            column_names = "presence",
-                           column_types =    TRUE,
+                           column_types = TRUE,
                            values_notempty = TRUE,
-                           values_exact =    TRUE,
-                           values_pattern =  TRUE) {
-
+                           values_exact = TRUE,
+                           values_pattern = TRUE) {
   df_result_out <- create_result_table()
 
-  if(!isFALSE(column_number)) {
+  if (!isFALSE(column_number)) {
     df_result_out[df_result_out$Check == "Column Number", ] <- check_column_number(check_table, validity_table,
-                                                                                   check_type = column_number)
+      check_type = column_number
+    )
   }
 
-  if(!isFALSE(column_names)) {
+  if (!isFALSE(column_names)) {
     df_result_out[df_result_out$Check == "Column Names", ] <- check_column_names(check_table, validity_table,
-                                                                                 check_type = column_names)
+      check_type = column_names
+    )
   }
 
-  if(column_types) {
+  if (column_types) {
     df_result_out[df_result_out$Check == "Column Types", ] <- check_column_types(check_table, validity_table)
   }
 
-  if(values_notempty) {
+  if (values_notempty) {
     df_result_out[df_result_out$Check == "Values Notempty", ] <- check_column_notempty(check_table, validity_table)
   }
 
-  if(values_exact) {
+  if (values_exact) {
     df_result_out[df_result_out$Check == "Values Exact", ] <- check_column_exactinput(check_table, validity_table)
   }
 
-  if(values_pattern) {
+  if (values_pattern) {
     df_result_out[df_result_out$Check == "Values Pattern", ] <- check_column_patterninput(check_table, validity_table)
-
   }
 
   df_result_out
-
 }

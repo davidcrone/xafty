@@ -1,5 +1,4 @@
 test_that("Can obtain all values under a specified rule", {
-
   check_table <- data.frame(
     "Product_Name" = c("Apple", "Banana", "Apple"),
     "Product_Weight" = c(2.1, 0.5, 1.0),
@@ -20,32 +19,45 @@ test_that("Can obtain all values under a specified rule", {
 
   xafty_pair <- obtain_columns_in_validity(validity_table = validity_table, xafty_syntax = "##!!eachexact")
 
-  expect_equal(obtain_values_in_validity(validity_table = validity_table, xafty_pair = xafty_pair[1]),
-               c("Apple", "Banana"))
-  expect_equal(obtain_values_in_validity(validity_table = validity_table, xafty_pair = xafty_pair[2]),
-               c("2022-02-01"))
+  expect_equal(
+    obtain_values_in_validity(validity_table = validity_table, xafty_pair = xafty_pair[1]),
+    c("Apple", "Banana")
+  )
+  expect_equal(
+    obtain_values_in_validity(validity_table = validity_table, xafty_pair = xafty_pair[2]),
+    c("2022-02-01")
+  )
 
   xafty_pair <- obtain_columns_in_validity(validity_table = validity_table, xafty_syntax = "##!!rowpattern")
 
-  expect_equal(obtain_values_in_validity(validity_table = validity_table, xafty_pair = xafty_pair),
-               c("Train", "Truck"))
+  expect_equal(
+    obtain_values_in_validity(validity_table = validity_table, xafty_pair = xafty_pair),
+    c("Train", "Truck")
+  )
 
   xafty_pair <- obtain_columns_in_validity(validity_table = validity_table, xafty_syntax = "##!!strictpattern")
 
-  expect_equal(obtain_values_in_validity(validity_table = validity_table, xafty_pair = xafty_pair),
-               c("@", "."))
+  expect_equal(
+    obtain_values_in_validity(validity_table = validity_table, xafty_pair = xafty_pair),
+    c("@", ".")
+  )
 
   xafty_pair <- obtain_columns_in_validity(validity_table = validity_table, xafty_syntax = "##!!notempty")
 
-  expect_equal(obtain_values_in_validity(validity_table = validity_table, xafty_pair = xafty_pair[1]),
-               character(0))
-  expect_equal(obtain_values_in_validity(validity_table = validity_table, xafty_pair = xafty_pair[2]),
-               character(0))
+  expect_equal(
+    obtain_values_in_validity(validity_table = validity_table, xafty_pair = xafty_pair[1]),
+    character(0)
+  )
+  expect_equal(
+    obtain_values_in_validity(validity_table = validity_table, xafty_pair = xafty_pair[2]),
+    character(0)
+  )
 
   xafty_pair <- obtain_columns_in_validity(validity_table = validity_table, xafty_syntax = "##!!factor")
 
 
-  expect_equal(obtain_values_in_validity(validity_table = validity_table, xafty_pair = xafty_pair),
-               character(0))
-
+  expect_equal(
+    obtain_values_in_validity(validity_table = validity_table, xafty_pair = xafty_pair),
+    character(0)
+  )
 })

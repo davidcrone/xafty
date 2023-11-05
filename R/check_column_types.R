@@ -1,10 +1,10 @@
-
 #' @title Check Column Classes
 #'
 #' @param check_table Data Frame. The table that will be checked against the specified rules in the validity table.
 #' @param validity_table Data Frame. A table that stores the rules by which the check table is compared to.
+#' @param simply Boolean. Changes the return value of the function to a single logical vector of length 1.
 #' @export
-check_column_types <- function(check_table, validity_table) {
+check_column_types <- function(check_table, validity_table, simply = FALSE) {
 
   xafty_syntax <- "##!!"
   possible_classes <- c("text", "date", "number", "factor", "datetime")
@@ -13,34 +13,27 @@ check_column_types <- function(check_table, validity_table) {
   list_result <- list()
 
   for (i in col_names_check_table) {
-
     if (i %in% colnames(validity_table)) {
-
       values_column <- validity_table[, i]
-      logical_data_type <-  xafty_data_types %in% values_column
+      logical_data_type <- xafty_data_types %in% values_column
       xafty_data_type <- xafty_data_types[logical_data_type]
 
-      list_result[[i]] <- switch (
-        xafty_data_type,
+      list_result[[i]] <- switch(xafty_data_type,
         "##!!text" = is.character(check_table[[i]]),
         "##!!date" = inherits(check_table[[i]], "Date"),
         "##!!number" = is.numeric(check_table[[i]]),
         "##!!factor" = is.factor(check_table[[i]]),
         "##!!datetime" = inherits(check_table[[i]], "POSIXct")
-        )
-
+      )
     }
-
   }
 
   result_unlisted <- unlist(list_result)
 
   if (all(result_unlisted)) {
-
     result <- TRUE
     message <- paste0("ALL GOOD!")
     columns <- NA
-
   } else {
     # TODO: Add expected data type
     result <- FALSE
@@ -50,8 +43,11 @@ check_column_types <- function(check_table, validity_table) {
     message <- paste0("Rule Broken: Column Types. Following columns have the wrong data type: ")
   }
 
-  data.frame("Check" = "Column Types", "Check_Result" = result, "Message" = message, "Columns" = columns)
+  if (simply) {
+    return(result)
+  }
 
+  data.frame("Check" = "Column Types", "Check_Result" = result, "Message" = message, "Columns" = columns)
 }
 
 #' @title Align Column Classes with Validity Table
@@ -67,39 +63,33 @@ check_column_types <- function(check_table, validity_table) {
 #' @param tz Timezone for the POSIXct values. Default is UTC
 #' @export
 align_column_types <- function(check_table, validity_table,
-                                 date_origin = "1899-12-30",
-                                 tryFormats = c("%d.%m.%Y", "%d/%m/%Y", "%Y-%m-%d", "%Y/%m/%d"),
-                                 tz = "") {
-
+                               date_origin = "1899-12-30",
+                               tryFormats = c("%d.%m.%Y", "%d/%m/%Y", "%Y-%m-%d", "%Y/%m/%d"),
+                               tz = "") {
   xafty_syntax <- "##!!"
   possible_classes <- c("text", "date", "number", "factor", "datetime")
   xafty_data_types <- paste0(xafty_syntax, possible_classes)
 
   for (i in colnames(check_table)) {
-
     if (i %in% colnames(validity_table)) {
-
       values_column <- validity_table[, i]
-      logical_data_type <-  xafty_data_types %in% values_column
+      logical_data_type <- xafty_data_types %in% values_column
 
-      if (sum(logical_data_type, na.rm = TRUE) > 1) stop(paste0("Validity column '", i,  "' has more than one data type"))
+      if (sum(logical_data_type, na.rm = TRUE) > 1) stop(paste0("Validity column '", i, "' has more than one data type"))
 
       xafty_data_type <- xafty_data_types[logical_data_type]
 
-      switch (xafty_data_type,
-              "##!!text" = check_table[, i] <- as.character(check_table[[i]]),
-              "##!!date" = check_table[, i] <- as.Date_xafty(check_table[[i]],
-                                                             date_origin = date_origin, tryFormats = tryFormats),
-              "##!!number" = check_table[, i] <- as.numeric(check_table[[i]]),
-              "##!!factor" = check_table[, i] <- as.factor(check_table[[i]]),
-              "##!!datetime" = check_table[, i] <- as.POSIXct_xafty(check_table[[i]], tz = tz)
+      switch(xafty_data_type,
+        "##!!text" = check_table[, i] <- as.character(check_table[[i]]),
+        "##!!date" = check_table[, i] <- as.Date_xafty(check_table[[i]],
+          date_origin = date_origin, tryFormats = tryFormats
+        ),
+        "##!!number" = check_table[, i] <- as.numeric(check_table[[i]]),
+        "##!!factor" = check_table[, i] <- as.factor(check_table[[i]]),
+        "##!!datetime" = check_table[, i] <- as.POSIXct_xafty(check_table[[i]], tz = tz)
       )
-
     }
-
   }
 
   check_table
-
 }
-

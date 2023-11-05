@@ -1,5 +1,4 @@
 test_that("Main functionality works as expected when all rules are fullfilled", {
-
   check_table <- data.frame(
     "Product_ID" = c("345", "341", "441"),
     "Product_Name" = c("Apple", "Banana", "Pencil"),
@@ -8,7 +7,7 @@ test_that("Main functionality works as expected when all rules are fullfilled", 
     "Delivery_Time" = as.POSIXct(c("2023-09-12 22:12:01", "2023-09-17 22:12:01", "2023-09-12 01:12:01")),
     "Is_Delivered_By" = factor(c("zzz__Train", "Train no Rails", "Truck")),
     "Mail_Customer" = c("applelover@yahoo.com", "banana_digester@bananas.uk", "grrm@asoiaf.com")
-    )
+  )
 
   validity_table <- data.frame(
     "Product_ID" = c("##!!text"),
@@ -20,18 +19,18 @@ test_that("Main functionality works as expected when all rules are fullfilled", 
     "Mail_Customer" = c("##!!text", "##!!strictpattern", "@", ".", "##!!notempty")
   )
 
-  check_result <- check_validity(check_table = check_table, validity_table = validity_table,
-                 column_number = TRUE, column_names = "presence", column_types = TRUE,
-                 values_notempty = TRUE, values_exact = TRUE, values_pattern = TRUE)
+  check_result <- check_validity(
+    check_table = check_table, validity_table = validity_table,
+    column_number = TRUE, column_names = "presence", column_types = TRUE,
+    values_notempty = TRUE, values_exact = TRUE, values_pattern = TRUE
+  )
 
   expect_true(all(check_result$Check_Result))
   expect_true(all(is.na(check_result$Columns)))
-
 })
 
 
 test_that("Main functionality works as expected when all rules are broken", {
-
   check_table <- data.frame(
     "Product_Name" = c("Apple", "Banana", NA),
     "Product_Weight" = c(2.1, 0.5, 1.0),
@@ -51,9 +50,11 @@ test_that("Main functionality works as expected when all rules are broken", {
     "Mail_Customer" = c("##!!text", "##!!strictpattern", "@", ".", "xx")
   )
 
-  check_result <- check_validity(check_table = check_table, validity_table = validity_table,
-                                 column_number = TRUE, column_names = "presence", column_types = TRUE,
-                                 values_notempty = TRUE, values_exact = TRUE, values_pattern = TRUE)
+  check_result <- check_validity(
+    check_table = check_table, validity_table = validity_table,
+    column_number = TRUE, column_names = "presence", column_types = TRUE,
+    values_notempty = TRUE, values_exact = TRUE, values_pattern = TRUE
+  )
 
   expect_false(any(check_result$Check_Result))
   expect_equal(check_result$Columns[1], as.character(NA))
@@ -62,5 +63,4 @@ test_that("Main functionality works as expected when all rules are broken", {
   expect_equal(check_result$Columns[4], "Product_Name")
   expect_equal(check_result$Columns[5], c("Product_Weight, Product_Name, Expiration_Date"))
   expect_equal(check_result$Columns[6], c("Mail_Customer, Is_Delivered_By"))
-
 })

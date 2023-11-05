@@ -1,5 +1,4 @@
 test_that("Xafty List shows all rules as true if all rules are fullfilled", {
-
   check_table <- data.frame(
     "Product_Name" = c("Apple", "Banana", "Apple"),
     "Product_Weight" = c(2.1, 0.5, 1.0),
@@ -25,11 +24,14 @@ test_that("Xafty List shows all rules as true if all rules are fullfilled", {
   summary_test_table <- build_xafty_test_table(xafty_list = xafty_list)
 
   expect_true(all(summary_test_table$test_result))
-  expect_equal(summary_test_table$column, c("Product_Name", "Product_Name", "Product_Name", "Product_Weight",
-                                            "Expiration_Date", "Expiration_Date", "Delivery_Time", "Is_Delivered_By",
-                                            "Is_Delivered_By", "Is_Delivered_By", "Mail_Customer", "Mail_Customer"))
-  expect_equal(summary_test_table$rule, c("##!!notempty", "##!!eachexact", "##!!text", "##!!number", "##!!eachexact",
-                                          "##!!date", "##!!datetime", "##!!notempty", "##!!factor", "##!!rowpattern",
-                                          "##!!text", "##!!strictpattern"))
-
+  expect_equal(summary_test_table$column, c(
+    "Product_Name", "Product_Name", "Product_Name", "Product_Weight",
+    "Expiration_Date", "Expiration_Date", "Delivery_Time", "Is_Delivered_By",
+    "Is_Delivered_By", "Is_Delivered_By", "Mail_Customer", "Mail_Customer"
+  ))
+  expect_equal(summary_test_table$rule, c(
+    "##!!notempty", "##!!eachexact", "##!!text", "##!!number", "##!!eachexact",
+    "##!!date", "##!!datetime", "##!!notempty", "##!!factor", "##!!rowpattern",
+    "##!!text", "##!!strictpattern"
+  ))
 })

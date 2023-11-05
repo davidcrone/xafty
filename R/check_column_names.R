@@ -1,4 +1,3 @@
-
 #' @title Check for Column Names
 #'
 #' @description
@@ -16,7 +15,6 @@
 #' @return A data.frame if simply is FALSE and a Boolean of length 1 if simply is TRUE
 #' @export
 check_column_names <- function(check_table, validity_table, check_type = "presence", simply = FALSE) {
-
   colnames_check_table <- colnames(check_table)
   colnames_validity_table <- colnames(validity_table)
 
@@ -24,36 +22,27 @@ check_column_names <- function(check_table, validity_table, check_type = "presen
 
   all_present <- all(logical_vector_no_order)
 
-  if(!all_present) {
-
+  if (!all_present) {
     if (simply) {
-
       return(FALSE)
-
     } else {
-
       missing_column_names <- colnames_validity_table[!logical_vector_no_order]
       missing_column_names <- paste(missing_column_names, collapse = ", ")
-      result <-  FALSE
+      result <- FALSE
       message <- paste("Rule Broken: Column names. Following columns are missing:")
       columns <- missing_column_names
 
       return(data.frame("Check" = "Column Names", "Check_Result" = result, "Message" = message, "Columns" = columns))
-
     }
   }
 
   if (check_type == "presence") {
-
-      result <-  TRUE
-      message <- paste("ALL GOOD!")
-      columns <- NA
-
-
+    result <- TRUE
+    message <- paste("ALL GOOD!")
+    columns <- NA
   }
 
-  if(check_type == "order") {
-
+  if (check_type == "order") {
     first_column <- colnames_validity_table[1]
     last_column <- colnames_validity_table[length(colnames_validity_table)]
 
@@ -65,31 +54,19 @@ check_column_names <- function(check_table, validity_table, check_type = "presen
     result_order <- all(suppressWarnings(colnames_validity_table == check_columns_between))
 
     if (result_order) {
-
-      result <-  TRUE
+      result <- TRUE
       message <- "ALL GOOD!"
       columns <- NA
-
     } else {
-
-      result <-  FALSE
+      result <- FALSE
       message <- "All columns are present but not in the specified order"
       columns <- NA
-
     }
-
   }
 
   if (simply) {
-
     return(result)
-
   } else {
-
     return(data.frame("Check" = "Column Names", "Check_Result" = result, "Message" = message, "Columns" = columns))
-
   }
-
-
-
 }
