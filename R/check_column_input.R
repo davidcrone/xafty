@@ -97,7 +97,7 @@ check_column_patterninput <- function(check_table, validity_table, simply = FALS
 
     pattern_values <- obtain_values_in_validity(validity_table = validity_table, xafty_pair = syntax)
 
-    # Accounting for non integer values. Check validity will always be read as integer.
+    # Accounting for non integer values. Check validity will always be read as character.
     # Thus, the comparison should always hold.
 
     check_table[[syntax]] <- as.character(check_table[[syntax]])
