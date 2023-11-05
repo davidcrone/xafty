@@ -5,7 +5,8 @@ test_that("Xafty List shows all rules as true if all rules are fullfilled", {
     "Expiration_Date" = as.Date(c("2022-02-01", "2021-04-25", "2025-03-02")),
     "Delivery_Time" = as.POSIXct(c("2023-09-12 22:12:01", "2023-09-17 22:12:01", "2023-09-12 01:12:01")),
     "Is_Delivered_By" = factor(c("zzz__Train", "Train no Rails", "Truck")),
-    "Mail_Customer" = c("applelover@yahoo.com", "banana_digester@bananas.uk", "grrm@asoiaf.com")
+    "Mail_Customer" = c("applelover@yahoo.com", "banana_digester@bananas.uk", "grrm@asoiaf.com"),
+    "Date_Arrival" = c("102203", "102202", "102201")
   )
 
   validity_table <- data.frame(
@@ -14,7 +15,8 @@ test_that("Xafty List shows all rules as true if all rules are fullfilled", {
     "Expiration_Date" = c("##!!date", "##!!eachexact", "2022-02-01", NA, NA),
     "Delivery_Time" = c("##!!datetime"),
     "Is_Delivered_By" = c("##!!factor", "##!!rowpattern", "Train", "Truck", "##!!notempty"),
-    "Mail_Customer" = c("##!!text", "##!!strictpattern", "@", ".", NA)
+    "Mail_Customer" = c("##!!text", "##!!strictpattern", "@", ".", NA),
+    "Date_Arrival" = c("##!!date", NA, NA, NA, NA)
   )
 
   check_table <- align_column_types(check_table = check_table, validity_table = validity_table)
@@ -27,11 +29,12 @@ test_that("Xafty List shows all rules as true if all rules are fullfilled", {
   expect_equal(summary_test_table$column, c(
     "Product_Name", "Product_Name", "Product_Name", "Product_Weight",
     "Expiration_Date", "Expiration_Date", "Delivery_Time", "Is_Delivered_By",
-    "Is_Delivered_By", "Is_Delivered_By", "Mail_Customer", "Mail_Customer"
+    "Is_Delivered_By", "Is_Delivered_By", "Mail_Customer", "Mail_Customer",
+    "Date_Arrival"
   ))
   expect_equal(summary_test_table$rule, c(
     "##!!notempty", "##!!eachexact", "##!!text", "##!!number", "##!!eachexact",
     "##!!date", "##!!datetime", "##!!notempty", "##!!factor", "##!!rowpattern",
-    "##!!text", "##!!strictpattern"
+    "##!!text", "##!!strictpattern", "##!!date"
   ))
 })
