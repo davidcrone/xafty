@@ -202,8 +202,6 @@ as.Date_xafty <- function(dates, date_origin = "1899-12-30", tryFormats = c("%Y-
 
   names(xafty_column) <- NULL
 
-  print(class(xafty_column))
-
   as.Date(xafty_column, origin = "1970-01-01")
 }
 

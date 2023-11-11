@@ -10,13 +10,12 @@ check_column_notempty <- function(check_table, validity_table, simply = FALSE) {
 
   if (any(is.na(columns_with_syntax))) {
     result <- FALSE
-    message <- "Warning: Checked for not empty, but no entry with '##!!notempty' in validity table!"
-
     if (simply) {
       return(result)
-    } else {
-      return(data.frame("Check" = "Column Classes", "Check_Result" = result, "Message" = message))
     }
+    message <- "Warning: Checked for not empty, but no entry with '##!!notempty' in validity table!"
+    return(data.frame("Check" = "Column Classes", "Check_Result" = result, "Message" = message))
+
   }
 
   list_result <- list()

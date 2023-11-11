@@ -151,7 +151,7 @@ test_that("Every columns with unexpected data type are detected", {
   check_result <- check_column_types(check_table = check_table, validity_table = validity_table)
 
   expect_false(check_result$Check_Result)
-  expect_equal(check_result$Columns, "Name, Age, Birthday, Has_Birthday, Arrival_Time")
+  expect_equal(check_result$Columns, "Name, Birthday, Age, Has_Birthday, Arrival_Time")
 })
 
 test_that("Missing column type in validity does not pose a problem", {

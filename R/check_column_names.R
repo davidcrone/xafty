@@ -70,3 +70,27 @@ check_column_names <- function(check_table, validity_table, check_type = "presen
     return(data.frame("Check" = "Column Names", "Check_Result" = result, "Message" = message, "Columns" = columns))
   }
 }
+
+#' @title Filter for Column Names
+#' @description
+#' The function filters for column names in two ways:
+#' * Column names in the check table that are expected by the validity table
+#' * Expected columns by the validity table that are not in the check table.
+#'
+#' This function also tries to implement column names that are stored in the validity table as regular expressions.
+#' @param check_table Data Frame. The table that will be checked against the information in the validity table
+#' @param validity_table Data Frame. A table that stores the column names in the first row
+filter_column_names <- function(check_table, validity_table) {
+
+  colnames_check_table <- colnames(check_table)
+  colnames_validity_table <- colnames(validity_table)
+
+  columns_in_validity_table <- colnames_validity_table %in% colnames_check_table
+  columns_in_check_table <- colnames_check_table %in% colnames_validity_table
+
+
+  list("colnames_validity_table" = columns_in_validity_table,
+       "colnames_check_table" = columns_in_check_table)
+
+}
+

@@ -6,25 +6,31 @@
 #' @export
 check_column_types <- function(check_table, validity_table, simply = FALSE) {
 
+  check_table_columns <- colnames(check_table)
+
   xafty_syntax <- "##!!"
   possible_classes <- c("text", "date", "number", "factor", "datetime")
   xafty_data_types <- paste0(xafty_syntax, possible_classes)
-  col_names_check_table <- colnames(check_table)
+  xafty_type_pairs <- obtain_columns_in_validity(validity_table = validity_table, xafty_syntax = xafty_data_types)
+  n_xafty_pairs <- length(xafty_type_pairs)
+
   list_result <- list()
 
-  for (i in col_names_check_table) {
-    if (i %in% colnames(validity_table)) {
-      values_column <- validity_table[, i]
-      logical_data_type <- xafty_data_types %in% values_column
-      xafty_data_type <- xafty_data_types[logical_data_type]
+  for (i in seq(n_xafty_pairs)) {
+
+    check_table_column <- xafty_type_pairs[i]
+    xafty_data_type <- names(check_table_column)
+
+    if (check_table_column %in% check_table_columns) {
 
       list_result[[i]] <- switch(xafty_data_type,
-        "##!!text" = is.character(check_table[[i]]),
-        "##!!date" = inherits(check_table[[i]], "Date"),
-        "##!!number" = is.numeric(check_table[[i]]),
-        "##!!factor" = is.factor(check_table[[i]]),
-        "##!!datetime" = inherits(check_table[[i]], "POSIXct")
+        "##!!text" = is.character(check_table[[check_table_column]]),
+        "##!!date" = inherits(check_table[[check_table_column]], "Date"),
+        "##!!number" = is.numeric(check_table[[check_table_column]]),
+        "##!!factor" = is.factor(check_table[[check_table_column]]),
+        "##!!datetime" = inherits(check_table[[check_table_column]], "POSIXct")
       )
+      names(list_result[[i]]) <- check_table_column
     }
   }
 
@@ -32,19 +38,33 @@ check_column_types <- function(check_table, validity_table, simply = FALSE) {
 
   if (all(result_unlisted)) {
     result <- TRUE
+    if (simply) {
+      return(result)
+    }
     message <- paste0("ALL GOOD!")
     columns <- NA
   } else {
-    # TODO: Add expected data type
     result <- FALSE
+
+    if (simply) {
+      return(result)
+    }
+
+    rule_to_type_table <- data.frame(rule = c('##!!text', '##!!date', '##!!number', '##!!factor', '##!!datetime'),
+                                     type = c("character", "Date", "numeric", "factor", "POSIXct"))
     wrong_classes_names <- names(result_unlisted)[!result_unlisted]
+    actual_type <- sapply(wrong_classes_names, \(col) class(check_table[[col]]))
+    expected_type <- sapply(wrong_classes_names, \(col) {
+      rule <- names(xafty_type_pairs)[xafty_type_pairs == col]
+      rule_to_type_table$type[rule_to_type_table$rule == rule]
+      })
+
+    type_report <- paste0("Column: '", wrong_classes_names, "' Expected: '", expected_type, "' Actual: '", actual_type, "'",
+                   collapse = "; ")
+
     wrong_classes_collapsed <- paste0(wrong_classes_names, collapse = ", ")
     columns <- wrong_classes_collapsed
-    message <- paste0("Rule Broken: Column Types. Following columns have the wrong data type: ")
-  }
-
-  if (simply) {
-    return(result)
+    message <- paste0("Rule Broken: Column Type. Following columns differ from expectation: ", type_report)
   }
 
   data.frame("Check" = "Column Types", "Check_Result" = result, "Message" = message, "Columns" = columns)

@@ -67,3 +67,34 @@ test_that("NA Values do not pose a problem", {
 
   expect_equal(column_xafty_pair, c("##!!datetime" = "Birthday_m", "##!!datetime" = "Birthday"))
 })
+
+test_that("Single #! syntax is not flagged as xafty snyrax", {
+  xafty_syntax <- c("##!!datetime", "##!!patterninput")
+
+  validity_table <- data.frame(
+    "Birthday_m" = c(NA, "#!datetime"),
+    "Birthday" = c("#!datetime", "#!date", NA, NA),
+    "Arrival" = c(rep(NA, 4))
+  )
+
+ expect_warning(obtain_columns_in_validity(validity_table = validity_table, xafty_syntax = xafty_syntax))
+
+})
+
+test_that("Single #! syntax is correctly retrieved", {
+  xafty_syntax <- c("#!datetime", "#!patterninput")
+
+  validity_table <- data.frame(
+    "Birthday_m" = c(NA, "#!datetime"),
+    "Birthday" = c("#!datetime", "#!patterninput", NA, NA),
+    "Arrival" = c(rep(NA, 4))
+  )
+
+  column_xafty_pair <- obtain_columns_in_validity(validity_table = validity_table, xafty_syntax = xafty_syntax)
+
+  expect_equal(column_xafty_pair, c("#!datetime" = "Birthday_m", "#!datetime" = "Birthday",
+                                    "#!patterninput" = "Birthday"))
+
+})
+
+
