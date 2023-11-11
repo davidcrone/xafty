@@ -19,9 +19,11 @@ test_that("All columns as regrex is possible and does not throw an error", {
   check_table <- data.frame(W501 = c(0, 1, 0),
                             W4051 = c(1, 1, 1),
                             W301 = c(0.1, 0.9, 0),
-                            LKW = c(1, 0, 0))
+                            LKW = c(1, 0, 0),
+                            WLKW = c(0, 1, 0))
   validity_table <- data.frame(LKW = c("##!!number", "##!!regexcolumns", "^L"),
-                               Wagon_Desing = c("##!!number", "##!!regexcolumns", "^W[1-9]"))
+                               Wagon_Desing = c("##!!number", "##!!regexcolumns", "^W[1-9]"),
+                               WLKW = c("##!!number", NA, NA))
 
   new_validity_table <- add_regex_columns_to_validity(check_table = check_table, validity_table = validity_table)
 

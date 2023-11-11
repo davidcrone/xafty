@@ -357,7 +357,9 @@ build_xafty_test_table <- function(xafty_list) {
 #' The rule ##!!regexcolumns specifies a regular expression as values below the rule that
 #' represents all columns in the check table which match the regular expression. This function
 #' adds these matched columns to the validity.
-#'
+#' @param check_table Data Frame. The table that will be checked against the specified rules in the validity table.
+#' @param validity_table Data Frame. A validation table that stores the rules that the check table will be checked against.
+#' @export
 add_regex_columns_to_validity <- function(check_table, validity_table) {
 
   xafty_syntax_regrex <- "##!!regexcolumns"

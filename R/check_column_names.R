@@ -29,6 +29,7 @@ check_column_names <- function(check_table, validity_table, check_type = "presen
     if (simply) {
       return(FALSE)
     } else {
+      result <- FALSE
       missing_column_names <- colnames_validity_table[!logical_vector_no_order]
       missing_column_names <- paste(missing_column_names, collapse = ", ")
       message <- paste("Rule Broken: Column names. Following columns are missing:")
