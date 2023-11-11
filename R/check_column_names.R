@@ -15,6 +15,9 @@
 #' @return A data.frame if simply is FALSE and a Boolean of length 1 if simply is TRUE
 #' @export
 check_column_names <- function(check_table, validity_table, check_type = "presence", simply = FALSE) {
+
+  stopifnot((check_type %in% c("presence", "order")))
+
   colnames_check_table <- colnames(check_table)
   colnames_validity_table <- colnames(validity_table)
 
@@ -28,7 +31,6 @@ check_column_names <- function(check_table, validity_table, check_type = "presen
     } else {
       missing_column_names <- colnames_validity_table[!logical_vector_no_order]
       missing_column_names <- paste(missing_column_names, collapse = ", ")
-      result <- FALSE
       message <- paste("Rule Broken: Column names. Following columns are missing:")
       columns <- missing_column_names
 

@@ -26,7 +26,8 @@ xafty_rules_table <- data.frame(
     "##!!rowpattern",
     "##!!anypattern",
     "##!!eachpattern",
-    "##!!unique"
+    "##!!unique",
+    "##!!regexcolumns"
   ),
   "type" = c(
     "value",
@@ -42,6 +43,7 @@ xafty_rules_table <- data.frame(
     "value",
     "value",
     "value",
+    "special",
     "special"
   ),
   "description" = c(
@@ -58,7 +60,9 @@ xafty_rules_table <- data.frame(
     "All values of the column must match at least to one pattern in the validity table",
     "At least one value in the column must match to any pattern provided in the validity table",
     "Every pattern provided in the validity table must match at least once to any value in the check table",
-    "No value in the column should be present more than once"
+    "No value in the column should be present more than once",
+    "Applies all rules of the same column in the validity table to every column in the check table
+    which have been matched by the provided regular expressions"
   ),
   "check_function" = I(list(
     check_column_notempty,
@@ -74,6 +78,7 @@ xafty_rules_table <- data.frame(
     check_column_patterninput,
     check_column_patterninput,
     check_column_patterninput,
-    check_columns_unique
+    check_columns_unique,
+    check_column_names
   ))
 )
