@@ -97,3 +97,91 @@ filter_column_names <- function(check_table, validity_table) {
 
 }
 
+
+#' @title Adds Columns to Validity Matched by Regular Expressions
+#' @description
+#' The rule ##!!regexcolumns specifies a regular expression as values below the rule that
+#' represents all columns in the check table which match the regular expression. This function
+#' adds these matched columns to the validity.
+#' @param check_table Data Frame. The table that will be checked against the specified rules in the validity table.
+#' @param validity_table Data Frame. A validation table that stores the rules that the check table will be checked against.
+#' @param multiple Character.
+#' The following Parameters are possible:
+#' \itemize{
+#'  \item "remove": The default. Removes all columns that have been duplicated through multiple matches
+#'  \item "keep": Keeps all columns that have been duplicated through multiple matches
+#' }
+#' @returns A Data Frame. The return value is the new validity table with column names added from the check table matched
+#' by the regular expressions. Each column matched in this way also inherits the same set of rules specified
+#' in the same column as the ##!!regexcolumns rule.
+#' @export
+add_regex_columns_to_validity <- function(check_table, validity_table, multiple = "remove") {
+
+  stopifnot(multiple %in% c("remove", "keep"))
+
+  xafty_syntax_regrex <- "##!!regexcolumns"
+
+  xafty_pairs_regex <- obtain_columns_in_validity(validity_table = validity_table,
+                                                  xafty_syntax = xafty_syntax_regrex)
+
+  if(any(is.na(xafty_pairs_regex))) return(validity_table)
+
+  columns_check_table <- colnames(check_table)
+
+  n_pairs <- length(xafty_pairs_regex)
+
+  list_help <- list()
+
+  for (i in seq(n_pairs)) {
+
+    xafty_pair <- xafty_pairs_regex[i]
+
+    regex <- obtain_values_in_validity(validity_table = validity_table, xafty_pair = xafty_pair)
+
+    if(length(regex) <= 0) {
+      stop(paste0("Expected a regular expression below rule ##!!regexcolumns, but no regular expression found.
+                  The error occured in the validity table column: ", xafty_pair))
+    }
+
+    regex_columns <- lapply(regex, \(x) columns_check_table[grepl(x, columns_check_table)])
+    regex_columns <- do.call(c, regex_columns)
+
+    validity_table_values <- validity_table[, xafty_pair]
+
+    new_validity_columns <- lapply(regex_columns,
+                                   FUN = \(regex_col){
+                                     df <- data.frame(tmp_colname = validity_table_values)
+                                     setNames(df, regex_col)
+                                   })
+
+    list_help[[i]] <-  do.call(cbind, new_validity_columns)
+
+  }
+
+  validity_add_columns <- do.call(cbind, list_help)
+
+  validity_add_column_names <- colnames(validity_add_columns)
+  length_validity_add <- length(validity_add_column_names)
+
+  uniqued_validity_add <- unique(validity_add_column_names)
+  uniqued_length_validity_add <- length(uniqued_validity_add)
+
+  if(length_validity_add != uniqued_length_validity_add) {
+
+    if (multiple == "remove") {
+
+      warning("Multiple matching of the same column by two or more regular expressions;
+            Warning! Duplicated columns have been removed!")
+
+      validity_add_columns <- validity_add_columns[!duplicated(validity_add_column_names)]
+
+    } else if (multiple == "keep") {
+      message("Multiple matching of same column(s) detected. Keeping all!")
+    }
+
+  }
+  validity_table_pruned <- validity_table[, !(colnames(validity_table) %in% xafty_pairs_regex), drop = FALSE]
+
+  cbind(validity_table_pruned, validity_add_columns)
+
+}

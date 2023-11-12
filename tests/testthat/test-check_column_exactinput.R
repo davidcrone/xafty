@@ -154,7 +154,10 @@ test_that("Function returns a warning when no corresponding rules are found", {
     "Has_Birthday" = c("##!!factor")
   )
 
-  expect_warning(check_column_exactinput(check_table = check_table, validity_table = validity_table))
+  test_result <- check_column_exactinput(check_table = check_table, validity_table = validity_table)
+
+  expect_equal(test_result$columns, NA)
+  expect_true(grepl("Warning", test_result$Message))
 })
 
 
