@@ -4,7 +4,7 @@
 #' @param simply Boolean. Changes the return value of the function to a single logical vector of length 1.
 #' @export
 check_column_notempty <- function(check_table, validity_table, simply = FALSE) {
-  # TODO: check column empty works with values that indicate non empty strings.
+
   xafty_notempty <- "##!!notempty"
   columns_with_syntax <- obtain_columns_in_validity(validity_table = validity_table, xafty_syntax = xafty_notempty)
 
@@ -21,9 +21,10 @@ check_column_notempty <- function(check_table, validity_table, simply = FALSE) {
   list_result <- list()
 
   for (i in seq(length(columns_with_syntax))) {
+
     column_name <- columns_with_syntax[i]
 
-    list_result[[i]] <- all(!filter_column_empty(check_table = check_table, filter_column = column_name))
+    list_result[[i]] <- all(!filter_column_empty(check_table = check_table, validity_table = validity_table, filter_column = column_name))
   }
 
   names(list_result) <- columns_with_syntax

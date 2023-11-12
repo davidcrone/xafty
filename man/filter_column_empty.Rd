@@ -4,10 +4,12 @@
 \alias{filter_column_empty}
 \title{Filter Values in Column That are NA}
 \usage{
-filter_column_empty(check_table, filter_column)
+filter_column_empty(check_table, validity_table, filter_column)
 }
 \arguments{
 \item{check_table}{Data Frame. The table that will be checked against the specified rules in the validity table.}
+
+\item{validity_table}{Data Frame. A validation table that stores the rules that the check table will be checked against.}
 
 \item{filter_column}{Character. The column which will be checked. The column must be present in both the check table
 as well as the validity table}

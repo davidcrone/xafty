@@ -52,3 +52,22 @@ test_that("Function correctly detects empty values for two column", {
 
   expect_false(check_result)
 })
+
+test_that("Non empty filter works with and wothout provided values", {
+  check_table <- data.frame(
+    "Name" = c("David", "Diana"),
+    "Age" = c(22, NA),
+    "Error" = c("", "")
+  )
+
+  validity_table <- data.frame("Name" = c("##!!text", "##!!notempty", "Diana"), "Age" = c("##!!number", NA, "##!!notempty"))
+
+  check_result <- check_column_notempty(check_table = check_table, validity_table = validity_table)
+
+  expect_false(check_result$Check_Result)
+  expect_equal(check_result$Columns, "Name, Age")
+
+  check_result <- check_column_notempty(check_table = check_table, validity_table = validity_table, simply = TRUE)
+
+  expect_false(check_result)
+})
