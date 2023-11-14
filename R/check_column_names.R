@@ -106,7 +106,7 @@ filter_column_names <- function(check_table, validity_table) {
 #' @param check_table Data Frame. The table that will be checked against the specified rules in the validity table.
 #' @param validity_table Data Frame. A validation table that stores the rules that the check table will be checked against.
 #' @param multiple Character.
-#' The following Parameters are possible:
+#' The following Parameters are allowed:
 #' \itemize{
 #'  \item "remove": The default. Removes all columns that have been duplicated through multiple matches
 #'  \item "keep": Keeps all columns that have been duplicated through multiple matches
@@ -138,12 +138,22 @@ add_regex_columns_to_validity <- function(check_table, validity_table, multiple 
 
     regex <- obtain_values_in_validity(validity_table = validity_table, xafty_pair = xafty_pair)
 
+
     if(length(regex) <= 0) {
-      stop(paste0("Expected a regular expression below rule ##!!regexcolumns, but no regular expression found.
-                  The error occured in the validity table column: ", xafty_pair))
+      warning(paste0("Expected a regular expression below rule ##!!regexcolumns, but no regular expression found.
+                  The warning occured for the validity column: ", xafty_pair))
+      next
     }
 
     regex_columns <- lapply(regex, \(x) columns_check_table[grepl(x, columns_check_table)])
+
+    test_for_no_match <- all(sapply(regex_columns, \(x) length(x) <= 0))
+
+    if(test_for_no_match) {
+      warning(paste0("No columns matched with regular expression provided in column: ", xafty_pair))
+      next
+    }
+
     regex_columns <- do.call(c, regex_columns)
 
     validity_table_values <- validity_table[, xafty_pair]
@@ -154,8 +164,15 @@ add_regex_columns_to_validity <- function(check_table, validity_table, multiple 
                                      setNames(df, regex_col)
                                    })
 
+
+
     list_help[[i]] <-  do.call(cbind, new_validity_columns)
 
+  }
+
+  if (length(list_help) <= 0) {
+    validity_table_pruned <- validity_table[, !(colnames(validity_table) %in% xafty_pairs_regex), drop = FALSE]
+    return(validity_table_pruned)
   }
 
   validity_add_columns <- do.call(cbind, list_help)

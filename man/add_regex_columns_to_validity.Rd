@@ -12,7 +12,7 @@ add_regex_columns_to_validity(check_table, validity_table, multiple = "remove")
 \item{validity_table}{Data Frame. A validation table that stores the rules that the check table will be checked against.}
 
 \item{multiple}{Character.
-The following Parameters are possible:
+The following Parameters are allowed:
 \itemize{
  \item "remove": The default. Removes all columns that have been duplicated through multiple matches
  \item "keep": Keeps all columns that have been duplicated through multiple matches

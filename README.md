@@ -30,6 +30,41 @@ following goals:
 3.  Leverage the business expertise of users to set sensible rules,
     allowing developers to make plausible assumptions about the data.
 
+### Add Columns with Regular Expressions
+
+**New Update:** xafty now supports the rule: **\##!!regexcolumns** which
+matches columns in the check table via a regular expression and applies
+the rules of that column to every matched column.
+
+``` r
+## Lets imagine, we have different car designs as columns in our check table. It would be tedious to add 
+## them all by hand and with time the car design team may decide to add or delete design columns from the table. 
+## Given that car design names follow some logic that can be matched with a regular expression, 
+## the rule ##!!regexcolumns comes in very handy to apply the same rules to all matched columns:
+
+
+check_table <- data.frame(T501 = c(0, 1, 0),
+                          T4051 = c(1, 1, 1),
+                          T301 = c(0.1, 0.9, 0),
+                          LKW = c(1, 0, 0))
+validity_table <- data.frame(LKW = c("##!!number", NA , NA),
+                  Car_Desing = c("##!!number", "##!!regexcolumns", "^T[1-9]"))
+
+new_validity_table <- add_regex_columns_to_validity(check_table = check_table, validity_table = validity_table)
+                    
+# |      LKW      |       T501        |        T4051      |       T301        |
+# |---------------------------------------------------------------------------|
+# |   ##!!number  |  ##!!number       |  ##!!number       | ##!!number        |
+# |     <NA>      |  ##!!regexcolumns |  ##!!regexcolumns | ##!!regexcolumns  |
+# |     <NA>      |  ^T[1-9]          |  ^T[1-9]          | ^T[1-9]           |
+
+# The validity table can then be used with all check functions:
+check_column_number(check_table = check_table, validity_table = new_validity_table, 
+                    check_type = "equal", simply = TRUE)
+```
+
+**Rule syntax:** \##!!regexcolumns
+
 ## Installation
 
 You can install the development version of xafty like so:
@@ -120,15 +155,23 @@ check_column_types(check_table = mtcars, validity_table = validity_table)
 
 ### Check for Empty Values
 
-Checks for empty (NA) column values. Use this check when a column should
-not have any NA values. Consequently, NA values must be correctly
+Checks for empty (NA) values or values provided below the rule that
+stand for missing values. Use this check when a column should not have
+any empty or missing values. Consequently, NA values must be correctly
 identified before being able to use this check correctly.
 
 **Rule syntax:** \##!!notempty
 
 ``` r
-validity_table <- data.frame("name" = c("##!!text", "##!!notempty"), "cyl" = c("##!!factor", "##!!notempty"), "wt" = c("##!!number", "##!!notempty"))
+validity_table <- data.frame("name" = c("##!!text", "##!!notempty"), 
+                  "cyl" = c("##!!factor", "##!!notempty"), "wt" = c("##!!number", "##!!notempty"))
 check_column_notempty(check_table = mtcars, validity_table = validity_table)
+
+## Alternatively, we can set the notempty-rule to look for NA values and values that stand for NA values. 
+## Setting the validity table as shown below, will interprete both NA or 999 as missing values within 
+## the specific columns of the check table.
+validity_table <- data.frame("name" = c("##!!text", "##!!notempty", "999"), 
+                  "cyl" = c("##!!factor", "##!!notempty", "999"), "wt" = c("##!!number", "##!!notempty", "999"))
 ```
 
 ### Check for Exact Values

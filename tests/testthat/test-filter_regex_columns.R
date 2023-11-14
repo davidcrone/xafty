@@ -82,7 +82,7 @@ test_that("Multiple regex values below the rule work as expected", {
 
 })
 
-test_that("No provided regular expression raises an error", {
+test_that("No provided regular expression raises a warning", {
 
   check_table <- data.frame(W501 = c(0, 1, 0),
                             W4051 = c(1, 1, 1),
@@ -91,7 +91,7 @@ test_that("No provided regular expression raises an error", {
   validity_table <- data.frame(LKW = c("##!!number", NA ),
                                Wagon_Desing = c("##!!number", "##!!regexcolumns"))
 
-  expect_error(add_regex_columns_to_validity(check_table = check_table, validity_table = validity_table))
+  expect_warning(add_regex_columns_to_validity(check_table = check_table, validity_table = validity_table))
 
 })
 
@@ -138,5 +138,37 @@ test_that("Passing the wrongly named parameter, raises an error", {
 
   expect_error(add_regex_columns_to_validity(check_table = check_table, validity_table = validity_table,
                                                       multiple = "sort"))
+
+})
+
+test_that("No matches for regular expressions raises a warning", {
+
+  check_table <- data.frame(W501 = c(0, 1, 0),
+                            W4051 = c(1, 1, 1),
+                            W301 = c(0.1, 0.9, 0),
+                            LKW = c(1, 0, 0))
+  validity_table <- data.frame(LKW = c("##!!number",NA, NA),
+                               Wagon_Desing = c("##!!number", "##!!regexcolumns", "^T[1-9]"))
+
+  expect_warning(add_regex_columns_to_validity(check_table = check_table, validity_table = validity_table,
+                                                      multiple = "keep"))
+
+})
+
+
+test_that("Having only one of two regular expression that matches columns works", {
+
+  check_table <- data.frame(W501 = c(0, 1, 0),
+                            W4051 = c(1, 1, 1),
+                            W301 = c(0.1, 0.9, 0),
+                            LKW = c(1, 0, 0))
+  validity_table <- data.frame(LKW = c("##!!number",NA, NA, NA),
+                               Wagon_Desing = c("##!!number", "##!!regexcolumns", "^T[1-9]", "^W[1-9]"))
+
+  new_validity_table <- add_regex_columns_to_validity(check_table = check_table, validity_table = validity_table,
+                                               multiple = "keep")
+
+  expect_true(check_column_names(check_table = check_table, validity_table = new_validity_table, simply = TRUE))
+  expect_true(check_column_types(check_table = check_table, validity_table = new_validity_table, simply = TRUE))
 
 })
