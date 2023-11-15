@@ -150,7 +150,7 @@ add_regex_columns_to_validity <- function(check_table, validity_table, multiple 
     test_for_no_match <- all(sapply(regex_columns, \(x) length(x) <= 0))
 
     if(test_for_no_match) {
-      warning(paste0("No columns matched with regular expression provided in column: ", xafty_pair))
+      warning(paste0("No columns matched with regular expression provided in validity column: ", xafty_pair))
       next
     }
 

@@ -263,15 +263,60 @@ as.POSIXct_xafty <- function(datetimes, tz = "") {
   as.POSIXct(xafty_column)
 }
 
-build_xafty_list <- function(check_table, validity_table, xafty_rules_table) {
+build_xafty_list <- function(check_table, validity_table, xafty_rules_table, meta_tests_name = "meta_tests", check_names = TRUE, check_number = TRUE) {
+
+  validity_table <- add_regex_columns_to_validity(check_table = check_table, validity_table = validity_table,
+                                                  multiple = "remove")
+
+  base_column_list <- list()
+
+  if (check_names || check_number) {
+
+    base_column_list[[meta_tests_name]] <- list()
+  }
+
+  ## Check for column names
+  if (check_names) {
+
+    check_column_names_result <- check_column_names(check_table = check_table, validity_table = validity_table,
+                                                    check_type = "presence")
+    test_name <- "xafty_column_names"
+
+    filter_names <- filter_column_names(check_table = check_table, validity_table = validity_table)
+
+    base_column_list[[meta_tests_name]][[test_name]] <- list(
+      rule_syntax = test_name,
+      values = names(validity_table),
+      test_result = check_column_names_result$Check_Result,
+      check_function = check_column_names,
+      filter_function = filter_column_names,
+      filter_result = filter_names,
+      message = check_column_names_result$Message
+    )
+  }
+
+  if (check_number) {
+
+    check_column_number_result <- check_column_number(check_table = check_table, validity_table = validity_table,
+                                                      check_type = "larger")
+    test_name <- "xafty_column_number"
+
+    base_column_list[[meta_tests_name]][[test_name]] <- list(
+      rule_syntax = test_name,
+      values = NULL,
+      test_result = check_column_number_result$Check_Result,
+      check_function = check_column_number,
+      message = check_column_number_result$Message
+    )
+
+
+  }
   colnames_validity <- colnames(validity_table)
   n_col <- length(colnames_validity)
 
   xafty_syntax <- xafty_rules_table$syntax
 
   xafty_pairs <- obtain_columns_in_validity(validity_table = validity_table, xafty_syntax = xafty_syntax)
-
-  base_column_list <- list()
 
   for (col in colnames_validity) {
     # TODO: What should happens when a column in the validity table is not present in the check table?
@@ -307,8 +352,10 @@ build_xafty_list <- function(check_table, validity_table, xafty_rules_table) {
       test_result <- xafty_check_function[[1]](check_table = single_col_check_table,
         validity_table = single_col_validity_table)$Check_Result
 
-      base_column_list[[col]][[single_rule]] <- list(
-        rule = single_rule,
+      single_rule_no_syntax <- sub("##!!", "", single_rule)
+
+      base_column_list[[col]][[single_rule_no_syntax]] <- list(
+        rule_syntax = single_rule,
         values = xafty_values,
         test_result = test_result,
         check_function = xafty_check_function,
@@ -334,7 +381,7 @@ build_xafty_test_table <- function(xafty_list) {
     array_tmp <- array(dim = c(n_xafty_rules, 2), dimnames = list(NULL, c("rule", "test_result")))
 
     for (j in seq(n_xafty_rules)) {
-      array_tmp[j, "rule"] <- xafty_list[[col]][[j]]$rule
+      array_tmp[j, "rule"] <- xafty_list[[col]][[j]]$rule_syntax
       array_tmp[j, "test_result"] <- xafty_list[[col]][[j]]$test_result
     }
 

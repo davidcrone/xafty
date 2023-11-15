@@ -78,7 +78,7 @@ xafty_rules_table <- data.frame(
     check_column_patterninput,
     check_column_patterninput,
     check_column_patterninput,
-    check_columns_unique,
+    check_column_unique,
     check_column_names
   ))
 )
