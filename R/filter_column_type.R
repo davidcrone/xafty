@@ -39,3 +39,37 @@ filter_column_type <- function(check_table, validity_table, filter_column,
 
   xafty_column
 }
+
+filter_column_type_xafty_list <- function(check_table, validity_table, filter_column, xafty_rule, xafty_values = NULL,
+                               date_origin = "1899-12-30",
+                               tryFormats = c("%Y-%m-%d", "%d.%m.%Y", "%d/%m/%Y", "%Y/%m/%d"),
+                               tz = "") {
+  stopifnot(length(filter_column) == 1 & is.character(filter_column))
+
+  if (!(filter_column %in% colnames(validity_table))) stop("Column is not present in validity table")
+  if (!(filter_column %in% colnames(check_table))) stop("Column is not present in check table")
+
+  xafty_syntax <- "##!!"
+  possible_classes <- c("text", "date", "number", "factor", "datetime")
+  xafty_data_types <- paste0(xafty_syntax, possible_classes)
+
+  stopifnot(xafty_rule %in% xafty_data_types)
+
+  check_column <- check_table[, filter_column, drop = TRUE]
+  validity_column <- validity_table[, filter_column, drop = FALSE]
+
+  switch(xafty_rule,
+         "##!!factor" = xafty_column <- sapply(check_column, \(x) is.factor(x), USE.NAMES = FALSE),
+         "##!!text" = xafty_column <- sapply(check_column, \(x) is.character(x), USE.NAMES = FALSE),
+         "##!!date" = xafty_column <- is.Date_xafty(check_column,
+                                                    date_origin = date_origin,
+                                                    tryFormats = tryFormats
+         ),
+         "##!!number" = xafty_column <- is.numeric_xafty(check_column),
+         "##!!datetime" = xafty_column <- is.POSIXct_xafty(check_column, tz = tz)
+  )
+
+  # Filter columns that break the rule!
+  !(xafty_column)
+}
+

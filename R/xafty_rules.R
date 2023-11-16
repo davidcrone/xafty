@@ -8,6 +8,7 @@
 #'   \item{type}{A character vector of rule types.}
 #'   \item{description}{A character vector of rule description in prosa.}
 #'   \item{check_function}{A list of functions for check purposes.}
+#'   \item{filter_function}{A list of functions to filter values.}
 #' }
 #'
 #' @source The data is curated by xafty developers and grows as new rules are added.
@@ -80,5 +81,22 @@ xafty_rules_table <- data.frame(
     check_column_patterninput,
     check_column_unique,
     check_column_names
+  )),
+  "filter_function" = I(list(
+    filter_column_empty_xafty_list,
+    filter_column_exactinput_xafty_list,
+    filter_column_exactinput_xafty_list,
+    filter_column_exactinput_xafty_list,
+    filter_column_type_xafty_list,
+    filter_column_type_xafty_list,
+    filter_column_type_xafty_list,
+    filter_column_type_xafty_list,
+    filter_column_type_xafty_list,
+    filter_column_patterninput_xafty_list,
+    filter_column_patterninput_xafty_list,
+    filter_column_patterninput_xafty_list,
+    filter_column_patterninput_xafty_list,
+    NULL,
+    NULL
   ))
 )

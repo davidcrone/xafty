@@ -295,6 +295,7 @@ build_xafty_list <- function(check_table, validity_table, xafty_rules_table, met
     )
   }
 
+  ## Check for column number
   if (check_number) {
 
     check_column_number_result <- check_column_number(check_table = check_table, validity_table = validity_table,
@@ -319,9 +320,7 @@ build_xafty_list <- function(check_table, validity_table, xafty_rules_table, met
   xafty_pairs <- obtain_columns_in_validity(validity_table = validity_table, xafty_syntax = xafty_syntax)
 
   for (col in colnames_validity) {
-    # TODO: What should happens when a column in the validity table is not present in the check table?
     if (!(col %in% colnames(check_table))) {
-      warning(paste(col, "is not present in check_table"))
       next
     }
 
@@ -337,9 +336,9 @@ build_xafty_list <- function(check_table, validity_table, xafty_rules_table, met
       single_rule <- xafty_rules_col[i]
       single_xafty_pair <- xafty_pairs[names(xafty_pairs) == single_rule & xafty_pairs == col]
 
-
       xafty_type <- xafty_rules_table$type[xafty_rules_table$syntax == single_rule]
-      xafty_check_function <- xafty_rules_table$check_function[xafty_rules_table$syntax == single_rule]
+      xafty_check_function <- xafty_rules_table$check_function[xafty_rules_table$syntax == single_rule][[1]]
+      xafty_filter_function <-  xafty_rules_table$filter_function[xafty_rules_table$syntax == single_rule][[1]]
       xafty_values <- NULL
 
       if (xafty_type == "value") {
@@ -349,7 +348,15 @@ build_xafty_list <- function(check_table, validity_table, xafty_rules_table, met
         )
       }
 
-      test_result <- xafty_check_function[[1]](check_table = single_col_check_table,
+      xafty_filter_result <- NULL
+      if (!is.null(xafty_filter_function)) {
+        xafty_filter_result <- xafty_filter_function(check_table = check_table, validity_table = validity_table,
+                                                          filter_column = single_xafty_pair, xafty_rule = single_rule,
+                                                          xafty_values = xafty_values)
+      }
+
+
+      test_result <- xafty_check_function(check_table = single_col_check_table,
         validity_table = single_col_validity_table)$Check_Result
 
       single_rule_no_syntax <- sub("##!!", "", single_rule)
@@ -359,7 +366,8 @@ build_xafty_list <- function(check_table, validity_table, xafty_rules_table, met
         values = xafty_values,
         test_result = test_result,
         check_function = xafty_check_function,
-        filter_function = NULL
+        filter_function = xafty_filter_function,
+        filter_result = xafty_filter_result
       )
     }
   }

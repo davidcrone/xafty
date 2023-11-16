@@ -17,3 +17,20 @@ filter_column_empty <- function(check_table, validity_table, filter_column) {
 
   check_column %in% na_values
 }
+
+filter_column_empty_xafty_list <- function(check_table, validity_table, filter_column, xafty_rule = "##!!notempty",
+                                           xafty_values = NULL, ...) {
+  stopifnot(length(filter_column) == 1 & is.character(filter_column))
+
+  if (!(filter_column %in% colnames(check_table))) stop("Column is not present in check table")
+
+  if (is.null(xafty_values)) {
+    xafty_values <- obtain_values_in_validity(validity_table = validity_table, xafty_pair = filter_column)
+    }
+  na_values <- c(NA, xafty_values)
+
+  check_column <- as.character(check_table[, filter_column, drop = TRUE])
+
+  check_column %in% na_values
+
+}

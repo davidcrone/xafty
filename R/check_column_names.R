@@ -88,8 +88,8 @@ filter_column_names <- function(check_table, validity_table) {
   colnames_check_table <- colnames(check_table)
   colnames_validity_table <- colnames(validity_table)
 
-  columns_in_validity_table <- colnames_validity_table %in% colnames_check_table
-  columns_in_check_table <- colnames_check_table %in% colnames_validity_table
+  columns_in_validity_table <- !(colnames_validity_table %in% colnames_check_table)
+  columns_in_check_table <- !(colnames_check_table %in% colnames_validity_table)
 
 
   list("colnames_validity_table" = columns_in_validity_table,

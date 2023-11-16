@@ -11,6 +11,7 @@ A data frame with 3 columns:
   \item{type}{A character vector of rule types.}
   \item{description}{A character vector of rule description in prosa.}
   \item{check_function}{A list of functions for check purposes.}
+  \item{filter_function}{A list of functions to filter values.}
 }
 }
 \source{

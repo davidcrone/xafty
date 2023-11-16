@@ -112,7 +112,7 @@ check_column_patterninput <- function(check_table, validity_table, simply = FALS
     }))
 
     presence_vector <- sapply(colnames(df_presence), \(pattern) {
-      grepl(pattern, df_presence[[pattern]], fixed = TRUE)
+      grepl(pattern, df_presence[[pattern]], ignore.case = TRUE)
     })
 
     switch(names(syntax),

@@ -123,3 +123,93 @@ filter_column_exactinput <- function(check_table, validity_table, filter_column)
 
   result_out
 }
+
+
+filter_column_patterninput_xafty_list <- function(check_table, validity_table, filter_column, xafty_rule, xafty_values) {
+  stopifnot(length(filter_column) == 1 & is.character(filter_column))
+
+  if (!(filter_column %in% colnames(validity_table))) stop("Column is not present in validity table")
+  if (!(filter_column %in% colnames(check_table))) stop("Column is not present in check table")
+
+  xafty_syntax <- "##!!"
+  possible_checks <- c("strictpattern", "rowpattern", "anypattern", "eachpattern")
+  xafty_data_types <- paste0(xafty_syntax, possible_checks)
+  stopifnot(xafty_rule %in% xafty_data_types)
+
+  check_column <- as.character(check_table[, filter_column, drop = TRUE])
+
+  if (all(is.na(check_column))) {
+    return(rep(FALSE, length(check_column)))
+  }
+
+  result_out <- rep(FALSE, length(check_column))
+
+  position_na <- which(is.na(check_column))
+
+  # position_broken_exact <- which(!(check_column %in% xafty_values))
+
+  df_pattern_presence <- as.data.frame(sapply(xafty_values, \(col_name){
+    sapply(check_column, \(values) {
+      data.frame(col_name = values)
+    })
+  }))
+
+  df_logical_presence <- sapply(colnames(df_pattern_presence), \(pattern) {
+    grepl(pattern, df_pattern_presence[[pattern]], ignore.case = TRUE)
+  })
+
+  switch(xafty_rule,
+         "##!!strictpattern" = position_broken_rule <- which((!apply(df_logical_presence, 1, \(row) all(row)))),
+         "##!!rowpattern" = position_broken_rule <- which(!(apply(df_logical_presence, 1, \(row) any(row)))),
+         "##!!anypattern" = position_broken_rule <- which(!(apply(df_logical_presence, 1, \(row) any(row)))),
+         "##!!eachpattern" = position_broken_rule <- which(!(apply(df_logical_presence, 1, \(row) any(row))))
+  )
+
+
+  position_broken_rule <- setdiff(position_broken_rule, position_na)
+
+  if (length(position_broken_rule) <= 0) {
+    return(result_out)
+  }
+
+  result_out[position_broken_rule] <- TRUE
+
+  result_out
+}
+
+
+filter_column_exactinput_xafty_list <- function(check_table, validity_table, filter_column, xafty_rule, xafty_values) {
+  stopifnot(length(filter_column) == 1 & is.character(filter_column))
+
+  if (!(filter_column %in% colnames(validity_table))) stop("Column is not present in validity table")
+  if (!(filter_column %in% colnames(check_table))) stop("Column is not present in check table")
+
+  xafty_syntax <- "##!!"
+  possible_checks <- c("anyexact", "strictexact", "eachexact")
+  xafty_data_types <- paste0(xafty_syntax, possible_checks)
+
+  stopifnot(xafty_rule %in% xafty_data_types)
+
+  check_column <- as.character(check_table[, filter_column, drop = TRUE])
+  if (all(is.na(check_column))) {
+    return(rep(FALSE, length(check_column)))
+  }
+
+  # Result should show the values that BREAK the rule!
+  result_out <- rep(FALSE, length(check_column))
+
+  list_xafty_values <- list()
+
+  position_na <- which(is.na(check_column))
+  position_broken_exact <- which(!(check_column %in% xafty_values))
+
+  position_broken_rule <- setdiff(position_broken_exact, position_na)
+
+  if (length(position_broken_rule) <= 0) {
+    return(result_out)
+  }
+
+  result_out[position_broken_rule] <- TRUE
+
+  result_out
+}
