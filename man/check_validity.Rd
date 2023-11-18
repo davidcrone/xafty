@@ -12,7 +12,8 @@ check_validity(
   column_types = TRUE,
   values_notempty = TRUE,
   values_exact = TRUE,
-  values_pattern = TRUE
+  values_pattern = TRUE,
+  multiple_regex_columns = "remove"
 )
 }
 \arguments{
@@ -21,7 +22,7 @@ check_validity(
 \item{validity_table}{Data Frame. A validation table that stores the rules that the check table will be checked against.}
 
 \item{column_number}{Character or Boolean. Should the count of columns be checked?
-Following Parameters are allowed:
+Following values are allowed:
 \itemize{
  \item "equal": If number of columns in both tables should be equal
  \item "larger": If number of columns in both tables should be equal or larger
@@ -29,7 +30,7 @@ Following Parameters are allowed:
 }}
 
 \item{column_names}{Character or Boolean. Should the column names be checked
-Following parameters are allowed:
+Following values are allowed:
 \itemize{
  \item "presence": If the simple presence of each column suffices
  \item "order": If the columns should be present as well as in the specified order
@@ -38,11 +39,19 @@ Following parameters are allowed:
 
 \item{column_types}{Boolean. Should the column's data types be checked?}
 
-\item{values_notempty}{Boolean. Should columns be checked for NA entries?}
+\item{values_notempty}{Boolean. Should columns be checked for NA entries or values representing NA values?}
 
 \item{values_exact}{Boolean. Should columns be checked for exact value rules?}
 
 \item{values_pattern}{Boolean. Should columns be checked for pattern value rules?}
+
+\item{multiple_regex_columns}{Character. Whether to keep duplicated columns that have been added via
+the rule ##!!regexcolumns or remove them.
+The following values are allowed:
+\itemize{
+ \item "remove": Removes duplicated columns.
+ \item "keep": Keeps all duplicated columns.
+}}
 }
 \value{
 A data frame that stores the check results.

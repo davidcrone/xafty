@@ -32,7 +32,9 @@ test_main_functions <- function() {
 
 #' @title Template of Result Data Frame for check_validity()
 create_result_table <- function() {
-  arg_names <- names(formals(check_validity))[!(names(formals(check_validity)) %in% c("check_table", "validity_table"))]
+
+  ignored_args <- c("check_table", "validity_table", "multiple_regex_columns")
+  arg_names <- names(formals(check_validity))[!(names(formals(check_validity)) %in% ignored_args)]
 
   list_out <- list()
 

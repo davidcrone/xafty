@@ -47,7 +47,7 @@ test_that("Main functionality works as expected when all rules are broken", {
     "Expiration_Date" = c("##!!date", "##!!eachexact", "2022-03-01", NA, NA),
     "Delivery_Time" = c("##!!datetime"),
     "Is_Delivered_By" = c("##!!factor", "##!!rowpattern", "Train", NA, "##!!notempty"),
-    "Mail_Customer" = c("##!!text", "##!!strictpattern", "@", ".", "xx")
+    "Mail_Customer" = c("##!!text", "##!!strictpattern", "@", NA, "xx")
   )
 
   check_result <- check_validity(
