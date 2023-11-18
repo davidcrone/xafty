@@ -152,6 +152,7 @@ obtain_invalid_columns <- function(column_string) {
 #' @param date_origin Character. The date from which numeric dates will be conversed into ISO-Date format
 #' @param tryFormats Character vector. Date formats that should be use to try to convert to date
 #' @return An equally length boolean vector whether the value can be parsed as a Date given the specified formats and origin
+#' @export
 is.Date_xafty <- function(dates, date_origin = "1899-12-30", tryFormats = c("%Y-%m-%d", "%d.%m.%Y", "%d/%m/%Y", "%Y/%m/%d")) {
   xafty_column <- sapply(dates, \(date) {
     tryCatch(
@@ -182,6 +183,7 @@ is.Date_xafty <- function(dates, date_origin = "1899-12-30", tryFormats = c("%Y-
 #' @param date_origin Character. The date from which numeric dates will be converted into ISO-Date format
 #' @param tryFormats Character vector. Date formats that should be use to try to convert to date
 #' @return An equally length date vector, \code{NA} when the value could not be converted to date
+#' @export
 as.Date_xafty <- function(dates, date_origin = "1899-12-30", tryFormats = c("%Y-%m-%d", "%d.%m.%Y", "%d/%m/%Y", "%Y/%m/%d")) {
   xafty_column <- sapply(dates, \(date) {
     tryCatch(
@@ -207,6 +209,7 @@ as.Date_xafty <- function(dates, date_origin = "1899-12-30", tryFormats = c("%Y-
 #' @title Check if Passed Values can be Parsed as Numeric
 #' @param numbers Character vector of Numbers to be Parsed
 #' @return An equally length Boolean vector whether the values can be parsed as numbers
+#' @export
 is.numeric_xafty <- function(numbers) {
   xafty_column <- rep(TRUE, length(numbers))
 
@@ -224,6 +227,7 @@ is.numeric_xafty <- function(numbers) {
 #' @param datetimes Character vector of date time values to be parsed
 #' @param tz Timezone for the POSIXct values. Default is UTC
 #' @return An equally length Boolean vector whether the values can be parsed as POSIXct
+#' @export
 is.POSIXct_xafty <- function(datetimes, tz = "") {
   xafty_column <- sapply(datetimes, \(datetime) {
     tryCatch(
@@ -246,6 +250,7 @@ is.POSIXct_xafty <- function(datetimes, tz = "") {
 #' @title Convert Passed Values to POSIXct
 #' @param datetimes Character vector of date time values to be parsed
 #' @param tz Timezone for the POSIXct values. Default is UTC
+#' @export
 as.POSIXct_xafty <- function(datetimes, tz = "") {
   xafty_column <- sapply(datetimes, \(datetime) {
     tryCatch(
@@ -263,7 +268,24 @@ as.POSIXct_xafty <- function(datetimes, tz = "") {
   as.POSIXct(xafty_column)
 }
 
-build_xafty_list <- function(check_table, validity_table, xafty_rules_table, meta_tests_name = "meta_tests", check_names = TRUE, check_number = TRUE) {
+#' @title Build a List of Test Results
+#' @description
+#' This function is supposed to be an upgrade to the function check_validity(). The xafty_list should make it easy
+#' to efficiently handle all checks and filters for each test within a dashboard context.
+#'
+#' @param check_table Data Frame. The table that will be checked against the specified rules in the validity table.
+#' @param validity_table Data Frame. A validation table that stores the rules that the check table will be checked against.
+#' @param meta_tests_name Character. Name of the list item that stores all meta_tests. The parameter is there to help avoid naming
+#' conflicts with column names from the check table or validity table.
+#' @param xafty_rules_table Data Frame. The table object with the same name, bundled in the xafty package.
+#' @param check_names Boolean. Adds a meta test that checks whether all column names of the validity table are present in
+#' the check table.
+#' @param check_number Boolean. Adds a meta test that checks whether the number of columns in the check table are equal or
+#' larger than the columns in the validity table.
+#' @returns A list.
+#' @export
+build_xafty_list <- function(check_table, validity_table, xafty_rules_table,
+                             meta_tests_name = "meta_tests", check_names = TRUE, check_number = TRUE) {
 
   validity_table <- add_regex_columns_to_validity(check_table = check_table, validity_table = validity_table,
                                                   multiple = "remove")
@@ -375,6 +397,13 @@ build_xafty_list <- function(check_table, validity_table, xafty_rules_table, met
   base_column_list
 }
 
+#' @title Create a Readable Table from a xafty List
+#' @description
+#' The function creates a rather readable output from a xafty list, that can be used in a summary context.
+#'
+#' @param xafty_list A list. The list should be the return value from the function build_xafty_list()
+#' @returns A Dataframe.
+#' @export
 build_xafty_test_table <- function(xafty_list) {
   colnames <- names(xafty_list)
   n_colnames <- length(colnames)

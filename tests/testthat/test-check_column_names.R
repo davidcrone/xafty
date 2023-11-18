@@ -103,3 +103,22 @@ test_that("Incorrect order of columns is correctly detected", {
     check_type = "order", simply = TRUE
   ))
 })
+
+test_that("filter_column_names finds all missing columns in the tables", {
+
+  check_table <- data.frame(
+    "ID" = c(3544, 5623, 5234),
+    "Name" = c("David", "Diana", "Marcel"),
+    "Birthday" = c("2000-12-12", "1999-02-02", "1989-02-28")
+  )
+  validity_table <- data.frame("Name" = "##!!text", "Age" = "##!!number")
+
+  filter_result <- filter_column_names(check_table = check_table, validity_table = validity_table)
+
+  missing_col_check <- colnames(check_table[filter_result$colnames_check_table])
+  missing_col_vald <- colnames(validity_table[filter_result$colnames_validity_table])
+
+  expect_equal(missing_col_check, c("ID", "Birthday"))
+  expect_equal(missing_col_vald, c("Age"))
+
+})
