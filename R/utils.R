@@ -434,3 +434,11 @@ build_xafty_test_table <- function(xafty_list) {
 
   df
 }
+
+is_valid_email <- function(emails) {
+
+  email_regex <- "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
+
+  grepl(email_regex, emails)
+
+}
