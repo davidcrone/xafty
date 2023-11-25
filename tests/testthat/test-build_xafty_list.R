@@ -21,7 +21,7 @@ test_that("Xafty List shows all rules as true if all rules are fullfilled", {
 
   check_table <- align_column_types(check_table = check_table, validity_table = validity_table)
 
-  xafty_list <- build_xafty_list(check_table = check_table, validity_table = validity_table, xafty_rules_table = xafty_rules_table,
+  xafty_list <- build_xafty_list(check_table = check_table, validity_table = validity_table,
                                 check_names = FALSE, check_number = FALSE)
 
   summary_test_table <- build_xafty_test_table(xafty_list = xafty_list)
@@ -68,7 +68,7 @@ test_that("Regex columns is supported in xafty list function", {
 
   check_table <- align_column_types(check_table = check_table, validity_table = validity_table)
 
-  xafty_list <- build_xafty_list(check_table = check_table, validity_table = validity_table, xafty_rules_table = xafty_rules_table)
+  xafty_list <- build_xafty_list(check_table = check_table, validity_table = validity_table)
 
   summary_xafty_table <- build_xafty_test_table(xafty_list = xafty_list)$test_result
 
@@ -102,7 +102,7 @@ test_that("Xafty_list can filter bad dates in a data set", {
     "Wagon_Design" = c("##!!number", "##!!regexcolumns", "^W[1-9]", "333", "##!!notempty")
   )
 
-  xafty_list <- build_xafty_list(check_table = check_table, validity_table = validity_table, xafty_rules_table = xafty_rules_table)
+  xafty_list <- build_xafty_list(check_table = check_table, validity_table = validity_table)
   expect_equal(check_table$Expiration_Date[xafty_list$Expiration_Date$date$filter_result], "2021.04-25")
 })
 
@@ -131,7 +131,7 @@ test_that("Column missing in check_table works with build_xafty_list", {
     "Wagon_Design" = c("##!!number", "##!!regexcolumns", "^W[1-9]", "333", "##!!notempty")
   )
 
-  xafty_list <- build_xafty_list(check_table = check_table, validity_table = validity_table, xafty_rules_table = xafty_rules_table)
+  xafty_list <- build_xafty_list(check_table = check_table, validity_table = validity_table)
 
   expect_equal(colnames(validity_table)[xafty_list$meta_tests$xafty_column_names$filter_result$colnames_validity_table],
                "Product_Name")

@@ -279,14 +279,13 @@ as.POSIXct_xafty <- function(datetimes, tz = "") {
 #' @param validity_table Data Frame. A validation table that stores the rules that the check table will be checked against.
 #' @param meta_tests_name Character. Name of the list item that stores all meta_tests. The parameter is there to help avoid naming
 #' conflicts with column names from the check table or validity table.
-#' @param xafty_rules_table Data Frame. The table object with the same name, bundled in the xafty package.
 #' @param check_names Boolean. Adds a meta test that checks whether all column names of the validity table are present in
 #' the check table.
 #' @param check_number Boolean. Adds a meta test that checks whether the number of columns in the check table are equal or
 #' larger than the columns in the validity table.
 #' @returns A list.
 #' @export
-build_xafty_list <- function(check_table, validity_table, xafty_rules_table,
+build_xafty_list <- function(check_table, validity_table,
                              meta_tests_name = "meta_tests", check_names = TRUE, check_number = TRUE) {
 
   validity_table <- add_regex_columns_to_validity(check_table = check_table, validity_table = validity_table,
