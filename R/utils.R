@@ -379,8 +379,11 @@ build_xafty_list <- function(check_table, validity_table,
       }
 
 
-      test_result <- xafty_check_function(check_table = single_col_check_table,
-        validity_table = single_col_validity_table)$Check_Result
+      test_result_row <- xafty_check_function(check_table = single_col_check_table,
+        validity_table = single_col_validity_table)
+
+      test_result <- test_result_row$Check_Result
+      message <- test_result_row$Message
 
       single_rule_no_syntax <- sub("##!!", "", single_rule)
 
@@ -390,7 +393,8 @@ build_xafty_list <- function(check_table, validity_table,
         test_result = test_result,
         check_function = xafty_check_function,
         filter_function = xafty_filter_function,
-        filter_result = xafty_filter_result
+        filter_result = xafty_filter_result,
+        message = message
       )
     }
   }
@@ -443,3 +447,60 @@ is_valid_email <- function(emails) {
   grepl(email_regex, emails)
 
 }
+
+
+get_column_rules_items <- function(xafty_list, column, rule = NULL, item = NULL) {
+
+  if(!is.null(rule) & !is.null(item))  {
+    xafty_list_reduced <-  xafty_list[[column]][[rule]][[item]]
+  } else if (!is.null(rule) & is.null(item)) {
+    xafty_list_reduced <-  xafty_list[[column]][[rule]]
+  } else if (is.null(rule) & is.null(item)) {
+    xafty_list_reduced <- xafty_list[[column]]
+  } else {
+    xafty_list_reduced <- xafty_list
+  }
+
+  xafty_list_reduced
+
+}
+
+get_rules_xafty_list <- function(xafty_list, columns = NULL) {
+
+  if(is.null(columns)) {
+    xafty_list_names <- names(xafty_list)
+    xafty_rules_list <- lapply(xafty_list_names, \(x) {
+          names(get_column_rules_items(xafty_list, x))
+      })
+
+    rules_list_out <- setNames(xafty_rules_list, xafty_list_names)
+  } else {
+
+    xafty_rules_list <- lapply(columns, \(x) {
+      names(get_column_rules_items(xafty_list, x))
+    })
+    rules_list_out <- setNames(xafty_rules_list, columns)
+
+  }
+
+  rules_list_out
+
+}
+
+#' @title Gets the Desired Items from a Column
+#' @param xafty_list A List Created by build_xafty_list()
+#' @param column The column from which the items should be taken?
+#' @param item The desired item from the xafty_list
+#' @export
+get_xafty_list_items <- function(xafty_list, column, item) {
+
+  xafty_rule_list <- get_rules_xafty_list(xafty_list, columns = column)
+  xafty_rules <- xafty_rule_list[[column]]
+
+  xafty_item_list <- lapply(xafty_rules, \(x){
+    get_column_rules_items(xafty_list, column = column, rule =  x, item = item)
+    })
+
+  setNames(xafty_item_list, xafty_rules)
+}
+
