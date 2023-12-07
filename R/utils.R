@@ -308,6 +308,7 @@ build_xafty_list <- function(check_table, validity_table,
     filter_names <- filter_column_names(check_table = check_table, validity_table = validity_table)
 
     base_column_list[[meta_tests_name]][[test_name]] <- list(
+      column_name = meta_tests_name,
       rule_syntax = test_name,
       values = names(validity_table),
       test_result = check_column_names_result$Check_Result,
@@ -326,6 +327,7 @@ build_xafty_list <- function(check_table, validity_table,
     test_name <- "xafty_column_number"
 
     base_column_list[[meta_tests_name]][[test_name]] <- list(
+      column_name = meta_tests_name,
       rule_syntax = test_name,
       values = NULL,
       test_result = check_column_number_result$Check_Result,
@@ -388,6 +390,7 @@ build_xafty_list <- function(check_table, validity_table,
       single_rule_no_syntax <- sub("##!!", "", single_rule)
 
       base_column_list[[col]][[single_rule_no_syntax]] <- list(
+        column_name = single_xafty_pair[[1]],
         rule_syntax = single_rule,
         values = xafty_values,
         test_result = test_result,
