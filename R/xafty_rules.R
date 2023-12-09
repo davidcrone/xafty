@@ -1,8 +1,8 @@
 #' Table of All Xafty Rules
 #'
-#' A simple table containing the xafty rules, their type and a description (soon)
+#' A simple table containing the xafty rules, their type, a description, and useful functions
 #'
-#' @format A data frame with 3 columns:
+#' @format A data frame with 6 columns:
 #' \describe{
 #'   \item{syntax}{A character vector with xafty rules.}
 #'   \item{type}{A character vector of rule types.}
@@ -98,5 +98,24 @@ xafty_rules_table <- data.frame(
     filter_column_patterninput_xafty_list,
     NULL,
     NULL
+  )),
+  "change_type_function" = I(list(
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    as.character,
+    as.Date_xafty,
+    as.numeric,
+    as.factor,
+    as.POSIXct_xafty,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL
   ))
 )
+
+

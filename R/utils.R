@@ -364,6 +364,7 @@ build_xafty_list <- function(check_table, validity_table,
       xafty_type <- xafty_rules_table$type[xafty_rules_table$syntax == single_rule]
       xafty_check_function <- xafty_rules_table$check_function[xafty_rules_table$syntax == single_rule][[1]]
       xafty_filter_function <-  xafty_rules_table$filter_function[xafty_rules_table$syntax == single_rule][[1]]
+      change_type_function <- xafty_rules_table$change_type_function[xafty_rules_table$syntax == single_rule][[1]]
       xafty_values <- NULL
 
       if (xafty_type == "value") {
@@ -392,10 +393,12 @@ build_xafty_list <- function(check_table, validity_table,
       base_column_list[[col]][[single_rule_no_syntax]] <- list(
         column_name = single_xafty_pair[[1]],
         rule_syntax = single_rule,
+        rule_type = xafty_type,
         values = xafty_values,
         test_result = test_result,
         check_function = xafty_check_function,
         filter_function = xafty_filter_function,
+        change_type_function = change_type_function,
         filter_result = xafty_filter_result,
         message = message
       )

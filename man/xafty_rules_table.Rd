@@ -5,7 +5,7 @@
 \alias{xafty_rules_table}
 \title{Table of All Xafty Rules}
 \format{
-A data frame with 3 columns:
+A data frame with 6 columns:
 \describe{
   \item{syntax}{A character vector with xafty rules.}
   \item{type}{A character vector of rule types.}
@@ -21,6 +21,6 @@ The data is curated by xafty developers and grows as new rules are added.
 xafty_rules_table
 }
 \description{
-A simple table containing the xafty rules, their type and a description (soon)
+A simple table containing the xafty rules, their type, a description, and useful functions
 }
 \keyword{datasets}
