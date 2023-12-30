@@ -184,28 +184,65 @@ is.Date_xafty <- function(dates, date_origin = "1899-12-30", tryFormats = c("%Y-
 #' @param dates Character vector of Dates to be Converted
 #' @param date_origin Character. The date from which numeric dates will be converted into ISO-Date format
 #' @param tryFormats Character vector. Date formats that should be use to try to convert to date
+#' @param force_type Boolean. Whether to force the type conversion even if it introduces NAs during type conversion. If TRUE
+#' the function keeps the column as is.
 #' @return An equally length date vector, \code{NA} when the value could not be converted to date
 #' @export
-as.Date_xafty <- function(dates, date_origin = "1899-12-30", tryFormats = c("%Y-%m-%d", "%d.%m.%Y", "%d/%m/%Y", "%Y/%m/%d")) {
-  xafty_column <- sapply(dates, \(date) {
-    tryCatch(
-      {
-        as.Date(date, tryFormats = tryFormats)
-      },
-      error = function(e) {
-        numeric_date <- suppressWarnings(as.numeric(date))
-        if (is.na(numeric_date)) {
-          return(NA)
+as.Date_xafty <- function(dates, date_origin = "1899-12-30",
+                          force_type = TRUE, tryFormats = c("%Y-%m-%d", "%d.%m.%Y", "%d/%m/%Y", "%Y/%m/%d")) {
+
+  if (force_type) {
+    xafty_column <- sapply(dates, \(date) {
+      tryCatch(
+        {
+          as.Date(date, tryFormats = tryFormats)
+        },
+        error = function(e) {
+          numeric_date <- suppressWarnings(as.numeric(date))
+          if (is.na(numeric_date)) {
+            return(NA)
+          }
+
+          as.Date(numeric_date, origin = date_origin)
         }
+      )
+    })
 
-        as.Date(numeric_date, origin = date_origin)
-      }
-    )
-  })
+    names(xafty_column) <- NULL
 
-  names(xafty_column) <- NULL
+    as.Date(xafty_column, origin = "1970-01-01")
 
-  as.Date(xafty_column, origin = "1970-01-01")
+  } else {
+
+    na_position <- which(is.na(dates))
+    xafty_column <- sapply(dates, \(date) {
+      tryCatch(
+        {
+          as.Date(date, tryFormats = tryFormats)
+        },
+        error = function(e) {
+          numeric_date <- suppressWarnings(as.numeric(date))
+          if (is.na(numeric_date)) {
+            return(NA)
+          }
+
+          as.Date(numeric_date, origin = date_origin)
+        }
+      )
+    })
+
+    na_position_after <- which(is.na(xafty_column))
+
+    if(sum(na_position_after) > sum(na_position)) {
+      return(dates)
+    } else {
+      names(xafty_column) <- NULL
+      as.Date(xafty_column, origin = "1970-01-01")
+    }
+
+  }
+
+
 }
 
 #' @title Check if Passed Values can be Parsed as Numeric
@@ -223,6 +260,26 @@ is.numeric_xafty <- function(numbers) {
   xafty_column[position_not_numbers] <- FALSE
 
   xafty_column
+}
+
+#' @title Check if Passed Values can be Parsed as Numeric
+#' @param numbers Character vector of Numbers to be converted
+#' @param force_type Boolean. Whether to force the type conversion even if it introduces NAs during type conversion. If TRUE
+#' the function keeps the column as is.
+#' @return An equally length numeric vector if the numerics could be successfully converted to NA.
+#' @export
+as.numeric_xafty <- function(numbers, force_type = TRUE) {
+
+  position_na <- which(is.na(numbers))
+
+  position_na_conversion <- which(is.na(suppressWarnings(as.numeric(numbers))))
+
+  if(sum(position_na_conversion) > sum(position_na) & !force_type) {
+    return(numbers)
+  } else {
+    as.numeric(numbers)
+  }
+
 }
 
 #' @title Check if Passed Values can be Parsed as POSIXct
@@ -252,22 +309,59 @@ is.POSIXct_xafty <- function(datetimes, tz = "") {
 #' @title Convert Passed Values to POSIXct
 #' @param datetimes Character vector of date time values to be parsed
 #' @param tz Timezone for the POSIXct values. Default is UTC
+#' @param force_type Boolean. Whether to force the type conversion even if it introduces NAs during type conversion. If TRUE
+#' the function keeps the column as is.
+#' @param tryFormats Character vector. POSIXct formats that should be use to try to convert to POSIXct
+#' the function keeps the column as is
 #' @export
-as.POSIXct_xafty <- function(datetimes, tz = "") {
-  xafty_column <- sapply(datetimes, \(datetime) {
-    tryCatch(
-      {
-        as.POSIXct(datetime, tz = tz)
-      },
-      error = function(e) {
-        NA
-      }
-    )
-  })
+as.POSIXct_xafty <- function(datetimes, force_type = TRUE,
+                             tryFormats = c("%Y-%m-%d %H:%M:%OS",
+                                            "%Y/%m/%d %H:%M:%OS",
+                                            "%Y-%m-%d %H:%M",
+                                            "%Y/%m/%d %H:%M",
+                                            "%Y-%m-%d",
+                                            "%Y/%m/%d"),
+                             tz = "") {
 
-  names(xafty_column) <- NULL
+  if (force_type) {
+    xafty_column <- sapply(datetimes, \(datetime) {
+      tryCatch(
+        {
+          as.POSIXct(datetime, tz = tz)
+        },
+        error = function(e) {
+          NA
+        }
+      )
+    })
 
-  as.POSIXct(xafty_column)
+    names(xafty_column) <- NULL
+    as.POSIXct(xafty_column, tryFormats = tryFormats)
+
+  } else {
+    na_position <- which(is.na(datetimes))
+
+    xafty_column <- sapply(datetimes, \(datetime) {
+      tryCatch(
+        {
+          as.POSIXct(datetime, tz = tz)
+        },
+        error = function(e) {
+          NA
+        }
+      )
+    })
+
+    na_position_after <- which(is.na(xafty_column))
+
+    if(sum(na_position_after) > sum(na_position)) {
+      return(datetimes)
+    } else {
+      names(xafty_column) <- NULL
+      as.POSIXct(xafty_column, tryFormats = tryFormats)
+    }
+  }
+
 }
 
 #' @title Build a List of Test Results
@@ -277,6 +371,7 @@ as.POSIXct_xafty <- function(datetimes, tz = "") {
 #'
 #' @param check_table Data Frame. The table that will be checked against the specified rules in the validity table.
 #' @param validity_table Data Frame. A validation table that stores the rules that the check table will be checked against.
+#' @param align_columns Boolean. Whether to align column types before checking for xafty rules. Does not coerce values to NA!
 #' @param meta_tests_name Character. Name of the list item that stores all meta_tests. The parameter is there to help avoid naming
 #' conflicts with column names from the check table or validity table.
 #' @param check_names Boolean. Adds a meta test that checks whether all column names of the validity table are present in
@@ -285,11 +380,16 @@ as.POSIXct_xafty <- function(datetimes, tz = "") {
 #' larger than the columns in the validity table.
 #' @returns A list.
 #' @export
-build_xafty_list <- function(check_table, validity_table,
+build_xafty_list <- function(check_table, validity_table, align_columns = TRUE,
                              meta_tests_name = "meta_tests", check_names = TRUE, check_number = TRUE) {
 
   validity_table <- add_regex_columns_to_validity(check_table = check_table, validity_table = validity_table,
                                                   multiple = "remove")
+
+  if(align_columns) {
+    check_table <- align_column_types(check_table = check_table, validity_table = validity_table,
+                                                      force_type = FALSE)
+  }
 
   base_column_list <- list()
 

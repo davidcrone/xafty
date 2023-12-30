@@ -7,6 +7,7 @@
 as.Date_xafty(
   dates,
   date_origin = "1899-12-30",
+  force_type = TRUE,
   tryFormats = c("\%Y-\%m-\%d", "\%d.\%m.\%Y", "\%d/\%m/\%Y", "\%Y/\%m/\%d")
 )
 }
@@ -14,6 +15,9 @@ as.Date_xafty(
 \item{dates}{Character vector of Dates to be Converted}
 
 \item{date_origin}{Character. The date from which numeric dates will be converted into ISO-Date format}
+
+\item{force_type}{Boolean. Whether to force the type conversion even if it introduces NAs during type conversion. If TRUE
+the function keeps the column as is.}
 
 \item{tryFormats}{Character vector. Date formats that should be use to try to convert to date}
 }

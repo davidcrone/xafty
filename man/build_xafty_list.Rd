@@ -7,6 +7,7 @@
 build_xafty_list(
   check_table,
   validity_table,
+  align_columns = TRUE,
   meta_tests_name = "meta_tests",
   check_names = TRUE,
   check_number = TRUE
@@ -16,6 +17,8 @@ build_xafty_list(
 \item{check_table}{Data Frame. The table that will be checked against the specified rules in the validity table.}
 
 \item{validity_table}{Data Frame. A validation table that stores the rules that the check table will be checked against.}
+
+\item{align_columns}{Boolean. Whether to align column types before checking for xafty rules. Does not coerce values to NA!}
 
 \item{meta_tests_name}{Character. Name of the list item that stores all meta_tests. The parameter is there to help avoid naming
 conflicts with column names from the check table or validity table.}

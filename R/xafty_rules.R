@@ -9,6 +9,7 @@
 #'   \item{description}{A character vector of rule description in prosa.}
 #'   \item{check_function}{A list of functions for check purposes.}
 #'   \item{filter_function}{A list of functions to filter values.}
+#'   \item{change_type_function}{A list of functions change data to appropriate types.}
 #' }
 #'
 #' @source The data is curated by xafty developers and grows as new rules are added.

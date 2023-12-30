@@ -4,10 +4,22 @@
 \alias{as.POSIXct_xafty}
 \title{Convert Passed Values to POSIXct}
 \usage{
-as.POSIXct_xafty(datetimes, tz = "")
+as.POSIXct_xafty(
+  datetimes,
+  force_type = TRUE,
+  tryFormats = c("\%Y-\%m-\%d \%H:\%M:\%OS", "\%Y/\%m/\%d \%H:\%M:\%OS",
+    "\%Y-\%m-\%d \%H:\%M", "\%Y/\%m/\%d \%H:\%M", "\%Y-\%m-\%d", "\%Y/\%m/\%d"),
+  tz = ""
+)
 }
 \arguments{
 \item{datetimes}{Character vector of date time values to be parsed}
+
+\item{force_type}{Boolean. Whether to force the type conversion even if it introduces NAs during type conversion. If TRUE
+the function keeps the column as is.}
+
+\item{tryFormats}{Character vector. POSIXct formats that should be use to try to convert to POSIXct
+the function keeps the column as is}
 
 \item{tz}{Timezone for the POSIXct values. Default is UTC}
 }

@@ -12,6 +12,7 @@ A data frame with 6 columns:
   \item{description}{A character vector of rule description in prosa.}
   \item{check_function}{A list of functions for check purposes.}
   \item{filter_function}{A list of functions to filter values.}
+  \item{change_type_function}{A list of functions change data to appropriate types.}
 }
 }
 \source{

@@ -7,8 +7,11 @@
 align_column_types(
   check_table,
   validity_table,
+  force_type = TRUE,
   date_origin = "1899-12-30",
-  tryFormats = c("\%d.\%m.\%Y", "\%d/\%m/\%Y", "\%Y-\%m-\%d", "\%Y/\%m/\%d"),
+  tryFormats_Date = c("\%d.\%m.\%Y", "\%d/\%m/\%Y", "\%Y-\%m-\%d", "\%Y/\%m/\%d"),
+  tryFormats_POSIXct = c("\%Y-\%m-\%d \%H:\%M:\%OS", "\%Y/\%m/\%d \%H:\%M:\%OS",
+    "\%Y-\%m-\%d \%H:\%M", "\%Y/\%m/\%d \%H:\%M", "\%Y-\%m-\%d", "\%Y/\%m/\%d"),
   tz = ""
 )
 }
@@ -17,10 +20,15 @@ align_column_types(
 
 \item{validity_table}{Data table. A validity table that holds the class information for alignment}
 
+\item{force_type}{Boolean. Whether to force the type conversion even if it introduces NAs during type conversion. If TRUE
+the function keeps the column as is.}
+
 \item{date_origin}{Character. A date string for date conversion giving the number of days since e.g. "1900-01-01". This
 is only necessary if the excel date is stored as numeric: (32768, 35981). For more information see: ?as.Date}
 
-\item{tryFormats}{Character vector. Date formats that should be use to try to convert to date}
+\item{tryFormats_Date}{Character vector. Date formats that should be use to try to convert to date}
+
+\item{tryFormats_POSIXct}{Character vector. POSIXct formats that should be use to try to convert to POSIXct}
 
 \item{tz}{Timezone for the POSIXct values. Default is UTC}
 }

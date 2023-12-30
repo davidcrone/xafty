@@ -79,12 +79,21 @@ check_column_types <- function(check_table, validity_table, simply = FALSE) {
 #' @param validity_table Data table. A validity table that holds the class information for alignment
 #' @param date_origin Character. A date string for date conversion giving the number of days since e.g. "1900-01-01". This
 #' is only necessary if the excel date is stored as numeric: (32768, 35981). For more information see: ?as.Date
-#' @param tryFormats Character vector. Date formats that should be use to try to convert to date
+#' @param tryFormats_Date Character vector. Date formats that should be use to try to convert to date
+#' @param tryFormats_POSIXct Character vector. POSIXct formats that should be use to try to convert to POSIXct
 #' @param tz Timezone for the POSIXct values. Default is UTC
+#' @param force_type Boolean. Whether to force the type conversion even if it introduces NAs during type conversion. If TRUE
+#' the function keeps the column as is.
 #' @export
-align_column_types <- function(check_table, validity_table,
+align_column_types <- function(check_table, validity_table, force_type = TRUE,
                                date_origin = "1899-12-30",
-                               tryFormats = c("%d.%m.%Y", "%d/%m/%Y", "%Y-%m-%d", "%Y/%m/%d"),
+                               tryFormats_Date = c("%d.%m.%Y", "%d/%m/%Y", "%Y-%m-%d", "%Y/%m/%d"),
+                               tryFormats_POSIXct = c("%Y-%m-%d %H:%M:%OS",
+                                                      "%Y/%m/%d %H:%M:%OS",
+                                                      "%Y-%m-%d %H:%M",
+                                                      "%Y/%m/%d %H:%M",
+                                                      "%Y-%m-%d",
+                                                      "%Y/%m/%d"),
                                tz = "") {
   xafty_syntax <- "##!!"
   possible_classes <- c("text", "date", "number", "factor", "datetime")
@@ -102,11 +111,12 @@ align_column_types <- function(check_table, validity_table,
       switch(xafty_data_type,
         "##!!text" = check_table[, i] <- as.character(check_table[[i]]),
         "##!!date" = check_table[, i] <- as.Date_xafty(check_table[[i]],
-          date_origin = date_origin, tryFormats = tryFormats
+                                         force_type = force_type, date_origin = date_origin, tryFormats = tryFormats_Date
         ),
-        "##!!number" = check_table[, i] <- as.numeric(check_table[[i]]),
+        "##!!number" = check_table[, i] <- as.numeric_xafty(check_table[[i]], force_type = force_type),
         "##!!factor" = check_table[, i] <- as.factor(check_table[[i]]),
-        "##!!datetime" = check_table[, i] <- as.POSIXct_xafty(check_table[[i]], tz = tz)
+        "##!!datetime" = check_table[, i] <- as.POSIXct_xafty(check_table[[i]], force_type = force_type,
+                                             tryFormats = tryFormats_POSIXct, tz = tz)
       )
     }
   }
