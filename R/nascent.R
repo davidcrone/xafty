@@ -1,4 +1,8 @@
 
+#' Retrieve Data from a xafty network
+#' @param network A xafty network
+#' @param xafty_list Xafty link object created with pull_link
+#' @export
 nascent <- function(network, xafty_list) {
   stopifnot(is.list(xafty_list))
   stopifnot(inherits(network, "xafty_network"))
@@ -30,7 +34,6 @@ retrieve_functions <- function(code, module = "link", sm, env) {
 collect_all_column_names <- function(xafty_list) {
   do.call(c, lapply(xafty_list, \(xl) xl$pull))
 }
-
 
 resolve_dependencies <- function(projects, xafty_list, network, sm) {
   lapply(projects, \(project) {

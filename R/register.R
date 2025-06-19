@@ -1,7 +1,3 @@
-#' Register a Function to a xafty Network
-#'
-#' @param fun
-# TODO: Add default network_env and default project name
 register <- function(fun, link_type = c("get", "add", "join"), module = "link", network_env = NULL, project = NULL) {
   stopifnot(!is.null(project))
   stopifnot(!is.null(link_type))
@@ -187,7 +183,6 @@ build_join_links <- function(unpacked, project, network) {
 #' get_function_package("mean")   # Returns "base"
 #' get_function_package("filter") # Returns "dplyr" (if dplyr is loaded)
 #' get_function_package("non_existent_function") # Returns NA
-#' @export
 get_function_package <- function(func_name) {
   # Validate input
   if (!is.character(func_name) || length(func_name) != 1) {

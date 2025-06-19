@@ -1,10 +1,22 @@
 #' Initialize a New xafty Network
+#' @description
+#' Use this function to initialize a new xafty network.
 #' @returns A 'xafty_network' environment
+#' @examples
+#' # Initialize the project
+#' new_network <- init_network()
+#'
+#' # Add a new project
+#' new_network$new_project("project1")
+#'
+#' @export
 init_network <- function() {
   network_env <- new.env() # This is the list where all projects will be merged together
   new_project <- function(project) {
     if(length(project) == 0 | length(project) > 1) stop("Please enter the project's name")
     if(!identical(project, make.names(project))) stop("Please enter a valid project name")
+    reserved_names <- c("save", "new_project")
+    if(project %in% reserved_names) stop(paste0("Please don't use any of the following reserved names: ", paste0(reserved_names, collapse = ", "), ". These names are reserved for methods."))
     names_network <- names(network_env)
     existing_projects <- names_network[vapply(names_network, \(project) is.environment(network_env[[project]]), FUN.VALUE = logical(1))]
     if(any(project %in% existing_projects)) stop(paste0("Project '", project, "' exists already in network"))
