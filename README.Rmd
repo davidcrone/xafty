@@ -1,0 +1,39 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+
+# xafty
+
+<!-- badges: start -->
+<!-- badges: end -->
+
+xafty makes it easy to build a scalable and collaborative data network. This is achieved by organizing the code as 
+a Directed Acyclic Tree (DAG) instead of running it top-to-bottom via a script. The main goal is to build a data pipeline that 
+is easy extendable, easy improvable, and still easy to use.
+
+## Installation
+
+``` r
+ pak::pkg_install("davidcrone/xafty")
+```
+
+# Philosophie
+
+# Pre-Requesites
+- 
+
+# Trade-offs - Is xafty right for me?
+
+
+
