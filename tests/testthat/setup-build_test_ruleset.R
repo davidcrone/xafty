@@ -39,15 +39,15 @@ test_join_car_id <- function(data_left, data_right) {
 }
 
 xafty_network <- init_network()
-xafty_network$new_project("test1")
+xafty_network$add_project("test1")
 
 xafty_network$test1$get(test_get_car_data(conn = TRUE))
-xafty_network$test1$add(test_add_car_color(data = pull_link(test1 = c("Has_Drivers_License", "Name", "Car"))))
+xafty_network$test1$add(test_add_car_color(data = query(test1 = c("Has_Drivers_License", "Name", "Car"))))
 
-xafty_network$new_project("test2")
+xafty_network$add_project("test2")
 xafty_network$test2$get(test_get_car_color_id())
 
-xafty_network$test1$join(with = "test2", fun = test_join_car_id(data_right = pull_link(test2 = "Car_Color"), data_left = pull_link(test1 = "Car_Color")))
+xafty_network$test1$join(with = "test2", fun = test_join_car_id(data_right = query(test2 = "Car_Color"), data_left = query(test1 = "Car_Color")))
 
 # setup tornado
 
@@ -88,10 +88,10 @@ join_main3 <- function(main, join3) {
 }
 
 main_network <- init_network()
-main_network$new_project("main")
-main_network$new_project("side1")
-main_network$new_project("side2")
-main_network$new_project("side3")
+main_network$add_project("main")
+main_network$add_project("side1")
+main_network$add_project("side2")
+main_network$add_project("side3")
 
 # register all get functions
 main_network$main$get(get_main_tornado())
@@ -100,8 +100,8 @@ main_network$side2$get(get_join_2())
 main_network$side3$get(get_join_3())
 
 # join all side projects with main
-main_network$main$join(with = "side1", join_main1(main = pull_link(main = "id"), join1 = pull_link(side1 = "id")))
-main_network$main$join(with = "side2", join_main2(main = pull_link(main = "id"), join2 = pull_link(side2 = "id")))
-main_network$main$join(with = "side3", join_main3(main = pull_link(main = "id"), join3 = pull_link(side3 = "id")))
+main_network$main$join(with = "side1", join_main1(main = query(main = "id"), join1 = query(side1 = "id")))
+main_network$main$join(with = "side2", join_main2(main = query(main = "id"), join2 = query(side2 = "id")))
+main_network$main$join(with = "side3", join_main3(main = query(main = "id"), join3 = query(side3 = "id")))
 
-data_tornado <- main_network |> nascent(pull_link(side1 = "col1", side2 = "col2", side3 = "col3"))
+data_tornado <- main_network |> nascent(query(side1 = "col1", side2 = "col2", side3 = "col3"))

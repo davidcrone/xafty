@@ -5,7 +5,6 @@ register <- function(fun, link_type = c("get", "add", "join"), module = "link", 
   if(link_type == "join" & length(project) <= 1) stop("When linking with link type join, a character vector of length two must be supplied containing the name of both joined projects")
   quosure <- fun
   unpacked <- unpack(quosure, link_type = link_type, network_env = network_env)
-
   if (link_type == "get") {
     register_get(project = project, unpacked = unpacked, env = network_env)
   } else if (link_type == "add") {
@@ -81,7 +80,7 @@ build_add_links <- function(unpacked, project, network) {
   first_arg <- unpacked$args[[1]]
   pull <- unpacked$first$cols
   if(inherits(first_arg, "data.frame")) {
-    first_arg <- do.call(pull_link, setNames(list(pull), project))
+    first_arg <- do.call(query, setNames(list(pull), project))
   }
   pull_project <- helper_pull_project(pull, first_arg)
   push <- unpacked$output$cols[!(unpacked$output$cols %in% pull)]
@@ -128,10 +127,10 @@ build_join_links <- function(unpacked, project, network) {
   pull_first <- unpacked$first$cols
   pull_second <- unpacked$second$cols
   if(inherits(first_arg, "data.frame")) {
-    first_arg <- do.call(pull_link, setNames(list(pull_first), project[1]))
+    first_arg <- do.call(query, setNames(list(pull_first), project[1]))
   }
   if(inherits(second_arg, "data.frame")) {
-    second_arg <- do.call(pull_link, setNames(list(pull_second), project[2]))
+    second_arg <- do.call(query, setNames(list(pull_second), project[2]))
   }
   pull <- c(pull_first, pull_second)
   pull_project_first <- helper_pull_project(pull_first, first_arg)

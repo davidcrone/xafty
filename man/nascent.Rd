@@ -4,12 +4,12 @@
 \alias{nascent}
 \title{Retrieve Data from a xafty network}
 \usage{
-nascent(network, xafty_list)
+nascent(network, ...)
 }
 \arguments{
 \item{network}{A xafty network}
 
-\item{xafty_list}{Xafty link object created with pull_link}
+\item{...}{List.}
 }
 \description{
 Retrieve Data from a xafty network

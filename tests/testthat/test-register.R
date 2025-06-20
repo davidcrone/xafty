@@ -4,7 +4,7 @@ test_that("Register builds a get node in the network environment correctly", {
                  b = sample(c("1", "2", "3"), size = 10, replace = TRUE))
     }
     project_env <- init_network()
-    project_env$new_project("test")
+    project_env$add_project("test")
     project_env$test$get(test_get_function(arg1 = list(1, 2), arg2 = TRUE, comment = "clear", 1:3))
     expect_equal(names(project_env$test$variables), c("a", "b"))
     expect_equal(project_env$test$variables$a, list(fun_name = "test_get_function", pull = NULL, from = NULL, exec = NULL, push = c("a", "b"), into = "test", joins = NULL))
@@ -21,7 +21,7 @@ test_that("Register builds a add node in the network environment correctly", {
     arg1
   }
   project_env <- init_network()
-  project_env$new_project("test")
+  project_env$add_project("test")
   project_env$test$get(test_get_function(arg1 = list(1, 2), arg2 = TRUE, comment = "clear", 1:3))
   project_env$test$add(test_add_function(arg1 = test_get_function()))
   expect_equal(names(project_env$test$variables), c("a", "b", "c"))
@@ -51,11 +51,11 @@ test_that("Register builds a join node in the network environment correctly", {
     base::merge(data_left, data_right, by = intersect(names(data_left), names(data_right)), all.x = TRUE, sort = FALSE)
   }
   project_env <- init_network()
-  project_env$new_project("test")
+  project_env$add_project("test")
   project_env$test$get(test_get_function(arg1 = list(1, 2), arg2 = TRUE, comment = "clear", 1:3))
   project_env$test$add(test_add_function(arg1 = test_get_function()))
 
-  project_env$new_project("test2")
+  project_env$add_project("test2")
   project_env$test2$get(test2_get_function())
   project_env$test$join(with = "test2", test_join_function(data_left = test_get_function()["a"], data_right = test2_get_function()))
 
@@ -67,11 +67,11 @@ test_that("Register builds a join node in the network environment correctly", {
 
 test_that("register add also works with xafty link instead of passing data into the to be registered function", {
   test_state_1 <- init_network()
-  test_state_1$new_project("customer_data")
+  test_state_1$add_project("customer_data")
   test_state_1$customer_data$get(get_sample_data())
-  xafty_link <- pull_link(customer_data = c("score", "name"))
+  xafty_link <- query(customer_data = c("score", "name"))
   test_state_1$customer_data$add(add_score_category(data = xafty_link))
-  xafty_test_pull <- pull_link(customer_data = c("name", "category"))
+  xafty_test_pull <- query(customer_data = c("name", "category"))
   data_test <- test_state_1 |> nascent(xafty_test_pull)
   data_expected <- structure(row.names = c(NA, -5L), class = "data.frame",
     list(

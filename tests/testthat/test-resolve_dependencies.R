@@ -1,6 +1,6 @@
 test_that("resolve dependencies works with a root dependency", {
   sm <- govern(test_network)
-  xafty_list <- pull_link(customer_data = "id")
+  xafty_list <- query(customer_data = "id")
   resolve_dependencies(projects = "customer_data", xafty_list = xafty_list, network = test_network, sm = sm)
   pulls <- sm$get_pulls("customer_data")
   projects <- sm$get_projects()
@@ -12,7 +12,7 @@ test_that("resolve dependencies works with a root dependency", {
 
 test_that("resolve dependencies works with an add link", {
   sm <- govern(test_network)
-  xafty_list <- pull_link(customer_data = "category")
+  xafty_list <- query(customer_data = "category")
   resolve_dependencies(projects = "customer_data", xafty_list = xafty_list, network = test_network, sm = sm)
   pulls <- sm$get_pulls("customer_data")
   projects <- sm$get_projects()
@@ -25,7 +25,7 @@ test_that("resolve dependencies works with an add link", {
 test_that("resolve_dependencies can correctly resolve a join link", {
   network <- test_network
   sm <- govern(network)
-  xafty_list <- pull_link(customer_data = "category", occupations = "department")
+  xafty_list <- query(customer_data = "category", occupations = "department")
   resolve_dependencies(projects = c("customer_data", "occupations"), xafty_list = xafty_list, network = network, sm = sm)
   pulls_customer_data <- sm$get_pulls("customer_data")
   pulls_occupations <- sm$get_pulls("occupations")
@@ -40,7 +40,7 @@ test_that("resolve_dependencies can correctly resolve a join link", {
 test_that("resolve_dependencies can correctly resolve a column that depends on two projects", {
   network <- test_network
   sm <- govern(network)
-  xafty_list <- pull_link(customer_data = c("name", "nickname"), occupations = "department")
+  xafty_list <- query(customer_data = c("name", "nickname"), occupations = "department")
   resolve_dependencies(projects = c("customer_data", "occupations"), xafty_list = xafty_list, network = network, sm = sm)
   pulls_customer_data <- sm$get_pulls("customer_data")
   pulls_occupations <- sm$get_pulls("occupations")
@@ -56,7 +56,7 @@ test_that("resolve_dependencies can correctly resolve a column that depends on t
 test_that("resolve_dependencies can correctly resolve a column that depends on two projects, but only pulls from one project", {
   network <- test_network
   sm <- govern(network)
-  xafty_list <- pull_link(customer_data = "nickname")
+  xafty_list <- query(customer_data = "nickname")
   resolve_dependencies(projects = c("customer_data"), xafty_list = xafty_list, network = network, sm = sm)
   pulls_customer_data <- sm$get_pulls("customer_data")
   pulls_occupations <- sm$get_pulls("occupations")
@@ -73,7 +73,7 @@ test_that("resolve_dependencies can correctly resolve a column that depends on t
 test_that("resolve_dependencies can correctly resolve a column that depends on two projects, but only pulls from one project", {
   network <- test_network
   sm <- govern(network)
-  xafty_list <- pull_link(occupations = "department", intelligence = "intelligence", customer_data = c("name", "nickname"))
+  xafty_list <- query(occupations = "department", intelligence = "intelligence", customer_data = c("name", "nickname"))
   resolve_dependencies(projects = c("customer_data", "occupations", "intelligence"), xafty_list = xafty_list, network = network, sm = sm)
   pulls_customer_data <- sm$get_pulls("customer_data")
   pulls_occupations <- sm$get_pulls("occupations")

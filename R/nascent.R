@@ -1,14 +1,22 @@
 
 #' Retrieve Data from a xafty network
 #' @param network A xafty network
-#' @param xafty_list Xafty link object created with pull_link
+#' @param ... List.
 #' @export
-nascent <- function(network, xafty_list) {
-  stopifnot(is.list(xafty_list))
+nascent <- function(network, ...) {
+
+  if(inherits(network, what = "bundled_xafty_network")) {
+    xafty_query <- network$query
+  } else if(!inherits(list(...)[[1]], what = "xafty_query_list")) {
+    xafty_query <- query(...)
+  } else {
+    xafty_query <- list(...)[[1]]
+  }
+  stopifnot(is.list(xafty_query))
   stopifnot(inherits(network, "xafty_network"))
   sm <- govern(network)
-  projects <- names(xafty_list)
-  resolve_dependencies(projects = projects, xafty_list = xafty_list, network = network, sm = sm)
+  projects <- names(xafty_query)
+  resolve_dependencies(projects = projects, xafty_list = xafty_query, network = network, sm = sm)
   topological_sorted_codes <- resolve_function_stack(sm = sm)
   list_function_stack <- lapply(topological_sorted_codes, retrieve_functions, sm = sm, env = network, module = "link")
   lapply(list_function_stack, sm$execute_stack)
@@ -19,7 +27,7 @@ nascent <- function(network, xafty_list) {
     names(data_list) <- key_salad
     data_list
   } else {
-    sm$get_data_by_key(data_keys)[collect_all_column_names(xafty_list)]
+    sm$get_data_by_key(data_keys)[collect_all_column_names(xafty_query)]
   }
 }
 
@@ -32,13 +40,13 @@ retrieve_functions <- function(code, module = "link", sm, env) {
 
 
 collect_all_column_names <- function(xafty_list) {
-  do.call(c, lapply(xafty_list, \(xl) xl$pull))
+  do.call(c, lapply(xafty_list, \(xl) xl$select))
 }
 
 resolve_dependencies <- function(projects, xafty_list, network, sm) {
   lapply(projects, \(project) {
     list_links <- xafty_list[[project]]
-    pulls <- list_links$pull
+    pulls <- list_links$select
     list_link <- sapply(pulls, get_chatty_link_from_network, project = project, network = network, simplify = FALSE, USE.NAMES = TRUE)
     add_function_stack <- lapply(pulls, \(pull) {
       link <- list_link[[pull]]
@@ -62,7 +70,7 @@ resolve_dependencies <- function(projects, xafty_list, network, sm) {
   list_dependencies <- list_dependencies[vapply(list_dependencies, \(value) !is.null(value), FUN.VALUE = logical(1))]
   if (length(list_dependencies) > 0) {
     projects <- names(list_dependencies)
-    xafty_list <- do.call(pull_link, list_dependencies)
+    xafty_list <- do.call(query, list_dependencies)
     resolve_dependencies(projects = projects, xafty_list = xafty_list, network = network, sm = sm)
   }
   build_join_bridges(sm = sm, network = network)

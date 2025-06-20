@@ -17,6 +17,6 @@ Use this function to initialize a new xafty network.
 new_network <- init_network()
 
 # Add a new project
-new_network$new_project("project1")
+new_network$add_project("project1")
 
 }

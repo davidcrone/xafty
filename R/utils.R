@@ -44,15 +44,15 @@ eval_args <- function(fun, args, env, network_env) {
   n_args <- length(args)
   if (n_args >= 1) {
     value_list$first <- args[[1]]
-    if(inherits(value_list$first, "xafty_link_list")) {
-      value_list$first <- nascent(network = network_env, xafty_list = value_list$first)
+    if(inherits(value_list$first, "xafty_query_list")) {
+      value_list$first <- nascent(network = network_env, value_list$first)
       args[[1]] <- value_list$first
     }
   }
   if (n_args >= 2) {
     value_list$second <- args[[2]]
-    if(inherits(value_list$second, "xafty_link_list")) {
-      value_list$second <- nascent(network = network_env, xafty_list = value_list$second)
+    if(inherits(value_list$second, "xafty_query_list")) {
+      value_list$second <- nascent(network = network_env, value_list$second)
       args[[2]] <- value_list$second
     }
   }
@@ -134,7 +134,7 @@ validate_link_type <- function(link_type, unpacked) {
 
 helper_pull_project <- function(columns, xafty_link) {
   pull_project <- sapply(xafty_link, \(link) {
-    which(columns %in% link$pull)
+    which(columns %in% link$select)
   }, simplify = FALSE, USE.NAMES = TRUE)
   tmp_container <- character(sum(vapply(pull_project, \(what) length(what), FUN.VALUE = numeric(1))))
   for (i in seq_along(pull_project)) {
