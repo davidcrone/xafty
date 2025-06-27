@@ -202,28 +202,6 @@ validate_link_type <- function(link_type, unpacked) {
   invisible(TRUE)
 }
 
-
-helper_pull_project <- function(columns, xafty_link) {
-  pull_project <- sapply(xafty_link, \(link) {
-    which(columns %in% link$select)
-  }, simplify = FALSE, USE.NAMES = TRUE)
-  tmp_container <- character(sum(vapply(pull_project, \(what) length(what), FUN.VALUE = numeric(1))))
-  for (i in seq_along(pull_project)) {
-    pos <- pull_project[[i]]
-    project <- names(pull_project[i])
-    tmp_container[pos] <- project
-  }
-  tmp_container
-}
-
-get_join_projects <- function(project, ...) {
-  dots <- list(...)
-  join_projs <- unique(do.call(c, lapply(dots, \(pull) names(pull))))
-  join_projs <- join_projs[!join_projs %in% project]
-  if(length(join_projs) == 0) return(NULL)
-  join_projs
-}
-
 build_dependency_codes <- function(deps) {
   if (length(deps) == 0) return(character(0))
   column_depends <- do.call(c, lapply(seq_along(deps), \(i) {
@@ -240,13 +218,6 @@ build_dependency_codes <- function(deps) {
     character(0)
   }))
   c(column_depends, join_depends)
-}
-
-get_join_w_proj <- function(link) {
-  into <- link$into
-  join_w_proj <- c(link$left, link$right)
-  join_w_proj <- join_w_proj[!join_w_proj == into]
-  join_w_proj
 }
 
 find_xafty_objects <- function(arg) {
