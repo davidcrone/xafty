@@ -12,7 +12,7 @@
 #' @export
 init_network <- function() {
   network_env <- new.env() # This is the list where all projects will be merged together
-  add_project <- function(project) {
+  add_project <- function(project, ...) {
     if(length(project) == 0 | length(project) > 1) stop("Please enter the project's name.")
     if(!identical(project, make.names(project))) stop("Please enter a valid project name")
     reserved_names <- c("save", "add_project", "query")
@@ -20,11 +20,37 @@ init_network <- function() {
     names_network <- names(network_env)
     existing_projects <- names_network[vapply(names_network, \(project) is.environment(network_env[[project]]), FUN.VALUE = logical(1))]
     if(any(project %in% existing_projects)) stop(paste0("Project '", project, "' exists already in network"))
+    project_config <- list(...)
     new_ruleset <- ruleset()
     new_settings <- settings()
-    add_new_project(project = project, ruleset = new_ruleset, settings = new_settings, network_env = network_env)
+    .network_env <- add_new_project(project = project, ruleset = new_ruleset, settings = new_settings, network_env = network_env)
+    if(length(project_config) > 0) {
+      xafty_query <- project_config[[1]]
+      if (!inherits(xafty_query, what = "xafty_query_list")) {
+        warning("value passed to dots argument, is not a xafty_query_list. Dots argument is being ignored!")
+      } else {
+        project_env <- .network_env[[project]]
+        entry <- function(val = "data") {
+          force(xafty_query)
+          if(val == "data") {
+            network_env |> nascent(xafty_query)
+          } else {
+            xafty_query
+          }
+        }
+        class(project_env) <- c("xafty_project", "xafty_bundle", "environment")
+        assign("entry", entry, envir = project_env)
+      }
+    }
+    invisible(.network_env)
+  }
+  save_project <- function(file_name, path) {
+    full_path <- paste0(path, "/", file_name, ".rds")
+    save(network_env, file = full_path)
   }
   assign("add_project", add_project, envir = network_env)
+  assign("save", save_project, envir = network_env)
+  class(network_env) <- c("xafty_network", "environment")
   invisible(network_env)
 }
 
@@ -32,6 +58,7 @@ add_new_project <- function(project, ruleset, settings, network_env) {
   env_names <- c("variables", "joined_projects") # These will be environments for frequent look-ups during the nascent process
 
   project_env <- new.env() # This is the environment, where all code will be organized
+  class(project_env) <- c("xafty_project", "environment")
   network_env[[project]] <- project_env
   for (env_name in env_names) {
     assign(env_name, new.env(), envir = project_env)
@@ -44,17 +71,15 @@ add_new_project <- function(project, ruleset, settings, network_env) {
   for (lp in link_names) {
     assign(lp, link_funs[[lp]], envir = project_env)
   }
-
-  class(network_env) <- c("xafty_network", "environment")
   invisible(network_env)
 }
 
 create_get <- function(project, env) {
   force(project)
   force(env)
-  get <- function(fun) {
+  get <- function(fun, ...) {
     quosure <- rlang::enquo(fun)
-    register(fun = quosure, link_type = "get", module = "link", network_env = env, project = project)
+    register(quosure = quosure, type = "get", module = "link", network = env, project = project, ... = ...)
   }
   get
 }
@@ -62,9 +87,9 @@ create_get <- function(project, env) {
 create_add <- function(project, env) {
   force(project)
   force(env)
-  add <- function(fun) {
+  add <- function(fun, ...) {
     quosure <- rlang::enquo(fun)
-    register(fun = quosure, link_type = "add", module = "link", network_env = env, project = project)
+    register(quosure = quosure, type = "add", module = "link", network = env, project = project, ... = ...)
   }
   add
 }
@@ -72,9 +97,9 @@ create_add <- function(project, env) {
 create_join <- function(project, env) {
   force(project)
   force(env)
-  join <- function(with, fun) {
+  join <- function(fun, ...) {
     quosure <- rlang::enquo(fun)
-    register(fun = quosure, link_type = "join", module = "link", network_env = env, project = c(project, with))
+    register(quosure = quosure, type = "join", module = "link", network = env, project = project, ... = ...)
   }
   join
 }

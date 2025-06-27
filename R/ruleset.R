@@ -16,12 +16,16 @@ settings <- function() {
 }
 
 add_to_ruleset <- function(item, module = "link", env, project) {
-  function_name <-names(item)
-  for (proj in project) {
+  function_name <- item$ruleset$fun_name
+  arg_names <- item$network$arg_defs$names["xafty_query" == item$network$arg_defs$link]
+  projects <- unique(c(project, vapply(arg_names, \(name) item$network$dependencies[[name]]$lead, character(1))))
+  new_rule <- list(item)
+  new_rule <- setNames(new_rule, function_name)
+  for (proj in projects) {
     current_rules <- env[[proj]]$ruleset$modules[[module]]
     if(function_name %in% names(current_rules)) {
       if(!exists("user_input")) {
-        user_input <- readline(paste0("Function was already registered in project '",  paste0(project, collapse = " and "),"'. Would you like to update? (y/n): "))
+        user_input <- readline(paste0("Function '", function_name, "' was already registered in project '",  paste0(projects, collapse = " and "),"'. Would you like to update? (y/n): "))
       }
       # Check the user input
       if (user_input == "y") {
@@ -30,10 +34,10 @@ add_to_ruleset <- function(item, module = "link", env, project) {
         # Add your update code here
       } else {
         # Abort the function
-        stop(paste0("Rule ", names(item), " already exists in ruleset of project '", paste0(project, collapse = " and "),"'. Cannot register a rule that already exists."))
+        stop(paste0("Rule ", names(item), " already exists in ruleset of project '", paste0(projects, collapse = " and "),"'. Cannot register a rule that already exists."))
       }
     }
-    add_rules <- c(current_rules, item)
+    add_rules <- c(current_rules, new_rule)
     env[[proj]]$ruleset$modules[[module]] <- add_rules
   }
   env

@@ -46,3 +46,10 @@ test_that("passing values as a list returns a standard xafty_query", {
   expect_equal(xafty_query$occupations$from, "occupations")
   expect_equal(names(xafty_query), c("customer_data", "occupations"))
 })
+
+test_that("passing just a character vecror into xafty_query returns the query with a star * select", {
+  xafty_query <- query(customer_data = "*")
+  expect_equal(xafty_query$customer_data$select, "*")
+  expect_equal(xafty_query$customer_data$from, "customer_data")
+})
+

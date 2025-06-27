@@ -35,10 +35,10 @@ govern <- function(network = NULL) {
     }
   }
 
-  set_fun_pair <- function(project, fun, code) {
+  set_fun_pair <- function(project, fun_name, code) {
     list_pairing <- list(
       project = project,
-      fun = fun
+      fun = fun_name
     )
     state_env$fun_pairs[[code]] <- list_pairing
   }
@@ -47,10 +47,10 @@ govern <- function(network = NULL) {
     state_env$fun_pairs[[code]]
   }
 
-  set_function_stack <- function(project, fun, fun_code, dep_funs, dep_projects, joins, push) {
+  set_function_stack <- function(project, fun_name, fun_code, deps, push) {
     current_stack <- get_function_stack(project = project)
-    codes <- build_dependency_codes(from = project, dependencies = dep_funs, projects = dep_projects, joins = joins)
-    set_fun_pair(project = project, fun = fun, code = fun_code)
+    codes <- build_dependency_codes(deps)
+    set_fun_pair(project = project, fun_name = fun_name, code = fun_code)
     set_pulls(project, push)
     add_to_stack <- setNames(list(codes), fun_code)
     if(!fun_code %in% names(current_stack)) {
@@ -116,32 +116,28 @@ govern <- function(network = NULL) {
   # Sets up a table environments for each Project
 
   execute_stack <- function(fun) {
-    link_type <- fun$info$link_type
-    if (link_type == "get") {
-      data <- do.call(fun$call$fun, fun$call$args)
-      project <- fun$info$project
-      set_data_key(project = project, key = project)
-      set_data(data = data, key = get_data_key(project))
-    } else if (link_type == "add") {
-      project <- fun$info$project
-      fun$call$args[[1]] <- get_data(project = project)
-      data <- do.call(fun$call$fun, fun$call$args)
-      set_data(data = data, key = get_data_key(project))
-    } else if (link_type == "join") {
-      project_1 <- fun$network$left
-      project_2 <- fun$network$right
-      fun$call$args[[1]] <- get_data(project = project_1)
-      fun$call$args[[2]]  <- get_data(project = project_2)
-      data <- do.call(fun$call$fun, fun$call$args)
-      set_data(data = NULL, key = get_data_key(project_1))
-      set_data(data = NULL, key = get_data_key(project_2))
-      new_key <- paste0(project_1, project_2)
-      update_projects <- c(get_projects_by_key(get_data_key(project_1)), get_projects_by_key(get_data_key(project_2)))
-      for(proj in update_projects) {
-        set_data_key(project = proj, key = new_key)
-      }
-      set_data(data = data, key = new_key)
+    arg_names <- fun$network$arg_defs$names
+    projects <- get_all_projects(fun)
+    if (!length(arg_names) == 0) { # set correct args
+      fun$ruleset$args <-   sapply(arg_names, \(name) build_executable_args(name = name, fun = fun, projects = projects, get_data = get_data), simplify = FALSE, USE.NAMES = TRUE)
     }
+    # Doing this to avoid too much memory use, is this necessary?
+    for (project in projects) {
+      if(!is.null(get_data_key(project))) {
+        set_data(data = NULL, key = get_data_key(project))
+      }
+    }
+    new_key <- paste0(projects, collapse = "_")
+    data <- do.call(fun$ruleset$fun, fun$ruleset$args)
+    projects_update_key <- do.call(c, lapply(projects, \(project) {
+      key <- get_data_key(project)
+      if(is.null(key)) return(project)
+      get_projects_by_key(key)
+      }))
+    for(proj in projects_update_key) {
+      set_data_key(project = proj, key = new_key)
+    }
+    set_data(data = data, key = new_key)
   }
 
   get_projects_by_key <- function(key) {

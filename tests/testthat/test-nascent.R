@@ -35,7 +35,7 @@ test_that("nascent can resolve a large network", {
 
   large_network <- merge_networks(test_network, main_network)
 
-  large_network$map$join(with = "main", join_datasets(main_data = query(map = "id"), extra_data = query(main = "id")))
+  large_network$map$join(join_datasets(main_data = query(map = "id"), extra_data = query(main = "id")))
   test_table <- large_network |> nascent(query(map = "id", intelligence = "new_column",
                     side1 = "col1", side2 = "col2", side3 = "col3"))
   expected_table <- data.frame(
@@ -47,3 +47,19 @@ test_that("nascent can resolve a large network", {
   )
   expect_identical(test_table, expected_table)
 })
+
+test_that("Querying a project with star retrieves all columns associated with the project", {
+  test_state_1 <- init_network()
+  test_state_1$add_project("customer_data")
+  test_state_1$add_project("occupation")
+  test_state_1$customer_data$get(get_sample_data())
+  test_state_1$customer_data$add(add_score_category(data = query(customer_data = "score")))
+  xafty_query <- query(customer_data = "*")
+  test_data <- test_state_1 |> nascent(xafty_query)
+  expected_data <- structure(list(score = c(85, 92, 78, 90, 88), id = 1:5,
+                            name = c("Alice", "Bob", "Charlie", "Diana", "Eve"),
+                            category = c("Low", "High", "Low", "High", "Low")),
+                             row.names = c(NA, -5L), class = "data.frame")
+  expect_identical(test_data, expected_data)
+})
+

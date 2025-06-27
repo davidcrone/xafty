@@ -4,7 +4,6 @@
 #' @param ... List.
 #' @export
 nascent <- function(network, ...) {
-
   if(inherits(network, what = "bundled_xafty_network")) {
     xafty_query <- network$query
   } else if(!inherits(list(...)[[1]], what = "xafty_query_list")) {
@@ -12,6 +11,9 @@ nascent <- function(network, ...) {
   } else {
     xafty_query <- list(...)[[1]]
   }
+  sub_queries <- get_sub_queries(query = xafty_query, network = network)
+  xafty_query <- temper_query(query = xafty_query, network = network)
+
   stopifnot(is.list(xafty_query))
   stopifnot(inherits(network, "xafty_network"))
   sm <- govern(network)
@@ -50,16 +52,21 @@ resolve_dependencies <- function(projects, xafty_list, network, sm) {
     list_link <- sapply(pulls, get_chatty_link_from_network, project = project, network = network, simplify = FALSE, USE.NAMES = TRUE)
     add_function_stack <- lapply(pulls, \(pull) {
       link <- list_link[[pull]]
-      fun_code <- paste0(project, ".", link$fun_name) # This happens here because when setting a join function, it needs to add join as a prefix.
-      sm$set_function_stack(project = project, fun = link$fun_name, fun_code = fun_code, dep_funs = link$exec, dep_projects = link$from, joins = link$joins, push = link$push)
+      fun_code <- paste0(project, ".", link$ruleset$fun_name) # This happens here because when setting a join function, it needs to add join as a prefix.
+      sm$set_function_stack(project = project, fun_name = link$ruleset$fun_name, fun_code = fun_code, deps = link$network$dependencies, push = link$network$output$added_cols)
     })
     dependend_projects <- lapply(list_link, \(link) {
-      dependend_projects <- unique(link$from)
-      if(!is.null(dependend_projects)) {
-        columns <- link$pull
-        for (project in dependend_projects) {
-          add_columns <- columns[link$from == project]
-          sm$set_dependencies(project, add_columns)
+       # TODO this needs a better break condition, so that normal arguments are not looped through
+      dependencies <- link$network$dependencies
+      arg_names <- link$network$arg_defs$names
+      if(length(dependencies) > 0) {
+        for (name in arg_names) {
+          deps_arg <- dependencies[[name]]
+          projects <- names(deps_arg$cols)
+          for (proj in projects) {
+            add_columns <- deps_arg$cols[[proj]]$select
+            sm$set_dependencies(proj, add_columns)
+          }
         }
       }
     })
@@ -90,17 +97,25 @@ remove_join_helpers <- function(stack_sorted) {
 }
 
 get_join_functions <- function(from, to, network, sm) {
-  link <- network[[from]]$joined_projects[[to]]
-  sm$set_fun_pair(project = from, fun = link$fun_name, code = paste0("fuse.", link$left, ".", link$right))
-  list_join_codes <- join_code_generator(link)
+  fun_name <- network[[from]]$joined_projects[[to]]
+  link <- network[[from]]$ruleset$modules$link[[fun_name]]
+  arg_names <- link$network$arg_defs$names
+  fused_projects <- vapply(arg_names, \(name) link$network$dependencies[[name]]$lead, FUN.VALUE = character(1))
+  join_code <- paste0("fuse.", paste0(fused_projects, collapse = "."))
+  sm$set_fun_pair(project = from, fun = fun_name, code = join_code)
+  list_join_codes <- join_code_generator(link = link, join_code = join_code, fused_projects = fused_projects)
   for(i in seq_along(list_join_codes)) {
     li_codes <- list_join_codes[i]
     append_join_list(li_codes, sm = sm)
   }
-  join_projects <- unique(link$from)
-  for (join_proj in join_projects) {
-    join_dependencies <- link$pull[link$from == join_proj]
-    sm$set_dependencies(join_proj, join_dependencies)
+  dependencies <- link$network$dependencies
+  for (name in arg_names) {
+    deps_arg <- dependencies[[name]]$cols
+    projects <- names(deps_arg)
+    for (proj in projects) {
+      join_dependencies <- deps_arg[[proj]]$select
+      sm$set_dependencies(project = proj, cols = join_dependencies)
+    }
   }
 }
 
@@ -114,11 +129,10 @@ append_join_list <- function(li_codes, sm) {
   invisible(current_joins)
 }
 
-join_code_generator <- function(link) {
-  join_code <- paste0("fuse.", link$left, ".", link$right)
-  join_dependencies <- build_dependency_codes(dependencies = link$exec, projects = link$from, joins = link$joins)
+join_code_generator <- function(link, join_code, fused_projects) {
+  join_dependencies <- build_dependency_codes(deps = link$network$dependencies)
   join_list_main <- setNames(list(join_dependencies), join_code)
-  fun_codes <- c(paste0("join.", link$left, ".", link$right), paste0("join.", link$right, ".", link$left))
+  fun_codes <- vapply(get_ordered_join_pairs(fused_projects), \(pair) paste0("join.", pair[1], ".", pair[2]), FUN.VALUE = character(1))
   join_list_help <- sapply(fun_codes, \(code) join_code, simplify = FALSE, USE.NAMES = TRUE)
   c(join_list_main, join_list_help)
 }
@@ -203,7 +217,7 @@ get_chatty_link_from_network <- function(pull, project, network) {
   if(is.null(columns_subset)) {
     stop(paste0("Column: ", pull, " is not contained in project: ", project))
   }
-  columns_subset
+  network[[project]]$ruleset[["modules"]][["link"]][[columns_subset]]
 }
 
 build_join_bridges <- function(sm, network) {

@@ -66,27 +66,20 @@ test_network <- init_network()
 ## Project 1 ##
 test_network$add_project("customer_data")
 test_network$customer_data$get(get_sample_data())
-score_data <- test_network |>  nascent(customer_data = c("score", "name"))
-test_network$customer_data$add(add_score_category(data = score_data))
+score_name_query<- query(customer_data = c("score", "name"))
+test_network$customer_data$add(add_score_category(data = score_name_query))
 
 ## Project 2 ##
 test_network$add_project("occupations")
 test_network$occupations$get(get_additional_info())
 
-## Join Projects ##
-customer_id <- get_sample_data()["id"]
-occupation_id <- get_additional_info()["id"]
-
 # Join  projects
-test_network$customer_data$join(join_datasets(main_data = query(customer_data = c("id", "category")), extra_data = query(occupations = "id")),
-                                with = "occupations")
-
+test_network$customer_data$join(join_datasets(main_data = query(customer_data = c("id", "category")), extra_data = query(occupations = "id")))
+test_network |> nascent(customer_data = "name", occupations = "department")
 # Column depending on a two projects
 test_network$customer_data$add(new_column_from_both_projects(query(customer_data = "name", occupations = "department")))
 
-data_worlds_connected <- test_network |>
-  add_query(occupations = "id", customer_data = c("name", "nickname")) |>
-  nascent()
+data_worlds_connected <- test_network |> nascent(query(occupations = "id", customer_data = c("name", "nickname")))
 
 
 
@@ -96,11 +89,11 @@ test_network$add_project("map")
 
 test_network$intelligence$get(intelligence_date())
 test_network$map$get(mapping_data())
-test_network$intelligence$join(with = "map", fun = join_datasets_map(intelligence = query(intelligence = "secret_id"), map = query(map =  "secret_id")))
+test_network$intelligence$join(fun = join_datasets_map(intelligence = query(intelligence = "secret_id"), map = query(map =  "secret_id")))
 
 test_network$map$add(add_decoded_id(query(map = "secret_id")))
 
-test_network$customer_data$join(with = "map", fun = join_intelligence(main_data = query(customer_data = "id"), extra_data = query(map = "id")))
+test_network$customer_data$join(fun = join_intelligence(main_data = query(customer_data = "id"), extra_data = query(map = "id")))
 
 all_joined <- test_network |> nascent(query(occupations = "department", intelligence = "intelligence", customer_data = c("name", "nickname")))
 
