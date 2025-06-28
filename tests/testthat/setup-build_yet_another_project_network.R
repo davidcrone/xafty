@@ -1,7 +1,3 @@
-capture_quosure <- function(fun) {
-  rlang::enquo(fun)
-}
-
 test_get_car_data <- function(conn) {
   if(conn) {
     data <- data.frame(

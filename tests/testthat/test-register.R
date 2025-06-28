@@ -110,3 +110,4 @@ test_that("xafty_bundle allows to seamlessly add a column to the project", {
                        "MarketingDiana", "SalesEve")), row.names = c(NA, -5L), class = "data.frame")
   expect_identical(table_test, table_expected)
 })
+
