@@ -44,12 +44,7 @@ unpack <- function(quosure, network, project) {
 
 args_analysis <- function(fun, args, fun_env, network) {
   links <- vapply(args, \(arg) find_xafty_objects(arg), FUN.VALUE = character(1))
-  arg_names <- names(links)
-  names(links) <- NULL
-  arg_defs <- list(
-    names = arg_names,
-    links = links
-  )
+  arg_defs <- build_arg_defs(links)
   args_evals <- mapply(exe_query, args, links, SIMPLIFY = FALSE, USE.NAMES = TRUE, MoreArgs = list(network = network))
   li_arg_dependencies <- gather_dependencies_per_arg(args = args, defs = arg_defs, network = network)
   li_output <- gather_output_info(fun = fun, args = args_evals, arg_deps = li_arg_dependencies, defs = arg_defs, fun_env = fun_env)
@@ -68,6 +63,15 @@ info_list <- function(list_args, project) {
   )
 }
 
+build_arg_defs <- function(links) {
+  arg_names <- names(links)
+  names(links) <- NULL
+  arg_defs <- list(
+    names = arg_names,
+    links = links
+  )
+  arg_defs
+}
 gather_output_info <- function(fun, args, arg_deps, defs, fun_env) {
   arg_names <- defs$names
   input_cols <- do.call(c, lapply(arg_names, \(name) {
@@ -120,7 +124,11 @@ gather_dependencies_per_arg <- function(args, defs, network) {
           funs = funs
         )
         }, simplify = FALSE, USE.NAMES = TRUE)
-      join_deps <- projects[projects != lead_project]
+      if (length(projects) <= 1) {
+        join_deps <- character(0)
+      } else {
+        join_deps <- projects
+      }
       list(
         lead = lead_project,
         cols = cols_deps,
@@ -210,10 +218,9 @@ build_dependency_codes <- function(deps) {
     do.call(c, lapply(dep_projects, \(proj) paste0(proj, ".", arg[[proj]]$funs)))
   }))
   join_depends <- do.call(c, lapply(deps, \(dep) {
-    lead_project <- dep$lead
-    join_projects <- dep$joins
-    if(length(join_projects) > 0) {
-      return(paste0("join.", lead_project, ".", join_projects))
+    if (length(dep$joins) > 1) {
+      unordered_pairs <- combn(dep$joins, 2, simplify = FALSE)
+      return(build_join_pairs(unordered_pairs))
     }
     character(0)
   }))
