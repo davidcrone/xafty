@@ -12,24 +12,19 @@
 #' @export
 init_network <- function() {
   network_env <- new.env() # This is the list where all projects will be merged together
-  add_project <- function(project, ...) {
-    if(length(project) == 0 | length(project) > 1) stop("Please enter the project's name.")
-    if(!identical(project, make.names(project))) stop("Please enter a valid project name")
-    reserved_names <- c("save", "add_project", "query")
-    if(project %in% reserved_names) stop(paste0("Please don't use any of the following reserved names as project names: ", paste0(reserved_names, collapse = ", "), "."))
-    names_network <- names(network_env)
-    existing_projects <- names_network[vapply(names_network, \(project) is.environment(network_env[[project]]), FUN.VALUE = logical(1))]
-    if(any(project %in% existing_projects)) stop(paste0("Project '", project, "' exists already in network"))
+  add_project <- function(name, ...) {
+    validate_project_name(name = name, network = network_env)
     project_config <- list(...)
     new_ruleset <- ruleset()
     new_settings <- settings()
-    .network_env <- add_new_project(project = project, ruleset = new_ruleset, settings = new_settings, network_env = network_env)
+    .network_env <- add_new_project(project = name, ruleset = new_ruleset, settings = new_settings, network_env = network_env,
+                                    link_types = c("get", "add", "join"))
     if(length(project_config) > 0) {
       xafty_query <- project_config[[1]]
       if (!inherits(xafty_query, what = "xafty_query_list")) {
         warning("value passed to dots argument, is not a xafty_query_list. Dots argument is being ignored!")
       } else {
-        project_env <- .network_env[[project]]
+        project_env <- .network_env[[name]]
         entry <- function(val = "data") {
           force(xafty_query)
           if(val == "data") {
@@ -38,23 +33,37 @@ init_network <- function() {
             xafty_query
           }
         }
-        class(project_env) <- c("xafty_project", "xafty_bundle", "environment")
+        class(project_env) <- c("xafty_bundle", "environment")
         assign("entry", entry, envir = project_env)
       }
     }
     invisible(.network_env)
   }
+
+  add_container <- function(name, ...)  {
+    validate_project_name(name = name, network = network_env)
+    project_config <- list(...)
+    new_ruleset <- ruleset()
+    new_settings <- settings()
+    .network_env <- add_new_project(project = name, ruleset = new_ruleset, settings = new_settings, network_env = network_env,
+                                    link_types = c("add"))
+    project_env <- .network_env[[name]]
+    class(project_env) <- c("xafty_container", "environment")
+    invisible(.network_env)
+  }
+
   save_project <- function(file_name, path) {
     full_path <- paste0(path, "/", file_name, ".rds")
     save(network_env, file = full_path)
   }
   assign("add_project", add_project, envir = network_env)
   assign("save", save_project, envir = network_env)
+  assign("add_container", add_container, envir = network_env)
   class(network_env) <- c("xafty_network", "environment")
   invisible(network_env)
 }
 
-add_new_project <- function(project, ruleset, settings, network_env) {
+add_new_project <- function(project, ruleset, settings, network_env, link_types = c("get", "add", "join")) {
   env_names <- c("variables", "joined_projects") # These will be environments for frequent look-ups during the nascent process
 
   project_env <- new.env() # This is the environment, where all code will be organized
@@ -66,9 +75,7 @@ add_new_project <- function(project, ruleset, settings, network_env) {
 
   link_funs <- bundle_link_functions(project = project, env = network_env)
 
-  link_names <- c("get", "add", "join")
-
-  for (lp in link_names) {
+  for (lp in link_types) {
     assign(lp, link_funs[[lp]], envir = project_env)
   }
   invisible(network_env)
@@ -143,4 +150,14 @@ merge_networks <- function(...) {
 
   class(new_network_env) <- c("xafty_network", "environment")
   new_network_env
+}
+
+validate_project_name <- function(name, network) {
+  if(length(name) == 0 | length(name) > 1) stop("Please enter the project's name.")
+  if(!identical(name, make.names(name))) stop("Please enter a valid project name")
+  reserved_names <- c("save", "add_project", "query")
+  if(name %in% reserved_names) stop(paste0("Please don't use any of the following reserved names as project names: ", paste0(reserved_names, collapse = ", "), "."))
+  names_network <- names(network)
+  existing_projects <- names_network[vapply(names_network, \(project) is.environment(network[[project]]), FUN.VALUE = logical(1))]
+  if(any(name %in% existing_projects)) stop(paste0("Project '", name, "' exists already in network"))
 }

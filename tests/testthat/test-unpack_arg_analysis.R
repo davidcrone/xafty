@@ -80,3 +80,53 @@ test_that("unpack dependencies works with a two projects passed both to the firs
   )
   expect_identical(list_depends_test, list_depends_expected)
 })
+
+test_that("unpack dependencies correctly detects containers and removes them from dependencies", {
+  test_network$add_container("value_sheet")
+  list_depends_test <- test_arg_dependencies(new_column_from_both_projects(query(occupations = "department", customer_data = "name")),
+                                             project = "value_sheet", network = test_network)
+  list_depends_expected <- list(
+    data = list(
+      lead = "occupations",
+      cols = list(
+        occupations = list(
+          select = c("department"),
+          funs = c("get_additional_info")
+        ),
+        customer_data = list(
+          select = "name",
+          funs = "get_sample_data"
+        )
+      ),
+      joins = c("occupations", "customer_data")
+    )
+  )
+  expect_identical(list_depends_test, list_depends_expected)
+})
+
+test_that("unpack dependencies correctly detects containers and removes them from dependencies", {
+  test_network$value_sheet$add(new_column_from_both_projects(query(occupations = "department", customer_data = "name")))
+  list_depends_test <- test_arg_dependencies(add_column_to_intelligence(data = query(occupations = "department", customer_data = "id", value_sheet = "nickname")),
+                        project = "value_sheet", network = test_network)
+  list_depends_expected <- list(
+    data = list(
+      lead = "occupations",
+      cols = list(
+        occupations = list(
+          select = c("department"),
+          funs = c("get_additional_info")
+        ),
+        customer_data = list(
+          select = "id",
+          funs = "get_sample_data"
+        ),
+        value_sheet = list(
+          select = "nickname",
+          funs = "new_column_from_both_projects"
+        )
+      ),
+      joins = c("occupations", "customer_data")
+    )
+  )
+  expect_identical(list_depends_test, list_depends_expected)
+})

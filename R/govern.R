@@ -100,8 +100,12 @@ govern <- function(network = NULL) {
     state_env$projects[[project]]$fun_stack
   }
 
-  get_projects <- function() {
-    names(state_env$projects)
+  get_projects <- function(joins_only = FALSE) {
+    projects <- names(state_env$projects)
+    if(joins_only) {
+      projects <- projects[vapply(projects, \(project) "xafty_project" %in% class(network[[project]]), FUN.VALUE = logical(1))]
+    }
+    projects
   }
 
   set_join_path <- function(path) {

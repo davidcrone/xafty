@@ -95,7 +95,7 @@ test_that("New environment type xafty_bundle allows to bundle queries with as su
   expect_identical(data_test, data_expected)
 })
 
-test_that("xafty_bundle allows to seamlessly add a column to the project", {
+test_that("xafty_bundle allows to seamlessly add a column to a ghost project", {
   test_state_1 <- init_network()
   test_state_1$add_project("customer_data")
   test_state_1$add_project("occupation")
@@ -111,3 +111,20 @@ test_that("xafty_bundle allows to seamlessly add a column to the project", {
   expect_identical(table_test, table_expected)
 })
 
+test_that("xafty_bundle allows to seamlessly add a column to a ghost project", {
+  test_state_1 <- init_network()
+  test_state_1$add_project("customer_data")
+  test_state_1$add_project("occupation")
+  test_state_1$add_container("value_sheet")
+  test_state_1$customer_data$get(get_sample_data())
+  test_state_1$customer_data$add(add_score_category(data = query(customer_data = "score")))
+  test_state_1$occupation$get(get_additional_info())
+  test_state_1$customer_data$join(join_datasets(main_data = query(customer_data = "id"), extra_data = query(occupation = "id")))
+  test_state_1$value_sheet$add(new_column_from_both_projects(query(occupation = "department", customer_data = "name")))
+  test_state_1$value_sheet$add(add_column_to_intelligence(data = query(occupation = "department", customer_data = "id", value_sheet = "nickname")))
+  table_test <- test_state_1 |> nascent(occupation = "department", value_sheet = "new_column")
+  table_expected <- structure(list(
+    department = c("HR", "IT", "Finance", "Marketing", "Sales"),
+    new_column = c("HR1", "IT2", "Finance3", "Marketing4", "Sales5")), row.names = c(NA, -5L), class = "data.frame")
+  expect_identical(table_test, table_expected)
+})

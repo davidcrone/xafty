@@ -71,7 +71,7 @@ resolve_dependencies <- function(projects, xafty_list, network, sm) {
       }
     })
   })
-  set_join_dependencies(projects = sm$get_projects(), network = network, sm = sm)
+  set_join_dependencies(projects = sm$get_projects(joins_only = TRUE), network = network, sm = sm)
   # Check whether unresolved dependencies remain
   list_dependencies <- sapply(sm$get_projects(), \(project) sm$get_dependencies(project), simplify = FALSE, USE.NAMES = TRUE)
   list_dependencies <- list_dependencies[vapply(list_dependencies, \(value) !is.null(value), FUN.VALUE = logical(1))]

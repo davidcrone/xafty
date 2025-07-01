@@ -37,7 +37,7 @@ new_column_from_both_projects <- function(data) {
 }
 
 intelligence_date <- function() {
-  intel <- ceiling(rnorm(5, mean = 100, sd = 10))
+  intel <- c(120, 99, 100, 130, 80)
   secret_id <-c(1, 2, 3, 4, 5) + 1
   data.frame(
     intelligence = intel,

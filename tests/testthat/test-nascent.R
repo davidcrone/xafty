@@ -63,3 +63,14 @@ test_that("Querying a project with star retrieves all columns associated with th
   expect_identical(test_data, expected_data)
 })
 
+test_that("querying with * retrieves all data from a project", {
+  test_data <- test_network |> nascent(query(customer_data = "*"))
+  expected_data <- structure(list(mean_nickname = c("SmartHRAlice", "DumbITBob",
+    "DumbFinanceCharlie", "SmartMarketingDiana", "DumbSalesEve"),
+    score = c(85, 92, 78, 90, 88), id = 1:5, name = c("Alice",
+    "Bob", "Charlie", "Diana", "Eve"), category = c("Low", "High",
+    "Low", "High", "Low"), nickname = c("HRAlice", "ITBob", "FinanceCharlie",
+    "MarketingDiana", "SalesEve")), row.names = c(NA, -5L), class = "data.frame")
+  expect_identical(test_data, expected_data)
+})
+
