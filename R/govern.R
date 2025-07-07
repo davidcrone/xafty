@@ -133,6 +133,7 @@ govern <- function(network = NULL) {
     }
     new_key <- paste0(projects, collapse = "_")
     data <- do.call(fun$ruleset$fun, fun$ruleset$args)
+    data <- scope(data = data, link = fun)
     projects_update_key <- do.call(c, lapply(projects, \(project) {
       key <- get_data_key(project)
       if(is.null(key)) return(project)

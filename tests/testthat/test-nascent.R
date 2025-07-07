@@ -74,3 +74,12 @@ test_that("querying with * retrieves all data from a project", {
   expect_identical(test_data, expected_data)
 })
 
+test_that("projects with same column names can be pulled", {
+  int_catgeory <- function(data) {
+    data$category <- c("right", "left", "left", "right", "left")
+    data
+  }
+  test_network$intelligence$add(int_catgeory(data = query(intelligence = "intelligence")))
+  test_data <- test_network |> nascent(query(customer_data = "category", intelligence = "category"))
+
+})

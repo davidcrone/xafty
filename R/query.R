@@ -93,6 +93,7 @@ get_sub_queries <- function(query, network) {
   sub_query_list[!vapply(sub_query_list, \(query) is.null(query), FUN.VALUE = logical(1))]
 }
 
+
 merge_queries <- function(...) {
  # TODO
 }

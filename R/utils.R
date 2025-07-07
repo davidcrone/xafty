@@ -284,7 +284,8 @@ build_executable_args <- function(name, fun, projects, get_data) {
   link <- fun$network$arg_defs$links[fun$network$arg_defs$names == name]
   if (link == "xafty_query") {
     lead_project <- fun$network$dependencies[[name]]$lead
-    get_data(project = lead_project)
+    data <- get_data(project = lead_project)
+    unscope(data = data, link = fun, arg_name = name)
   } else if (link == "xafty_state") {
     # TODO get xafty state
     fun$ruleset$args[[name]]

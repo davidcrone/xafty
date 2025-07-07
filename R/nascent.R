@@ -13,7 +13,6 @@ nascent <- function(network, ...) {
   }
   sub_queries <- get_sub_queries(query = xafty_query, network = network)
   xafty_query <- temper_query(query = xafty_query, network = network)
-
   stopifnot(is.list(xafty_query))
   stopifnot(inherits(network, "xafty_network"))
   sm <- govern(network)
@@ -29,7 +28,7 @@ nascent <- function(network, ...) {
     names(data_list) <- key_salad
     data_list
   } else {
-    sm$get_data_by_key(data_keys)[collect_all_column_names(xafty_query)]
+    return_unscoped_data(data = sm$get_data_by_key(data_keys), query = xafty_query)
   }
 }
 
