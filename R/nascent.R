@@ -28,6 +28,7 @@ nascent <- function(network, ...) {
     names(data_list) <- key_salad
     data_list
   } else {
+    browser()
     return_unscoped_data(data = sm$get_data_by_key(data_keys), query = xafty_query)
   }
 }

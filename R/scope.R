@@ -1,10 +1,23 @@
 
 scope <- function(data, link) {
-  # TODO Scope dependencies again!
-  browser()
+
+  dependend_args <- link$network$dependencies
+  colnames_dataset <- colnames(data)
+
+  for (dep_arg in dependend_args) {
+    projects <- names(dep_arg$cols)
+    for (project in projects) {
+      selection <- dep_arg$cols[[project]]$select
+      for (col in selection) {
+        pos_col <- which(colnames_dataset %in% col)
+        scoped_name <- paste0(project, ".", col)
+        colnames_dataset[pos_col] <- scoped_name
+      }
+    }
+  }
+
   added_columns <- link$network$output$added_cols
   project <- link$info$project
-  colnames_dataset <- colnames(data)
 
   for (col in added_columns) {
     pos_col <- which(colnames_dataset %in% col)
