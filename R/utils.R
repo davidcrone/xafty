@@ -280,12 +280,12 @@ build_join_pairs <- function(li_pairs) {
   }))
 }
 
-build_executable_args <- function(name, fun, projects, get_data) {
+build_executable_args <- function(name, fun, projects, get_data, mask) {
   link <- fun$network$arg_defs$links[fun$network$arg_defs$names == name]
   if (link == "xafty_query") {
     lead_project <- fun$network$dependencies[[name]]$lead
     data <- get_data(project = lead_project)
-    unscope(data = data, link = fun, arg_name = name)
+    unscope(data = data, link = fun, arg_name = name, mask = mask)
   } else if (link == "xafty_state") {
     # TODO get xafty state
     fun$ruleset$args[[name]]

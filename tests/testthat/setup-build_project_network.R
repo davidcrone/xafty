@@ -114,7 +114,7 @@ test_network$customer_data$add(add_new_nickname(data = add_new_nickname_link))
 test_network |> nascent(query(customer_data = "mean_nickname"))
 # join between occupations and intelligence
 
-new_query <- query(occupations = "department" ,intelligence = "intelligence")
+new_query <- query(occupations = "department", map = "id")
 
 add_column_to_intelligence <- function(data) {
   data$new_column <- paste0(data$department, data$id)

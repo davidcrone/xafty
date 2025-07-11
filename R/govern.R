@@ -27,6 +27,16 @@ govern <- function(network = NULL) {
     state_env$data[[key]]
   }
 
+  get_projects_by_key <- function(key) {
+    projects <- get_projects()
+    contains_key <- vapply(projects, \(project) {
+      key_value <- state_env$projects[[project]]$key
+      if(is.null(key_value)) return(FALSE)
+      key_value == key
+    } , FUN.VALUE = logical(1))
+    names(contains_key)[contains_key]
+  }
+
   set_dependencies <- function(project, cols) {
     new_dependencies <- c(get_dependencies(project), cols)
     non_already_pulled <- new_dependencies[!new_dependencies %in% get_pulls(project)]
@@ -123,7 +133,7 @@ govern <- function(network = NULL) {
     arg_names <- fun$network$arg_defs$names
     projects <- get_all_projects(fun)
     if (!length(arg_names) == 0) { # set correct args
-      fun$ruleset$args <-   sapply(arg_names, \(name) build_executable_args(name = name, fun = fun, projects = projects, get_data = get_data), simplify = FALSE, USE.NAMES = TRUE)
+      fun$ruleset$args <-   sapply(arg_names, \(name) build_executable_args(name = name, fun = fun, projects = projects, get_data = get_data, mask = state_env$masks), simplify = FALSE, USE.NAMES = TRUE)
     }
     # Doing this to avoid too much memory use, is this necessary?
     for (project in projects) {
@@ -133,7 +143,7 @@ govern <- function(network = NULL) {
     }
     new_key <- paste0(projects, collapse = "_")
     data <- do.call(fun$ruleset$fun, fun$ruleset$args)
-    data <- scope(data = data, link = fun)
+    data <- scope(data = data, link = fun, mask = state_env$masks)
     projects_update_key <- do.call(c, lapply(projects, \(project) {
       key <- get_data_key(project)
       if(is.null(key)) return(project)
@@ -145,16 +155,19 @@ govern <- function(network = NULL) {
     set_data(data = data, key = new_key)
   }
 
-  get_projects_by_key <- function(key) {
-    projects <- get_projects()
-    contains_key <- vapply(projects, \(project) {
-      key_value <- state_env$projects[[project]]$key
-      if(is.null(key_value)) return(FALSE)
-      key_value == key
-    } , FUN.VALUE = logical(1))
-    names(contains_key)[contains_key]
+  set_masked_columns <- function(mask) {
+    current_masks <- state_env$masks
+    for (i in seq_along(mask)) {
+      col <- names(mask[i])
+      projects <- mask[[i]]
+      current_masks[[col]] <- unique(c(current_masks[[col]], projects))
+    }
+    state_env$masks <- current_masks
   }
 
+  get_masked_columns <- function() {
+    state_env$masks
+  }
   list(
     # Global state
     get_projects = get_projects,
@@ -176,7 +189,8 @@ govern <- function(network = NULL) {
     set_fun_pair = set_fun_pair,
     get_fun_pair = get_fun_pair,
     get_projects_by_key = get_projects_by_key,
-    get_data_by_key = get_data_by_key
+    get_data_by_key = get_data_by_key,
+    set_masked_columns = set_masked_columns,
+    get_masked_columns = get_masked_columns
   )
-
 }

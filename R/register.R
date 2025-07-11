@@ -1,5 +1,4 @@
 register <- function(quosure, type, module, project, network, ...) {
-  # quosure <- rlang::enquo(quosure)
   unpacked <- unpack(quosure = quosure, network = network, project = project)
   add_to_ruleset(item = unpacked, module = module, env = network, project = project)
   add_to_network(item = unpacked, network = network, project = project)

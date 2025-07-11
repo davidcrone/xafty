@@ -81,5 +81,8 @@ test_that("projects with same column names can be pulled", {
   }
   test_network$intelligence$add(int_catgeory(data = query(intelligence = "intelligence")))
   test_data <- test_network |> nascent(query(customer_data = "category", intelligence = "category"))
-
+  expected_data <- structure(list(category = c("Low", "High", "Low", "High", "Low"
+  ), category = c("right", "left", "left", "right", "left")), row.names = c(NA,
+    -5L), class = "data.frame")
+  expect_identical(test_data, expected_data)
 })

@@ -28,8 +28,7 @@ nascent <- function(network, ...) {
     names(data_list) <- key_salad
     data_list
   } else {
-    browser()
-    return_unscoped_data(data = sm$get_data_by_key(data_keys), query = xafty_query)
+    return_unscoped_data(data = sm$get_data_by_key(data_keys), query = xafty_query, sm = sm)
   }
 }
 
@@ -99,6 +98,8 @@ remove_join_helpers <- function(stack_sorted) {
 get_join_functions <- function(from, to, network, sm) {
   fun_name <- network[[from]]$joined_projects[[to]]
   link <- network[[from]]$ruleset$modules$link[[fun_name]]
+  lst_masked_columns <- get_masked_column_names(link)
+  sm$set_masked_columns(lst_masked_columns)
   arg_names <- link$network$arg_defs$names
   fused_projects <- vapply(arg_names, \(name) link$network$dependencies[[name]]$lead, FUN.VALUE = character(1))
   join_code <- paste0("fuse.", paste0(fused_projects, collapse = "."))
