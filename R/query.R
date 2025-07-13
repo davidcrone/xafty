@@ -95,5 +95,25 @@ get_sub_queries <- function(query, network) {
 
 
 merge_queries <- function(...) {
- # TODO
+  li_queries <- list(...)
+  merged_query <- list()
+  for (query in li_queries) {
+    projects <- vapply(query, \(q) q$from, FUN.VALUE = character(1))
+    uq_projects <- unique(projects)
+    positions <- lapply(uq_projects, \(proj) which(projects %in% proj))
+    index <- seq_along(uq_projects)
+    for(i in index) {
+      proj <- uq_projects[i]
+      pos <- positions[[i]]
+      selection <- do.call(c, lapply(pos, \(p) query[[p]]$select))
+      merged_query[[proj]]$select <- unique(c(merged_query[[proj]]$select, selection))
+    }
+  }
+  all_projects <- names(merged_query)
+  for (proj in all_projects) {
+    merged_query[[proj]]$from <- proj
+    class(merged_query[[proj]]) <- c("list", "xafty_query")
+  }
+  class(merged_query) <- c("list", "xafty_query_list")
+  merged_query
 }

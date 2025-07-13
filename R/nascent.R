@@ -5,14 +5,15 @@
 #' @export
 nascent <- function(network, ...) {
   if(inherits(network, what = "bundled_xafty_network")) {
-    xafty_query <- network$query
+    query <- network$query
   } else if(!inherits(list(...)[[1]], what = "xafty_query_list")) {
-    xafty_query <- query(...)
+    query <- query(...)
   } else {
-    xafty_query <- list(...)[[1]]
+    query <- list(...)[[1]]
   }
-  sub_queries <- get_sub_queries(query = xafty_query, network = network)
-  xafty_query <- temper_query(query = xafty_query, network = network)
+  sub_queries <- get_sub_queries(query = query, network = network)
+  query <- temper_query(query = query, network = network)
+  xafty_query <- merge_queries(query)
   stopifnot(is.list(xafty_query))
   stopifnot(inherits(network, "xafty_network"))
   sm <- govern(network)
@@ -28,7 +29,7 @@ nascent <- function(network, ...) {
     names(data_list) <- key_salad
     data_list
   } else {
-    return_unscoped_data(data = sm$get_data_by_key(data_keys), query = xafty_query, sm = sm)
+    return_unscoped_data(data = sm$get_data_by_key(data_keys), query = query, sm = sm)
   }
 }
 

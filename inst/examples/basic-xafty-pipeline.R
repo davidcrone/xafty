@@ -1,42 +1,3 @@
----
-output: github_document
----
-
-<!-- README.md is generated from README.Rmd. Please edit that file -->
-
-```{r, include = FALSE}
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>",
-  fig.path = "man/figures/README-",
-  out.width = "100%"
-)
-```
-
-# xafty
-
-<!-- badges: start -->
-<!-- badges: end -->
-
-**xafty** lets you build data pipelines as a directed acyclic graph (DAG), turning each step into a reusable node in a knowledge network. This makes pipelines more scalable, easier to collaborate on, and less complex over time through layered abstraction.
-
-⚠️ Note: In its current iteration, xafty should be understood as a proof of concept. The design and functionality are still evolving and may change significantly in future versions.
-
-## Installation
-
-``` r
- pak::pkg_install("davidcrone/xafty")
-```
-
-## Get Involved
-
-**xafty** is in active development, and your feedback is incredibly valuable.  
-If you're curious, testing it out, or have ideas to improve it [get in touch](mailto:davidjvcrone@gmail.com) or 
-[open an issue](https://github.com/davidcrone/xafty/issues). Whether it’s bugs, feature requests, or just to chat, I’d love to hear from you! :)
-
-## Basic Function
-
-``` r
 
 library(xafty)
 
@@ -84,5 +45,3 @@ xafty_network
 
 # Pull data from the network
 xafty_network |> nascent(mtcars = c("hp", "wt", "vs"), engine = "type", mtcars = "power_to_weight")
- 
-```

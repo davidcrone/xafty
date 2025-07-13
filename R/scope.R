@@ -118,7 +118,6 @@ interpolate_masks <- function(query, mask, data_cols) {
   vec_projects <- project_order[!cols_present]
 
   fill_vec <- vector(mode = "character", length = length(vec_columns))
-
   for (i in seq_along(vec_columns)) {
     col <- vec_columns[i]
     proj <- vec_projects[i]
