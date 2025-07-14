@@ -49,6 +49,7 @@ resolve_dependencies <- function(projects, xafty_list, network, sm) {
   lapply(projects, \(project) {
     list_links <- xafty_list[[project]]
     pulls <- list_links$select
+    browser()
     list_link <- sapply(pulls, get_chatty_link_from_network, project = project, network = network, simplify = FALSE, USE.NAMES = TRUE)
     add_function_stack <- lapply(pulls, \(pull) {
       link <- list_link[[pull]]

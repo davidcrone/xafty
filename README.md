@@ -11,9 +11,9 @@
 This makes pipelines more scalable, easier to collaborate on, and less
 complex over time through layered abstraction.
 
-⚠️ Note: In its current iteration, xafty should be understood as a proof
-of concept. The design and functionality are still evolving and may
-change significantly in future versions.
+⚠️ **Note:** In its current iteration, xafty should be understood as a
+proof of concept. The design and functionality are still evolving and
+may change significantly in future versions.
 
 ## Installation
 
@@ -30,9 +30,13 @@ touch](mailto:davidjvcrone@gmail.com) or [open an
 issue](https://github.com/davidcrone/xafty/issues). Whether it’s bugs,
 feature requests, or just to chat, I’d love to hear from you! :)
 
-## Basic Function
+## Basic Functionality
 
 ``` r
+
+########################
+## START: Preperation ##
+########################
 
 library(xafty)
 
@@ -58,6 +62,10 @@ get_engine_details <- function() {
 join_engine_details <- function(mtcars, engine) {
   merge(mtcars, engine, all.x = TRUE, sort = FALSE)
 }
+
+######################
+## END: Preperation ##
+######################
 
 ## Initialize the network
 xafty_network <- init_network()
