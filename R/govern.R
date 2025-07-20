@@ -129,11 +129,11 @@ govern <- function(network = NULL) {
   }
   # Sets up a table environments for each Project
 
-  execute_stack <- function(fun) {
-    arg_names <- fun$network$arg_defs$names
-    projects <- get_all_projects(fun)
+  execute_stack <- function(link) {
+    arg_names <- names(get_xafty_objects_vec(link))
+    projects <- unique(c(link$project, get_lead_projects(link)))
     if (!length(arg_names) == 0) { # set correct args
-      fun$ruleset$args <-   sapply(arg_names, \(name) build_executable_args(name = name, fun = fun, projects = projects, get_data = get_data, mask = state_env$masks), simplify = FALSE, USE.NAMES = TRUE)
+      link$args <- sapply(arg_names, \(name) build_executable_args(name = name, fun = fun, projects = projects, get_data = get_data, mask = state_env$masks), simplify = FALSE, USE.NAMES = TRUE)
     }
     # Doing this to avoid too much memory use, is this necessary?
     for (project in projects) {
@@ -142,8 +142,8 @@ govern <- function(network = NULL) {
       }
     }
     new_key <- paste0(projects, collapse = "_")
-    data <- do.call(fun$ruleset$fun, fun$ruleset$args)
-    data <- scope(data = data, link = fun, mask = state_env$masks)
+    data <- do.call(link$fun, link$args)
+    data <- scope(data = data, link = link, mask = state_env$masks)
     projects_update_key <- do.call(c, lapply(projects, \(project) {
       key <- get_data_key(project)
       if(is.null(key)) return(project)
@@ -192,5 +192,41 @@ govern <- function(network = NULL) {
     get_data_by_key = get_data_by_key,
     set_masked_columns = set_masked_columns,
     get_masked_columns = get_masked_columns
+  )
+}
+
+build_tree <- function() {
+  tree_env <- new.env()
+  tree_env$query <- query()
+
+  set_nodes <- function(link, code) {
+    node_name <- names(code)
+    node_dependencies <- code[[node_name]]
+    tree_env$codes[[node_name]] <- node_dependencies
+    tree_env$links[[node_name]] <- link
+  }
+
+  get_codes <- function() {
+    tree_env$codes
+  }
+
+  get_links <- function() {
+    tree_env$links
+  }
+
+  set_query <- function(query) {
+    tree_env$query <- merge_queries(tree_env$query, query)
+  }
+
+  get_query <- function() {
+    tree_env$query
+  }
+
+  list(
+    set_nodes = set_nodes,
+    get_codes = get_codes,
+    get_links = get_links,
+    get_query = get_query,
+    set_query = set_query
   )
 }

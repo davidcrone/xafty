@@ -16,9 +16,8 @@ settings <- function() {
 }
 
 add_to_ruleset <- function(item, module = "link", env, project) {
-  function_name <- item$ruleset$fun_name
-  arg_names <- item$network$arg_defs$names["xafty_query" == item$network$arg_defs$link]
-  projects <- unique(c(project, vapply(arg_names, \(name) item$network$dependencies[[name]]$lead, character(1))))
+  function_name <- item$fun_name
+  projects <- unique(c(project, get_lead_projects(item)))
   new_rule <- list(item)
   new_rule <- setNames(new_rule, function_name)
   for (proj in projects) {

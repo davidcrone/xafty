@@ -1,7 +1,7 @@
 register <- function(quosure, type, module, project, network, ...) {
-  unpacked <- unpack(quosure = quosure, network = network, project = project)
-  add_to_ruleset(item = unpacked, module = module, env = network, project = project)
-  add_to_network(item = unpacked, network = network, project = project)
+  link <- create_link(quosure = quosure,  project = project, network = network)
+  add_to_ruleset(item = link, module = module, env = network, project = project)
+  add_to_network(item = link, network = network, project = project)
   invisible(network)
 }
 
@@ -36,3 +36,21 @@ get_function_package <- function(func_name) {
   return(NA)  # Return NA if no package is found
 }
 
+create_link <- function(quosure, project, network) {
+  fun_exp <- rlang::get_expr(quosure)
+  fun_env <- rlang::get_env(quosure)
+  list_args <- unpack_args(exp = fun_exp, env = fun_env)
+  list_info <- list(
+    package = get_function_package(func_name = list_args$fun_name),
+    language = "R",
+    project = project
+  )
+  link<- append(list_args, list_info)
+  class(link) <- c("xafty_link", "list")
+  link$added_columns <- get_added_columns(link = link, network = network)
+  link
+}
+
+is_valid_link <- function(link) {
+  inherits(link, what = "xafty_link")
+}

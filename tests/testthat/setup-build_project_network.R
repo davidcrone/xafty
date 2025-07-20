@@ -97,7 +97,6 @@ test_network$customer_data$join(fun = join_intelligence(main_data = query(custom
 
 all_joined <- test_network |> nascent(query(occupations = "department", intelligence = "intelligence", customer_data = c("name", "nickname")))
 
-
 # new_add
 add_new_nickname_link <- query(intelligence = "intelligence", customer_data = "nickname")
 

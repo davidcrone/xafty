@@ -17,11 +17,10 @@ nascent <- function(network, ...) {
   stopifnot(is.list(xafty_query))
   stopifnot(inherits(network, "xafty_network"))
   sm <- govern(network)
-  projects <- names(xafty_query)
-  resolve_dependencies(projects = projects, xafty_list = xafty_query, network = network, sm = sm)
-  topological_sorted_codes <- resolve_function_stack(sm = sm)
-  list_function_stack <- lapply(topological_sorted_codes, retrieve_functions, sm = sm, env = network, module = "link")
-  lapply(list_function_stack, sm$execute_stack)
+  tree_sm <- resolve_dependencies(xafty_list = xafty_query, network = network, sm = sm)
+  topological_sorted_codes <- resolve_function_stack(sm = tree_sm)
+  list_links <- sort_links(topological_sorted_codes, sm = tree_sm)
+  lapply(list_links, sm$execute_stack)
   data_keys <- unique(vapply(sm$get_projects(), \(project) sm$get_data_key(project), FUN.VALUE = character(1)))
   if (length(data_keys) > 1) {
     key_salad <- vapply(data_keys, \(key) paste0(sm$get_projects_by_key(key), collapse = "_"), FUN.VALUE = character(1))
@@ -33,11 +32,9 @@ nascent <- function(network, ...) {
   }
 }
 
-retrieve_functions <- function(code, module = "link", sm, env) {
-  pair <- sm$get_fun_pair(code)
-  project <- pair$project
-  fun <- pair$fun
-  env[[project]]$ruleset$modules[[module]][[fun]]
+sort_links <- function(codes, sm) {
+  links <- sm$get_links()
+  lapply(codes, \(code) links[[code]])
 }
 
 
@@ -45,50 +42,15 @@ collect_all_column_names <- function(xafty_list) {
   do.call(c, lapply(xafty_list, \(xl) xl$select))
 }
 
-resolve_dependencies <- function(projects, xafty_list, network, sm) {
-  lapply(projects, \(project) {
-    list_links <- xafty_list[[project]]
-    pulls <- list_links$select
-    browser()
-    list_link <- sapply(pulls, get_chatty_link_from_network, project = project, network = network, simplify = FALSE, USE.NAMES = TRUE)
-    add_function_stack <- lapply(pulls, \(pull) {
-      link <- list_link[[pull]]
-      fun_code <- paste0(project, ".", link$ruleset$fun_name) # This happens here because when setting a join function, it needs to add join as a prefix.
-      sm$set_function_stack(project = project, fun_name = link$ruleset$fun_name, fun_code = fun_code, deps = link$network$dependencies, push = link$network$output$added_cols)
-    })
-    dependend_projects <- lapply(list_link, \(link) {
-       # TODO this needs a better break condition, so that normal arguments are not looped through
-      dependencies <- link$network$dependencies
-      arg_names <- link$network$arg_defs$names
-      if(length(dependencies) > 0) {
-        for (name in arg_names) {
-          deps_arg <- dependencies[[name]]
-          projects <- names(deps_arg$cols)
-          for (proj in projects) {
-            add_columns <- deps_arg$cols[[proj]]$select
-            sm$set_dependencies(proj, add_columns)
-          }
-        }
-      }
-    })
-  })
+resolve_dependencies <- function(xafty_list, network, sm) {
+  tree_sm <- dependencies(xafty_list, network = network)
   set_join_dependencies(projects = sm$get_projects(joins_only = TRUE), network = network, sm = sm)
-  # Check whether unresolved dependencies remain
-  list_dependencies <- sapply(sm$get_projects(), \(project) sm$get_dependencies(project), simplify = FALSE, USE.NAMES = TRUE)
-  list_dependencies <- list_dependencies[vapply(list_dependencies, \(value) !is.null(value), FUN.VALUE = logical(1))]
-  if (length(list_dependencies) > 0) {
-    projects <- names(list_dependencies)
-    xafty_list <- do.call(query, list_dependencies)
-    resolve_dependencies(projects = projects, xafty_list = xafty_list, network = network, sm = sm)
-  }
   build_join_bridges(sm = sm, network = network)
+  tree_sm
 }
 
 resolve_function_stack <- function(sm) {
- list_stack_projects <- lapply(sm$get_projects(), sm$get_function_stack)
- stack_unsorted <- do.call(c, list_stack_projects)
- stack_appended <- append(stack_unsorted, sm$get_join_list())
- stack_sorted <- toposort::topological_sort(stack_appended, dependency_type = "follows")
+ stack_sorted <- toposort::topological_sort(sm$get_codes(), dependency_type = "follows")
  stack_prepared <- remove_join_helpers(stack_sorted)
  stack_prepared
 }
@@ -211,16 +173,28 @@ get_shortest_join_path_for <- function(projects, network) {
   join_paths
 }
 
-get_chatty_link_from_network <- function(pull, project, network) {
+get_chatty_link_from_network <- function(col, project, network) {
   project_subset <- network[[project]]
   if(is.null(project_subset)) {
     stop(paste0("Project: ", project, " is not contained in the network"))
   }
-  columns_subset <- project_subset$variables[[pull]]
+  columns_subset <- project_subset$variables[[col]]
   if(is.null(columns_subset)) {
-    stop(paste0("Column: ", pull, " is not contained in project: ", project))
+    stop(paste0("Column: ", col, " is not contained in project: ", project))
   }
   network[[project]]$ruleset[["modules"]][["link"]][[columns_subset]]
+}
+
+get_chatty_func_name_from_network <- function(col, project, network) {
+  project_subset <- network[[project]]
+  if(is.null(project_subset)) {
+    stop(paste0("Project: ", project, " is not contained in the network"))
+  }
+  columns_subset <- project_subset$variables[[col]]
+  if(is.null(columns_subset)) {
+    stop(paste0("Column: ", col, " is not contained in project: ", project))
+  }
+  columns_subset
 }
 
 build_join_bridges <- function(sm, network) {

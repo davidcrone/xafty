@@ -151,12 +151,21 @@ gather_dependencies_per_arg <- function(args, defs, network) {
   deps
 }
 
-exe_query <- function(arg, def, network) {
-  if(def == "xafty_query") {
+evaluate_arg <- function(arg, xo, network) {
+  if(xo == "xafty_query") {
     nascent(network, arg)
   } else {
     arg
   }
+}
+
+eval_args <- function(link, network) {
+  xo <- get_xafty_objects_vec(link)
+  mapply(evaluate_arg, link$args, xo, MoreArgs = list(network = network), SIMPLIFY = FALSE, USE.NAMES = TRUE)
+}
+
+execute_function <- function(link, network) {
+  do.call(link$fun, eval_args(link, network))
 }
 
 unpack_args <- function(exp, env) {
@@ -214,27 +223,44 @@ validate_link_type <- function(link_type, unpacked) {
   invisible(TRUE)
 }
 
-build_dependency_codes <- function(deps) {
-  if (length(deps) == 0) return(character(0))
-  column_depends <- do.call(c, lapply(seq_along(deps), \(i) {
-    arg <- deps[[i]]$cols
-    dep_projects <- names(arg)
-    do.call(c, lapply(dep_projects, \(proj) paste0(proj, ".", arg[[proj]]$funs)))
-  }))
-  join_depends <- do.call(c, lapply(deps, \(dep) {
+build_dependency_codes <- function(link, network) {
+  queries <- get_queries(link)
+  fun_code <- paste0(link$project, ".", link$fun_name)
+  if (length(queries) == 0) {
+    root_node <- setNames(list(character(0)), fun_code)
+    return(root_node)
+  }
+  get_ordered_join_pairs(link = link)
+  scoped_functions <- unique(do.call(c, lapply(link$args, get_scoped_function_order, network = network)))
+  join_depends <- do.call(c, lapply(get_ordered_join_pairs(link = link), \(dep) {
     if (length(dep$joins) > 1) {
       unordered_pairs <- combn(dep$joins, 2, simplify = FALSE)
       return(build_join_pairs(unordered_pairs))
     }
     character(0)
   }))
-  c(column_depends, join_depends)
+  node <- setNames(list(c(scoped_functions, join_depends)), fun_code)
+  node
 }
 
 find_xafty_objects <- function(arg) {
   if("xafty_query_list" %in% class(arg)) return("xafty_query")
   if(is_xafty_state_variable(arg)) return("xafty_state")
   "none_xafty_object"
+}
+
+get_xafty_objects_vec <- function(link) {
+  args <- link$args
+  xafty_objects_vec <- vapply(args, find_xafty_objects, FUN.VALUE = character(1))
+  xafty_objects_vec
+}
+
+get_queries <- function(link) {
+  xafty_objects_vec <- get_xafty_objects_vec(link)
+  arg_names_w_query <- names(xafty_objects_vec)[xafty_objects_vec == "xafty_query"]
+  if(length(arg_names_w_query) <= 0) return(list())
+  arg_w_query <- sapply(arg_names_w_query, \(arg_name) link$args[[arg_name]], simplify = FALSE, USE.NAMES = TRUE)
+  arg_w_query
 }
 
 is_braced_variable <- function(arg) {
@@ -259,7 +285,8 @@ is_xafty_state_variable <- function(arg) {
   is_valid_variable_name(arg)
 }
 
-get_ordered_join_pairs <- function(projects) {
+get_ordered_join_pairs <- function(link) {
+  projects <- get_lead_projects(link)
   n <- length(projects)
   pairs <- list()
   k <- 1
@@ -299,4 +326,57 @@ get_all_projects <- function(item) {
   args_with_lead <- item$network$arg_defs$names["xafty_query" == item$network$arg_defs$link]
   lead_projects <- vapply(args_with_lead, \(arg) item$network$dependencies[[arg]]$lead, FUN.VALUE = character(1))
   unique(c(main_project, lead_projects))
+}
+
+get_lead_projects <- function(link) {
+  queries <- get_queries(link)
+  arg_w_query <- names(queries)
+  # The lead project will always be the first project in a query
+  vapply(arg_w_query, \(arg_name) queries[[arg_name]][[1]]$from, FUN.VALUE = character(1))
+}
+
+build_cartesian_product <- function(query) {
+  df_cartesian <- do.call(rbind, lapply(query, \(sq) data.frame(project = rep(sq$from, length(sq$select)), column = sq$select)))
+  row.names(df_cartesian) <- NULL
+  df_cartesian
+}
+
+get_flattened_cartesian <- function(link) {
+  queries <- get_queries(link)
+  sapply(queries, build_cartesian_product, simplify = FALSE, USE.NAMES = TRUE)
+}
+
+get_dependend_functions <- function(link, network, scope = FALSE) {
+  li_cartesian <- get_flattened_cartesian(link)
+  sapply(li_cartesian, \(df) {
+    n_row <- nrow(df)
+    func_names <- vapply(seq(n_row), \(n) get_chatty_func_name_from_network(col = df$column[n], project = df$project[n], network = network),
+                         FUN.VALUE = character(1))
+    if(scope) return(paste0(df$project, ".", func_names))
+    func_names
+  }, simplify = FALSE, USE.NAMES = TRUE)
+}
+
+get_added_columns <- function(link, network) {
+  project <- link$project
+  dep_queries <- get_queries(link)
+  input_column_names <- do.call(c, lapply(dep_queries, get_column_order))
+  func_output <- execute_function(link = link, network = network)
+  output_column_names <- colnames(func_output)
+  added_columns <- output_column_names[!output_column_names %in% input_column_names]
+  added_columns
+}
+
+flatten_list <- function(li) {
+  outer <- length(li)
+  li_return <- list()
+  c <- 1
+  for (o in seq(outer)) {
+    inner <- length(li[[o]])
+    for (i in seq(inner)) {
+      li_return[[c]] <- li[[o]][[i]]
+      c <- c + 1
+    }
+  }
+  li_return
 }

@@ -15,3 +15,18 @@ test_that("Column names are returned in correct order", {
   column_order <- get_column_order(query = xafty_query)
   expect_identical(column_order, c("col1", "col2", "col3", "col4"))
 })
+
+test_that("Scoped Columns works with empty list and return an empty list", {
+  scoped_column_order <- get_scoped_column_order(query = list())
+  expect_identical(scoped_column_order, character(0))
+})
+
+test_that("Project order returns the correct amount of projects", {
+  project_order <- get_project_order(query = list())
+  expect_identical(project_order, character(0))
+})
+
+test_that("Column names are returned in correct order", {
+  column_order <- get_column_order(query = list())
+  expect_identical(column_order, character(0))
+})

@@ -14,8 +14,8 @@ scope <- function(data, link, mask) {
       }
     }
   }
-  added_columns <- link$network$output$added_cols
-  project <- link$info$project
+  added_columns <- link$added_columns
+  project <- link$project
 
   for (col in added_columns) {
     pos_col <- which(colnames_dataset %in% col)
@@ -48,6 +48,7 @@ unscope <- function(data, link, arg_name, mask) {
 }
 
 get_scoped_column_order <- function(query) {
+  if(length(query) <= 0) return(character(0))
   li <- list()
   for (i in seq_along(query)) {
     project_selection <- query[[i]]
@@ -58,7 +59,15 @@ get_scoped_column_order <- function(query) {
   do.call(c, li)
 }
 
+get_scoped_function_order <- function(query, network) {
+  columns <- get_column_order(query)
+  projects <- get_project_order(query)
+  functions <- do.call(c, mapply(get_chatty_func_name_from_network, columns, projects, MoreArgs = list(network = network), SIMPLIFY = FALSE, USE.NAMES = TRUE))
+  paste0(projects, ".", functions)
+}
+
 get_project_order <- function(query) {
+  if(length(query) <= 0) return(character(0))
   li <- list()
   for (i in seq_along(query)) {
     project_selection <- query[[i]]
@@ -69,6 +78,7 @@ get_project_order <- function(query) {
 }
 
 get_column_order <- function(query) {
+  if(length(query) <= 0) return(character(0))
   cols_vec <- do.call(c, lapply(query, \(q) q$select))
   names(cols_vec) <- NULL
   cols_vec
