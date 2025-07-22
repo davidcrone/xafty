@@ -1,19 +1,29 @@
 
 scope <- function(data, link, mask) {
-
-  dependend_args <- link$network$dependencies
+  dependend_args <- get_queries(link)
   colnames_dataset <- colnames(data)
-  for (dep_arg in dependend_args) {
-    projects <- names(dep_arg$cols)
+
+  # This part rescopes columns again that were used as the input of the link-function, it also checks the mask object whether a column
+  # is masked
+  for (query_list in dependend_args) {
+    projects <- get_projects(query_list)
     for (project in projects) {
-      selection <- dep_arg$cols[[project]]$select
+      selection <- query_list[[project]]$select
       for (col in selection) {
         pos_col <- which(colnames_dataset %in% col)
-        scoped_name <- paste0(project, ".", col)
+        if(project %in% mask[[col]]) {
+          # TODO: This can be perhaps replaced instead of the first project with a more clean prepared name
+          projects_masked <- mask[[col]]
+          scoped_name <- paste0(projects_masked[1], ".", col)
+        } else {
+          scoped_name <- paste0(project, ".", col)
+        }
         colnames_dataset[pos_col] <- scoped_name
       }
     }
   }
+
+  # This part scopes the newly added columns
   added_columns <- link$added_columns
   project <- link$project
 
@@ -28,10 +38,10 @@ scope <- function(data, link, mask) {
 
 unscope <- function(data, link, arg_name, mask) {
   colnames_data <- colnames(data)
-  dependencies <- link$network$dependencies[[arg_name]]$cols
-  dep_projects <- names(dependencies)
-  for (project in dep_projects) {
-    selection <- dependencies[[project]]$select
+  query_list <- link$args[[arg_name]]
+  for (query in query_list) {
+    selection <- query$select
+    project <- query$from
     for (col in selection) {
       col_scoped <- paste0(project, ".", col)
       if(!col_scoped %in% colnames_data) {
@@ -86,7 +96,7 @@ get_column_order <- function(query) {
 
 return_unscoped_data <- function(data, query, sm) {
   data_cols <- colnames(data)
-  data_select <- interpolate_masks(query = query, mask = sm$get_masked_columns(), data_cols = data_cols)
+  data_select <- interpolate_masks(query = query, mask = sm$get_mask(), data_cols = data_cols)
   # TODO Resolve Joined columns
   data_selected <- data[data_select]
   colnames(data_selected) <- get_column_order(query)
@@ -94,27 +104,13 @@ return_unscoped_data <- function(data, query, sm) {
 }
 
 get_masked_column_names <- function(link) {
-  arg_names <- link$network$arg_defs$names
-  arg_defs <- link$network$arg_defs$links
-
-  arg_names_query <- arg_names[arg_defs == "xafty_query"]
-
-  vec_projects <- do.call(c, lapply(arg_names_query, \(arg) {
-    xafty_query <- link$ruleset$args[[arg]]
-    get_project_order(xafty_query)
-  }))
-
-  vec_columns <- do.call(c, lapply(arg_names_query, \(arg) {
-    xafty_query <- link$ruleset$args[[arg]]
-    get_column_order(xafty_query)
-  }))
-
+  queries <- get_queries(link)
+  vec_projects <- do.call(c, lapply(queries, get_project_order))
+  names(vec_projects) <- NULL
+  vec_columns <- do.call(c, lapply(queries, get_column_order))
+  names(vec_columns) <- NULL
   duplicated_columns <- vec_columns[duplicated(vec_columns)]
-
-  sapply(duplicated_columns, \(col) {
-    masked_projects <- vec_projects[vec_columns == col]
-    masked_projects
-  }, simplify = FALSE, USE.NAMES = TRUE)
+  sapply(duplicated_columns, \(col) vec_projects[vec_columns == col], simplify = FALSE, USE.NAMES = TRUE)
 }
 
 interpolate_masks <- function(query, mask, data_cols) {

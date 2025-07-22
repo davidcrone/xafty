@@ -223,22 +223,28 @@ validate_link_type <- function(link_type, unpacked) {
   invisible(TRUE)
 }
 
-build_dependency_codes <- function(link, network) {
+build_dependency_codes <- function(link, network, sm) {
   queries <- get_queries(link)
   fun_code <- paste0(link$project, ".", link$fun_name)
   if (length(queries) == 0) {
     root_node <- setNames(list(character(0)), fun_code)
     return(root_node)
   }
-  get_ordered_join_pairs(link = link)
   scoped_functions <- unique(do.call(c, lapply(link$args, get_scoped_function_order, network = network)))
-  join_depends <- do.call(c, lapply(get_ordered_join_pairs(link = link), \(dep) {
-    if (length(dep$joins) > 1) {
-      unordered_pairs <- combn(dep$joins, 2, simplify = FALSE)
-      return(build_join_pairs(unordered_pairs))
+  li_within_joins <- lapply(queries, get_joins_within_query, network = network)
+  for (i in seq_along(li_within_joins)) {
+    joins <- li_within_joins[[i]]
+    if(length(joins) <= 0) next
+    unordered_pairs <- combn(joins, 2, simplify = FALSE)
+    join_codes <- build_join_pairs(unordered_pairs)
+    li_within_joins[[i]] <- join_codes
+    li_pairs <- setNames(unordered_pairs, join_codes)
+    for (i in seq_along(li_pairs)) {
+      sm$set_join_pairs(li_pairs[i])
     }
-    character(0)
-  }))
+  }
+  join_depends <- do.call(c, li_within_joins)
+
   node <- setNames(list(c(scoped_functions, join_depends)), fun_code)
   node
 }
@@ -307,18 +313,19 @@ build_join_pairs <- function(li_pairs) {
   }))
 }
 
-build_executable_args <- function(name, fun, projects, get_data, mask) {
-  link <- fun$network$arg_defs$links[fun$network$arg_defs$names == name]
-  if (link == "xafty_query") {
-    lead_project <- fun$network$dependencies[[name]]$lead
-    data <- get_data(project = lead_project)
-    unscope(data = data, link = fun, arg_name = name, mask = mask)
-  } else if (link == "xafty_state") {
-    # TODO get xafty state
-    fun$ruleset$args[[name]]
-  } else {
-    fun$ruleset$args[[name]]
+build_executable_args <- function(link, get_data, mask) {
+  func_args <- link$args
+  lead_projects <- get_lead_projects(link)
+  queries <- get_queries(link)
+  args <- names(queries)
+  for (i in seq_along(queries)) {
+    project <- lead_projects[i]
+    arg <- args[i]
+    data <- get_data(project = project)
+    data <- unscope(data = data, link = link, arg_name = arg, mask = mask)
+    func_args[[arg]] <- data
   }
+  func_args
 }
 
 get_all_projects <- function(item) {
@@ -368,6 +375,7 @@ get_added_columns <- function(link, network) {
 }
 
 flatten_list <- function(li) {
+  if(length(li) == 0) return(li)
   outer <- length(li)
   li_return <- list()
   c <- 1

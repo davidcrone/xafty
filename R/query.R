@@ -96,7 +96,7 @@ get_sub_queries <- function(query, network) {
 
 merge_queries <- function(...) {
   li_queries <- list(...)
-  merged_query <- list()
+  merged_query <- setNames(list(), character(0))
   for (query in li_queries) {
     projects <- vapply(query, \(q) q$from, FUN.VALUE = character(1))
     uq_projects <- unique(projects)
@@ -116,4 +116,16 @@ merge_queries <- function(...) {
   }
   class(merged_query) <- c("list", "xafty_query_list")
   merged_query
+}
+
+get_projects <- function(query) {
+  vapply(query, \(q) q$from, FUN.VALUE = character(1), USE.NAMES = FALSE)
+}
+
+get_joins_within_query <- function(query, network) {
+  projects <- get_projects(query)
+  # remove containers
+  projects <- projects[vapply(projects, \(project) "xafty_project" %in% class(network[[project]]), FUN.VALUE = logical(1))]
+  if(length(projects) <= 1) return(character(0))
+  projects
 }

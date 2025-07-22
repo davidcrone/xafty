@@ -2,7 +2,7 @@
 add_to_network <- function(item, network, project) {
   project_env <- network[[project]]
   fun_name <- item$fun_name
-  added_columns <- get_added_columns(link = item, network = network)
+  added_columns <- item$added_columns
   added_joins <- get_ordered_join_pairs(link = item)
   for (new_col in added_columns) {
     assign(new_col, fun_name, envir = project_env$variables)

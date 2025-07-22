@@ -117,43 +117,7 @@ govern <- function(network = NULL) {
     }
     projects
   }
-
-  set_join_path <- function(path) {
-    state_env$join_path <- path
-  }
-
-  get_join_path <- function() {
-    join_path <-  state_env$join_path
-    if(is.null(join_path)) return(list())
-    join_path
-  }
   # Sets up a table environments for each Project
-
-  execute_stack <- function(link) {
-    arg_names <- names(get_xafty_objects_vec(link))
-    projects <- unique(c(link$project, get_lead_projects(link)))
-    if (!length(arg_names) == 0) { # set correct args
-      link$args <- sapply(arg_names, \(name) build_executable_args(name = name, fun = fun, projects = projects, get_data = get_data, mask = state_env$masks), simplify = FALSE, USE.NAMES = TRUE)
-    }
-    # Doing this to avoid too much memory use, is this necessary?
-    for (project in projects) {
-      if(!is.null(get_data_key(project))) {
-        set_data(data = NULL, key = get_data_key(project))
-      }
-    }
-    new_key <- paste0(projects, collapse = "_")
-    data <- do.call(link$fun, link$args)
-    data <- scope(data = data, link = link, mask = state_env$masks)
-    projects_update_key <- do.call(c, lapply(projects, \(project) {
-      key <- get_data_key(project)
-      if(is.null(key)) return(project)
-      get_projects_by_key(key)
-      }))
-    for(proj in projects_update_key) {
-      set_data_key(project = proj, key = new_key)
-    }
-    set_data(data = data, key = new_key)
-  }
 
   set_masked_columns <- function(mask) {
     current_masks <- state_env$masks
@@ -163,6 +127,15 @@ govern <- function(network = NULL) {
       current_masks[[col]] <- unique(c(current_masks[[col]], projects))
     }
     state_env$masks <- current_masks
+  }
+
+  set_join_path <- function(path) {
+    state_env$join_path <- path
+  }
+
+  get_join_path <- function() {
+    if(is.null(state_env$join_path)) return(list())
+    state_env$join_path
   }
 
   get_masked_columns <- function() {
@@ -183,13 +156,13 @@ govern <- function(network = NULL) {
     get_dependencies = get_dependencies,
     set_function_stack = set_function_stack,
     get_function_stack = get_function_stack,
-    set_join_path = set_join_path,
-    get_join_path = get_join_path,
     execute_stack = execute_stack,
     set_fun_pair = set_fun_pair,
     get_fun_pair = get_fun_pair,
     get_projects_by_key = get_projects_by_key,
     get_data_by_key = get_data_by_key,
+    set_join_path = set_join_path,
+    get_join_path = get_join_path,
     set_masked_columns = set_masked_columns,
     get_masked_columns = get_masked_columns
   )
@@ -222,11 +195,49 @@ build_tree <- function() {
     tree_env$query
   }
 
+  set_join_path <- function(path) {
+    tree_env$join_path <- path
+  }
+
+  get_join_path <- function() {
+    if(is.null(tree_env$join_path)) return(list())
+    tree_env$join_path
+  }
+
+  set_mask <- function(mask) {
+    current_masks <- tree_env$masks
+    for (i in seq_along(mask)) {
+      col <- names(mask[i])
+      projects <- mask[[i]]
+      current_masks[[col]] <- unique(c(current_masks[[col]], projects))
+    }
+    tree_env$masks <- current_masks
+  }
+
+  get_mask <- function() {
+    tree_env$masks
+  }
+
+  set_join_pairs <- function(li_pairs) {
+    join_code <- names(li_pairs)
+    tree_env$join_pairs[[join_code]] <- li_pairs[[join_code]]
+  }
+
+  get_join_pairs <- function() {
+    tree_env$join_pairs
+  }
+
   list(
     set_nodes = set_nodes,
     get_codes = get_codes,
     get_links = get_links,
     get_query = get_query,
-    set_query = set_query
+    set_query = set_query,
+    set_join_path = set_join_path,
+    get_join_path = get_join_path,
+    set_join_pairs = set_join_pairs,
+    get_join_pairs = get_join_pairs,
+    set_mask = set_mask,
+    get_mask = get_mask
   )
 }

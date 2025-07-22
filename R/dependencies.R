@@ -3,7 +3,7 @@
 dependencies <- function(query_list, network, tree_sm = build_tree()) {
   tree_sm$set_query(query_list)
   links <- get_dependend_links(query_list, network)
-  codes <- lapply(links, build_dependency_codes, network = network)
+  codes <- lapply(links, build_dependency_codes, network = network, sm = tree_sm)
   out <- mapply(tree_sm$set_nodes, links, codes, SIMPLIFY = FALSE)
   queries <- flatten_list(remove_empty_lists(get_dependend_queries(links = links)))
   query <- do.call(merge_queries, queries)
@@ -20,7 +20,12 @@ prune_query <- function(query, compare) {
     compare_selected <- compare[[project]]$select
     new_select <- q$select
     pruned_select <- new_select[!new_select %in% compare_selected]
-    query[[project]]$select <- pruned_select
+    if(length(pruned_select) <= 0) {
+      query[[project]] <- NULL
+    } else {
+      query[[project]]$select <- pruned_select
+    }
+
   }
   query
 }

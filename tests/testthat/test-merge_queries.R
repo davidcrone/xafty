@@ -26,3 +26,9 @@ test_that("Two seperate queries and duplicated projects are merged together", {
   expected_query <- query(proj1 = c("col1", "col3"), proj2 = "col2")
   expect_identical(test_query, expected_query)
 })
+
+test_that("Merging with an empty list returns a named empty xafty query", {
+  test_query <- merge_queries(query(), list())
+  expected_query <- query()
+  expect_identical(test_query, expected_query)
+})

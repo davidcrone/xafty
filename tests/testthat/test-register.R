@@ -46,12 +46,12 @@ test_that("Register builds a join node in the network environment correctly", {
   }
   project_env <- init_network()
   project_env$add_project("test")
-  project_env$test$get(test_get_function(arg1 = list(1, 2), arg2 = TRUE, comment = "clear", 1:3))
+  project_env$test$get(test_get_function(arg1 = list(1, 2), arg2 = TRUE, comment = "clear", 1:3), added_columns = c("a", "b"))
   project_env$test$add(test_add_function(arg1 = test_get_function()))
 
   project_env$add_project("test2")
   project_env$test2$get(test2_get_function())
-  project_env$test$join(test_join_function(data_left = query(test = "a"), data_right = query(test2 = "a")))
+  project_env$test$join(test_join_function(data_left = query(test = "a"), data_right = query(test2 = "a")), added_columns = character(0))
 
   expect_equal(names(project_env$test$joined_projects), "test2")
   expect_equal(names(project_env$test2$joined_projects), "test")
