@@ -56,8 +56,3 @@ create_link <- function(quosure, project, network, ...) {
   }
   link
 }
-
-
-is_valid_link <- function(link) {
-  inherits(link, what = "xafty_link")
-}

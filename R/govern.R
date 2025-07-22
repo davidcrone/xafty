@@ -1,10 +1,6 @@
-govern <- function(network = NULL) {
+data_sm <- function() {
 
   state_env <- new.env()
-
-  ##################################
-  ######## Global  State ###########
-  ##################################
 
   set_data_key <- function(project, key) {
     state_env$projects[[project]]$key <- key
@@ -28,7 +24,7 @@ govern <- function(network = NULL) {
   }
 
   get_projects_by_key <- function(key) {
-    projects <- get_projects()
+    projects <- names(state_env$projects)
     contains_key <- vapply(projects, \(project) {
       key_value <- state_env$projects[[project]]$key
       if(is.null(key_value)) return(FALSE)
@@ -37,134 +33,13 @@ govern <- function(network = NULL) {
     names(contains_key)[contains_key]
   }
 
-  set_dependencies <- function(project, cols) {
-    new_dependencies <- c(get_dependencies(project), cols)
-    non_already_pulled <- new_dependencies[!new_dependencies %in% get_pulls(project)]
-    if(length(non_already_pulled) > 0) {
-      state_env$projects[[project]]$dependencies <- non_already_pulled
-    }
-  }
-
-  set_fun_pair <- function(project, fun_name, code) {
-    list_pairing <- list(
-      project = project,
-      fun = fun_name
-    )
-    state_env$fun_pairs[[code]] <- list_pairing
-  }
-
-  get_fun_pair <- function(code) {
-    state_env$fun_pairs[[code]]
-  }
-
-  set_function_stack <- function(project, fun_name, fun_code, deps, push) {
-    current_stack <- get_function_stack(project = project)
-    codes <- build_dependency_codes(deps)
-    set_fun_pair(project = project, fun_name = fun_name, code = fun_code)
-    set_pulls(project, push)
-    add_to_stack <- setNames(list(codes), fun_code)
-    if(!fun_code %in% names(current_stack)) {
-      new_stack <- c(current_stack, add_to_stack)
-      state_env$projects[[project]]$fun_stack <- new_stack
-    }
-  }
-
-  set_pulls <- function(project, pull) {
-    current_pull <- get_pulls(project)
-    new_pulls <- unique(pull[!pull %in% current_pull])
-    if(length(new_pulls) > 0) {
-      new_pull_stack <- c(current_pull, new_pulls)
-      state_env$projects[[project]]$pulls <- new_pull_stack
-      remove_dependencies(project, pull)
-    }
-  }
-
-  set_join_list <- function(li) {
-    state_env$join_list <- li
-  }
-
-  remove_dependencies <- function(project, cols) {
-    dependencies <- get_dependencies(project)
-    dependencies <- dependencies[!dependencies %in% cols]
-    if(length(dependencies) <= 0) {
-      dependencies <- NULL
-    }
-    state_env$projects[[project]]$dependencies <- dependencies
-  }
-
-  get_dependencies <- function(project) {
-    state_env$projects[[project]]$dependencies
-  }
-
-  get_join_list <- function() {
-    state_env$join_list
-  }
-
-
-  get_pulls <- function(project) {
-    state_env$projects[[project]]$pulls
-  }
-
-
-  get_function_stack <- function(project) {
-    state_env$projects[[project]]$fun_stack
-  }
-
-  get_projects <- function(joins_only = FALSE) {
-    projects <- names(state_env$projects)
-    if(joins_only) {
-      projects <- projects[vapply(projects, \(project) "xafty_project" %in% class(network[[project]]), FUN.VALUE = logical(1))]
-    }
-    projects
-  }
-  # Sets up a table environments for each Project
-
-  set_masked_columns <- function(mask) {
-    current_masks <- state_env$masks
-    for (i in seq_along(mask)) {
-      col <- names(mask[i])
-      projects <- mask[[i]]
-      current_masks[[col]] <- unique(c(current_masks[[col]], projects))
-    }
-    state_env$masks <- current_masks
-  }
-
-  set_join_path <- function(path) {
-    state_env$join_path <- path
-  }
-
-  get_join_path <- function() {
-    if(is.null(state_env$join_path)) return(list())
-    state_env$join_path
-  }
-
-  get_masked_columns <- function() {
-    state_env$masks
-  }
   list(
-    # Global state
-    get_projects = get_projects,
     set_data_key = set_data_key,
     get_data_key = get_data_key,
     set_data = set_data,
     get_data = get_data,
-    set_pulls = set_pulls,
-    get_pulls = get_pulls,
-    set_join_list = set_join_list,
-    get_join_list = get_join_list,
-    set_dependencies = set_dependencies,
-    get_dependencies = get_dependencies,
-    set_function_stack = set_function_stack,
-    get_function_stack = get_function_stack,
-    execute_stack = execute_stack,
-    set_fun_pair = set_fun_pair,
-    get_fun_pair = get_fun_pair,
     get_projects_by_key = get_projects_by_key,
-    get_data_by_key = get_data_by_key,
-    set_join_path = set_join_path,
-    get_join_path = get_join_path,
-    set_masked_columns = set_masked_columns,
-    get_masked_columns = get_masked_columns
+    get_data_by_key = get_data_by_key
   )
 }
 

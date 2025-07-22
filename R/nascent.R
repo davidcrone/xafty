@@ -16,12 +16,12 @@ nascent <- function(network, ...) {
   xafty_query <- merge_queries(query)
   stopifnot(is.list(xafty_query))
   stopifnot(inherits(network, "xafty_network"))
-  data_sm <- govern(network)
+  data_sm <- data_sm()
   tree_sm <- resolve_dependencies(xafty_list = xafty_query, network = network, sm = build_tree())
   topological_sorted_codes <- resolve_function_stack(sm = tree_sm)
   list_links <- sort_links(topological_sorted_codes, sm = tree_sm)
   lapply(list_links, execute_stack, tree_sm = tree_sm, data_sm = data_sm)
-  data_keys <- unique(vapply(data_sm$get_projects(), \(project) data_sm$get_data_key(project), FUN.VALUE = character(1)))
+  data_keys <- unique(vapply(get_projects(tree_sm$get_query()), \(project) data_sm$get_data_key(project), FUN.VALUE = character(1)))
   if (length(data_keys) > 1) {
     key_salad <- vapply(data_keys, \(key) paste0(data_sm$get_projects_by_key(key), collapse = "_"), FUN.VALUE = character(1))
     data_list <- lapply(data_keys, \(key) data_sm$get_data_by_key(key))
@@ -76,16 +76,6 @@ get_join_functions <- function(from, to, network, sm) {
   for (query in queries) {
     dependencies(query_list = query, network = network, tree_sm = sm)
   }
-}
-
-append_join_list <- function(li_codes, sm) {
-  code <- names(li_codes)
-  current_joins <- sm$get_join_list()
-  current_dep_values <- current_joins[[code]]
-  new_values <- c(current_dep_values, li_codes[[code]])
-  current_joins[[code]] <- new_values
-  sm$set_join_list(current_joins)
-  invisible(current_joins)
 }
 
 join_code_generator <- function(link, network) {
