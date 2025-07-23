@@ -129,3 +129,19 @@ get_joins_within_query <- function(query, network) {
   if(length(projects) <= 1) return(character(0))
   projects
 }
+
+dots_to_query <- function(network, ...)  {
+  query_raw <- list(...)
+  if(!inherits(query_raw[[1]], what = "xafty_query_list")) {
+    query <- query(query_raw)
+  } else {
+    query <- list(...)[[1]]
+  }
+  query_order <- temper_query(query = query, network = network)
+  query_internal <- merge_queries(query_order)
+
+  list(
+    internal = query_internal,
+    order = query_order
+  )
+}

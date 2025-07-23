@@ -4,23 +4,12 @@
 #' @param ... List.
 #' @export
 nascent <- function(network, ...) {
-  if(inherits(network, what = "bundled_xafty_network")) {
-    query <- network$query
-  } else if(!inherits(list(...)[[1]], what = "xafty_query_list")) {
-    query <- query(...)
-  } else {
-    query <- list(...)[[1]]
-  }
-  sub_queries <- get_sub_queries(query = query, network = network)
-  query <- temper_query(query = query, network = network)
-  xafty_query <- merge_queries(query)
-  stopifnot(is.list(xafty_query))
   stopifnot(inherits(network, "xafty_network"))
-  data_sm <- data_sm()
-  tree_sm <- resolve_dependencies(xafty_list = xafty_query, network = network, sm = build_tree())
-  topological_sorted_codes <- resolve_function_stack(sm = tree_sm)
-  list_links <- sort_links(topological_sorted_codes, sm = tree_sm)
-  lapply(list_links, execute_stack, tree_sm = tree_sm, data_sm = data_sm)
+  li_query <- dots_to_query(network = network, ... = ...)
+  tree_sm <- resolve_dependencies(query = li_query$internal, network = network)
+  dag <- build_dag(tree_sm)
+  data_sm <- evaluate_dag(dag)
+
   data_keys <- unique(vapply(get_projects(tree_sm$get_query()), \(project) data_sm$get_data_key(project), FUN.VALUE = character(1)))
   if (length(data_keys) > 1) {
     key_salad <- vapply(data_keys, \(key) paste0(data_sm$get_projects_by_key(key), collapse = "_"), FUN.VALUE = character(1))
@@ -28,7 +17,7 @@ nascent <- function(network, ...) {
     names(data_list) <- key_salad
     data_list
   } else {
-    return_unscoped_data(data = data_sm$get_data_by_key(data_keys), query = query, sm = tree_sm)
+    return_unscoped_data(data = data_sm$get_data_by_key(data_keys), query = li_query$order, sm = tree_sm)
   }
 }
 
@@ -37,10 +26,11 @@ sort_links <- function(codes, sm) {
   lapply(codes, \(code) links[[code]])
 }
 
-resolve_dependencies <- function(xafty_list, network, sm) {
-  dependencies(xafty_list, network = network, tree_sm = sm)
+resolve_dependencies <- function(query, network, sm = build_tree()) {
+  dependencies(query, network = network, tree_sm = sm)
   set_join_dependencies(network = network, sm = sm)
   build_join_bridges(sm = sm, network = network)
+
   sm
 }
 
@@ -57,7 +47,7 @@ remove_join_helpers <- function(stack_sorted) {
 get_join_functions <- function(from, to, network, sm) {
   fun_name <- network[[from]]$joined_projects[[to]]
   link <- network[[from]]$ruleset$modules$link[[fun_name]]
-  list_join_codes <- join_code_generator(link = link, network = network)
+  list_join_codes <- join_code_generator(link = link, network = network, sm = sm)
 
   # Three codes are set. One for the join function and two join.codes which will be used to connect the functions
   # that depend on the join
@@ -78,10 +68,10 @@ get_join_functions <- function(from, to, network, sm) {
   }
 }
 
-join_code_generator <- function(link, network) {
+join_code_generator <- function(link, network, sm) {
   fused_projects <- get_lead_projects(link)
   join_code <- paste0("fuse.", paste0(fused_projects, collapse = "."))
-  join_dependencies <- build_dependency_codes(link = link, network = network)
+  join_dependencies <- build_dependency_codes(link = link, network = network, sm = sm)
   join_list_main <- setNames(join_dependencies, join_code)
   fun_codes <- vapply(get_ordered_join_pairs(link), \(pair) paste0("join.", pair[1], ".", pair[2]), FUN.VALUE = character(1))
   join_list_help <- sapply(fun_codes, \(code) join_code, simplify = FALSE, USE.NAMES = TRUE)
@@ -98,25 +88,20 @@ build_join_graph <- function(network) {
 }
 
 bfs_traversal <- function(graph, start, end) {
-
   # Breadth-First Search
   visited <- list()
   queue <- list(list(node = as.character(start), path = as.character(c(start))))
-
   while (length(queue) > 0) {
     current <- queue[[1]]
     queue <- queue[-1]
     node <- current$node
     path <- current$path
-
     if (node == as.character(end)) {
       return(path)
     }
-
     if (is.null(visited[[node]])) {
       visited[[node]] <- TRUE
       neighbors <- graph[[node]]
-
       for (neighbor in neighbors) {
         if (is.null(visited[[neighbor]])) {
           queue <- append(queue, list(list(node = neighbor, path = c(path, neighbor))))
@@ -234,9 +219,9 @@ build_join_bridges <- function(sm, network) {
   }
 }
 
-execute_stack <- function(link, tree_sm, data_sm) {
+execute_stack <- function(link, mask, data_sm) {
   projects <- unique(c(link$project, get_lead_projects(link)))
-  executable_args <-  build_executable_args(link, get_data = data_sm$get_data, mask = tree_sm$get_mask())
+  executable_args <-  build_executable_args(link, get_data = data_sm$get_data, mask = mask)
 
   # Doing this to avoid too much memory use, is this necessary?
   for (project in projects) {
@@ -246,7 +231,7 @@ execute_stack <- function(link, tree_sm, data_sm) {
   }
   new_key <- paste0(projects, collapse = "_")
   data <- do.call(link$fun, executable_args)
-  data <- scope(data = data, link = link, mask = tree_sm$get_mask())
+  data <- scope(data = data, link = link, mask = mask)
   projects_update_key <- do.call(c, lapply(projects, \(project) {
     key <- data_sm$get_data_key(project)
     if(is.null(key)) return(project)
@@ -256,4 +241,24 @@ execute_stack <- function(link, tree_sm, data_sm) {
     data_sm$set_data_key(project = proj, key = new_key)
   }
   data_sm$set_data(data = data, key = new_key)
+}
+
+build_dag <- function(tree_sm) {
+  topological_sorted_codes <- resolve_function_stack(sm = tree_sm)
+  list_links <- sort_links(topological_sorted_codes, sm = tree_sm)
+  list(
+    full_query = tree_sm$get_query(),
+    dag = tree_sm$get_codes(),
+    execution_order = topological_sorted_codes,
+    sorted_links = list_links,
+    masked_columns = tree_sm$get_mask()
+  )
+}
+
+evaluate_dag <- function(dag) {
+  links <- dag$sorted_links
+  mask <- dag$masked_columns
+  data_sm <- data_sm()
+  lapply(links, execute_stack, mask = mask, data_sm = data_sm)
+  data_sm
 }

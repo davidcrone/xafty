@@ -86,7 +86,7 @@ create_get <- function(project, env) {
   force(env)
   get <- function(fun, ...) {
     quosure <- rlang::enquo(fun)
-    register(quosure = quosure, type = "get", module = "link", network = env, project = project, ... = ...)
+    register(quosure = quosure, module = "link", network = env, project = project, ... = ...)
   }
   get
 }
@@ -96,7 +96,7 @@ create_add <- function(project, env) {
   force(env)
   add <- function(fun, ...) {
     quosure <- rlang::enquo(fun)
-    register(quosure = quosure, type = "add", module = "link", network = env, project = project, ... = ...)
+    register(quosure = quosure, module = "link", network = env, project = project, ... = ...)
   }
   add
 }
@@ -106,7 +106,7 @@ create_join <- function(project, env) {
   force(env)
   join <- function(fun, ...) {
     quosure <- rlang::enquo(fun)
-    register(quosure = quosure, type = "join", module = "link", network = env, project = project, ... = ...)
+    register(quosure = quosure, module = "link", network = env, project = project, ... = ...)
   }
   join
 }

@@ -1,4 +1,16 @@
-register <- function(quosure, type, module, project, network, ...) {
+
+#' Register a Function in a Network
+#' @description
+#' The function is the workhorse behind all register methods of a network.
+#' @param quosure A function call enquoted with rlang::enquo
+#' @param project The project name of the project within the network where the function should be registered.
+#' @param network A xafty network.
+#' @param module The module name of the rulset. Currently only "link" is supported
+#' @param ... Configurations of the register. Following parameters are allowed
+#' * added_columns : The parameter takes in a character vector of column names that are added to the data set.
+#' @returns A xafty network (invisibly)
+#' @export
+register <- function(quosure, project, network, module, ...) {
   link <- create_link(quosure = quosure,  project = project, network = network, ... = ...)
   add_to_ruleset(item = link, module = module, env = network, project = project)
   add_to_network(item = link, network = network, project = project)
