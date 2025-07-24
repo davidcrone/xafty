@@ -73,7 +73,6 @@ create_link <- function(quosure, project, network, ...) {
 validate_network_integrity <- function(link, network) {
   queries <- get_queries(link)
   if(length(queries) <= 0) return(invisible(TRUE))
-  browser()
   flat_queries <- flatten_list(queries)
   for (query in flat_queries) {
     project <- query$from
