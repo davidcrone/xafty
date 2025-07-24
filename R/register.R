@@ -12,6 +12,7 @@
 #' @export
 register <- function(quosure, project, network, module, ...) {
   link <- create_link(quosure = quosure,  project = project, network = network, ... = ...)
+  validate_network_integrity(link = link, network = network)
   add_to_ruleset(item = link, module = module, env = network, project = project)
   add_to_network(item = link, network = network, project = project)
   invisible(network)
@@ -67,4 +68,30 @@ create_link <- function(quosure, project, network, ...) {
     link$added_columns <- get_added_columns(link = link, network = network)
   }
   link
+}
+
+validate_network_integrity <- function(link, network) {
+  queries <- get_queries(link)
+  if(length(queries) <= 0) return(invisible(TRUE))
+  browser()
+  flat_queries <- flatten_list(queries)
+  for (query in flat_queries) {
+    project <- query$from
+    selection <- query$select
+    for (col in selection) {
+      validate_query(col = col, project = project, network = network)
+    }
+  }
+}
+
+validate_query <- function(col, project, network) {
+  project_subset <- network[[project]]
+  if(is.null(project_subset)) {
+    stop(paste0("Project: ", project, " is not contained in the network"))
+  }
+  columns_subset <- project_subset$variables[[col]]
+  if(is.null(columns_subset)) {
+    stop(paste0("Column: ", col, " is not contained in project: ", project))
+  }
+  invisible(TRUE)
 }

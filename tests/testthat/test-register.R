@@ -128,3 +128,10 @@ test_that("xafty_bundle allows to seamlessly add a column to a ghost project", {
     new_column = c("HR1", "IT2", "Finance3", "Marketing4", "Sales5")), row.names = c(NA, -5L), class = "data.frame")
   expect_identical(table_test, table_expected)
 })
+
+test_that("register throws an error when a column within a query is not present within a project while the added_columns parameter is set", {
+  test_func <- function(data) {
+    data
+  }
+  expect_error(test_network$customer_data$add(test_func(data = query(customer_data = "col_not_present")), added_columns = c("add_col")))
+})

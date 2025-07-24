@@ -155,26 +155,14 @@ get_shortest_join_path_for <- function(projects, network, sm) {
 }
 
 get_chatty_link_from_network <- function(col, project, network) {
-  project_subset <- network[[project]]
-  if(is.null(project_subset)) {
-    stop(paste0("Project: ", project, " is not contained in the network"))
-  }
-  columns_subset <- project_subset$variables[[col]]
-  if(is.null(columns_subset)) {
-    stop(paste0("Column: ", col, " is not contained in project: ", project))
-  }
+  validate_query(col = col, project = project, network = network)
+  columns_subset <- network[[project]]$variables[[col]]
   network[[project]]$ruleset[["modules"]][["link"]][[columns_subset]]
 }
 
 get_chatty_func_name_from_network <- function(col, project, network) {
-  project_subset <- network[[project]]
-  if(is.null(project_subset)) {
-    stop(paste0("Project: ", project, " is not contained in the network"))
-  }
-  columns_subset <- project_subset$variables[[col]]
-  if(is.null(columns_subset)) {
-    stop(paste0("Column: ", col, " is not contained in project: ", project))
-  }
+  validate_query(col = col, project = project, network = network)
+  columns_subset <- network[[project]]$variables[[col]]
   columns_subset
 }
 

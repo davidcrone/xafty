@@ -63,7 +63,6 @@ unpack_args <- function(exp, env) {
       }
     }
   }
-
   list(
     fun_name = fun_name,
     fun = fun,
@@ -264,4 +263,20 @@ flatten_list <- function(li) {
     }
   }
   li_return
+}
+
+list_graph_to_edges <- function(dag) {
+  dag_nodes <- dag$dag
+  edgelist <- lapply(seq_along(dag_nodes), \(i) {
+    node <- dag_nodes[i]
+    node_name <- names(node)
+    from <- node[[node_name]]
+    if(length(from) <= 0) return(NULL)
+    to <- rep(node_name, length(from))
+    data.frame(
+      from = from,
+      to = to
+    )
+  })
+  do.call(rbind, edgelist)
 }
