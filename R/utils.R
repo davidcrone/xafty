@@ -128,6 +128,7 @@ build_dependency_codes <- function(link, network, sm) {
 find_xafty_objects <- function(arg) {
   if("xafty_query_list" %in% class(arg)) return("xafty_query")
   if(is_xafty_state_variable(arg)) return("xafty_state")
+  if(is_xafty_object_variable(arg)) return("xafty_object")
   "none_xafty_object"
 }
 
@@ -145,26 +146,43 @@ get_queries <- function(link) {
   arg_w_query
 }
 
-is_braced_variable <- function(arg) {
+is_curved_variable <- function(arg) {
   grepl("^\\{[^{}]+\\}$", arg)
 }
 
-get_braced_variable <- function(arg) {
-  match <- regmatches(arg, regexec("^\\{([^{}]+)\\}$", arg))[[1]]
-  match[2]
+is_squared_variable <- function(arg) {
+  grepl("^\\[[a-zA-Z0-9_.]+\\]$", arg)
 }
 
-is_valid_variable_name <- function(arg) {
-  match <- get_braced_variable(arg)
+get_braced_variable <- function(arg) {
+  match <- gsub("^\\{|\\}$", "", arg)
+  match
+}
+
+get_squared_variable <- function(arg) {
+  match <- gsub("^\\[|\\]$", "", arg)
+  match
+}
+
+is_valid_variable_name <- function(match) {
   is_valid_variable_name <- identical(match, make.names(match))
-  if(!is_valid_variable_name) stop(paste0("State variable detected, but '", match, "' is not a valid variable name"))
+  if(!is_valid_variable_name) warning(paste0("xafty variable detected, but '", match, "' is not a valid variable name"))
   is_valid_variable_name
 }
 
 is_xafty_state_variable <- function(arg) {
+  browser()
   if(!is.character(arg) || length(arg) != 1) return(FALSE)
-  if(!is_braced_variable(arg)) return(FALSE)
-  is_valid_variable_name(arg)
+  if(!is_curved_variable(arg)) return(FALSE)
+  match <- get_braced_variable(arg)
+  is_valid_variable_name(match = match)
+}
+
+is_xafty_object_variable <- function(arg) {
+  if(!is.character(arg) || length(arg) != 1) return(FALSE)
+  if(!is_squared_variable(arg)) return(FALSE)
+  match <- get_squared_variable(arg)
+  is_valid_variable_name(match)
 }
 
 get_ordered_join_pairs <- function(link) {
