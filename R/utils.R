@@ -45,31 +45,6 @@ execute_function <- function(link, network) {
   do.call(link$fun, eval_args(link, network))
 }
 
-unpack_args <- function(exp, env) {
-  fun_name <- as.character(exp[[1]])
-  fun <- get(fun_name, envir = env)
-  fun_args <- as.list(formals(fun))
-  matched_call <- match.call(definition = fun, call = exp, envir = env, expand.dots = FALSE)
-  for (arg_name in names(fun_args)) {
-    if (!(arg_name %in% names(matched_call))) {
-      # Case 1: Default argument
-      fun_args[[arg_name]] <- rlang::eval_tidy(fun_args[[arg_name]], env = env)
-    } else {
-      if(arg_name == "...") {
-        fun_args <- handle_dots_args(fun_args, matched_call, env = env)
-      } else {
-        call_expr <- matched_call[[arg_name]]
-        fun_args[[arg_name]] <- rlang::eval_tidy(call_expr, env =  env)
-      }
-    }
-  }
-  list(
-    fun_name = fun_name,
-    fun = fun,
-    args = fun_args
-  )
-}
-
 handle_dots_args <- function(fun_args, matched_call, env) {
   call_expr <- as.list(matched_call[["..."]])
   n_dot_args <- length(call_expr)
@@ -171,7 +146,6 @@ is_valid_variable_name <- function(match) {
 }
 
 is_xafty_state_variable <- function(arg) {
-  browser()
   if(!is.character(arg) || length(arg) != 1) return(FALSE)
   if(!is_curved_variable(arg)) return(FALSE)
   match <- get_braced_variable(arg)

@@ -135,3 +135,13 @@ test_that("register throws an error when a column within a query is not present 
   }
   expect_error(test_network$customer_data$add(test_func(data = query(customer_data = "col_not_present")), added_columns = c("add_col")))
 })
+
+test_that("register can register an object", {
+  testthat::skip("No test case")
+  filter_active_customers <- function(customer_data) {
+    customer_data[customer_data$intelligence > 100, ]
+  }
+  test_network$add_container("object_container")
+  test_network$object_container$add_object("active_customers", filter_active_customers(customer_data = query(customer_data = c("id", "name"),
+                                                                intelligence = "intelligence")))
+})

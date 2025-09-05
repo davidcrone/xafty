@@ -62,3 +62,12 @@ test_that("get_queries ignores a xafty state and returns the query from the seco
   expect_identical(test_query, expected_query)
 })
 
+test_that("an object can be build as a correct link", {
+  filter_active_customers <- function(customer_data) {
+    customer_data[customer_data$intelligence > 100, ]
+  }
+  test_link <- test_create_link(filter_active_customers(customer_data = query(customer_data = c("id", "name"),
+                                                                                intelligence = "intelligence")), object_name = "active_customers")
+  expect_equal(test_link$added_object, "[active_customers]")
+})
+

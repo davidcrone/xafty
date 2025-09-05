@@ -1,6 +1,8 @@
 #' Initialize a New xafty Network
 #' @description
 #' Use this function to initialize a new xafty network.
+#' @param projects Character vector of project names that should be added to the network
+#' @param containers Character vector of container names that should be added to the network
 #' @returns A 'xafty_network' environment
 #' @examples
 #' # Initialize the project
@@ -10,15 +12,38 @@
 #' new_network$add_project("project1")
 #'
 #' @export
-init_network <- function() {
+init_network <- function(projects = NULL, containers = NULL) {
   network_env <- new.env() # This is the list where all projects will be merged together
+  add_project <- create_add_project(network_env = network_env)
+  add_container <- create_add_container(network_env = network_env)
+  save_project <- create_save_project(network_env = network_env)
+  assign("add_project", add_project, envir = network_env)
+  assign("add_container", add_container, envir = network_env)
+  assign("save", save_project, envir = network_env)
+  class(network_env) <- c("xafty_network", "environment")
+
+  if(!is.null(projects)) {
+    for (project in projects) {
+      network_env$add_project(project)
+    }
+  }
+  if(!is.null(containers)) {
+    for (container in containers) {
+      network_env$add_container(container)
+    }
+  }
+  invisible(network_env)
+}
+
+create_add_project <- function(network_env) {
+  force(network_env)
   add_project <- function(name, ...) {
     validate_project_name(name = name, network = network_env)
     project_config <- list(...)
     new_ruleset <- ruleset()
     new_settings <- settings()
     .network_env <- add_new_project(project = name, ruleset = new_ruleset, settings = new_settings, network_env = network_env,
-                                    link_types = c("get", "add", "join"))
+                                    link_types = c("get", "add", "join", "add_object"))
     if(length(project_config) > 0) {
       xafty_query <- project_config[[1]]
       if (!inherits(xafty_query, what = "xafty_query_list")) {
@@ -39,31 +64,34 @@ init_network <- function() {
     }
     invisible(.network_env)
   }
+  add_project
+}
 
+create_add_container <- function(network_env) {
+  force(network_env)
   add_container <- function(name, ...)  {
     validate_project_name(name = name, network = network_env)
     project_config <- list(...)
     new_ruleset <- ruleset()
     new_settings <- settings()
     .network_env <- add_new_project(project = name, ruleset = new_ruleset, settings = new_settings, network_env = network_env,
-                                    link_types = c("add"))
+                                    link_types = c("add", "add_object"))
     project_env <- .network_env[[name]]
     class(project_env) <- c("xafty_container", "environment")
     invisible(.network_env)
   }
+  add_container
+}
 
+create_save_project <- function(network_env) {
   save_project <- function(file_name, path) {
     full_path <- paste0(path, "/", file_name, ".rds")
     save(network_env, file = full_path)
   }
-  assign("add_project", add_project, envir = network_env)
-  assign("save", save_project, envir = network_env)
-  assign("add_container", add_container, envir = network_env)
-  class(network_env) <- c("xafty_network", "environment")
-  invisible(network_env)
+  save_project
 }
 
-add_new_project <- function(project, ruleset, settings, network_env, link_types = c("get", "add", "join")) {
+add_new_project <- function(project, ruleset, settings, network_env, link_types = c("get", "add", "join", "add_object")) {
   env_names <- c("variables", "joined_projects") # These will be environments for frequent look-ups during the nascent process
 
   project_env <- new.env() # This is the environment, where all code will be organized
@@ -79,6 +107,16 @@ add_new_project <- function(project, ruleset, settings, network_env, link_types 
     assign(lp, link_funs[[lp]], envir = project_env)
   }
   invisible(network_env)
+}
+
+create_add_object <- function(project, env) {
+  force(project)
+  force(env)
+  add_object <- function(name, fun, ...) {
+    quosure <- rlang::enquo(fun)
+    register(quosure = quosure, module = "link", network = env, project = project, object_name = name, ...)
+  }
+  add_object
 }
 
 create_get <- function(project, env) {
@@ -115,10 +153,11 @@ bundle_link_functions <- function(project, env) {
   get_fun <- create_get(project = project, env = env)
   add_fun <- create_add(project = project, env = env)
   join_fun <- create_join(project = project, env = env)
-
+  add_object <- create_add_object(project = project, env = env)
   list("get" = get_fun,
        "add" = add_fun,
-       "join" = join_fun)
+       "join" = join_fun,
+       "add_object" = add_object)
 }
 
 
@@ -137,7 +176,7 @@ merge_networks <- function(...) {
     network_env <- passed_networks[[i]]
     for (project in vec_projects) {
       link_funs <- bundle_link_functions(project = project, env = new_network_env)
-      link_names <- c("get", "add", "join")
+      link_names <- c("get", "add", "join", "add_object")
       project_env <- network_env[[project]]
       rm(list = link_names, envir = project_env)
       for (lp in link_names) {

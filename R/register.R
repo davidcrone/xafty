@@ -13,8 +13,8 @@
 register <- function(quosure, project, network, module, ...) {
   link <- create_link(quosure = quosure,  project = project, network = network, ... = ...)
   validate_network_integrity(link = link, network = network)
-  add_to_ruleset(item = link, module = module, env = network, project = project)
-  add_to_network(item = link, network = network, project = project)
+  add_to_ruleset(item = link, module = module, env = network, project = project, ... = ...)
+  add_to_network(item = link, network = network, project = project, ... = ...)
   invisible(network)
 }
 
@@ -62,12 +62,48 @@ create_link <- function(quosure, project, network, ...) {
   link<- append(list_args, list_info)
   class(link) <- c("xafty_link", "list")
 
-  if("added_columns" %in% names(.dots)) {
-    link$added_columns <- .dots[["added_columns"]]
+  if("object_name" %in% names(.dots)) {
+    object_name <- .dots[["object_name"]]
+    is_squared_already <- is_squared_variable(object_name)
+    if(!is_squared_already) object_name <- paste0("[", object_name, "]")
+    if(!is_xafty_object_variable(object_name)) stop("object_name is not a valid xafty object variable")
+    link$added_object <- object_name
   } else {
-    link$added_columns <- get_added_columns(link = link, network = network)
+    link$added_object <- NULL
   }
+
+  if("added_columns" %in% names(.dots)) {
+      link$added_columns <- .dots[["added_columns"]]
+  } else {
+      link$added_columns <- get_added_columns(link = link, network = network)
+  }
+
   link
+}
+
+unpack_args <- function(exp, env) {
+  fun_name <- as.character(exp[[1]])
+  fun <- get(fun_name, envir = env)
+  fun_args <- as.list(formals(fun))
+  matched_call <- match.call(definition = fun, call = exp, envir = env, expand.dots = FALSE)
+  for (arg_name in names(fun_args)) {
+    if (!(arg_name %in% names(matched_call))) {
+      # Case 1: Default argument
+      fun_args[[arg_name]] <- rlang::eval_tidy(fun_args[[arg_name]], env = env)
+    } else {
+      if(arg_name == "...") {
+        fun_args <- handle_dots_args(fun_args, matched_call, env = env)
+      } else {
+        call_expr <- matched_call[[arg_name]]
+        fun_args[[arg_name]] <- rlang::eval_tidy(call_expr, env =  env)
+      }
+    }
+  }
+  list(
+    fun_name = fun_name,
+    fun = fun,
+    args = fun_args
+  )
 }
 
 validate_network_integrity <- function(link, network) {

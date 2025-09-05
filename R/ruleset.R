@@ -15,9 +15,15 @@ settings <- function() {
     )
 }
 
-add_to_ruleset <- function(item, module = "link", env, project) {
+add_to_ruleset <- function(item, module = "link", env, project, ...) {
   function_name <- item$fun_name
-  projects <- unique(c(project, get_lead_projects(item)))
+  .dots <- list()
+
+  # When registering an object, the object should only be registered in the project
+  if(!"object_name" %in% names(.dots)) {
+    projects <- unique(c(project, get_lead_projects(item)))
+  }
+
   new_rule <- list(item)
   new_rule <- setNames(new_rule, function_name)
   for (proj in projects) {
