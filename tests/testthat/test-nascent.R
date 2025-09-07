@@ -86,3 +86,11 @@ test_that("projects with same column names can be pulled", {
     -5L), class = "data.frame")
   expect_identical(test_data, expected_data)
 })
+
+test_that("nascent two projects that have not yet been joined will raise an errors", {
+  test_network <- init_network(projects = c("customer_data", "occupations"))
+  test_network$customer_data$get(get_sample_data())
+  test_network$customer_data$add(add_score_category(data = query(customer_data = c("score", "name"))))
+  test_network$occupations$get(get_additional_info())
+  expect_error(nascent(test_network, query(occupations = "id", customer_data = c("name"))), regexp = "building a join path is not possible")
+})

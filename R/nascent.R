@@ -80,10 +80,11 @@ join_code_generator <- function(link, network, sm) {
 
 build_join_graph <- function(network) {
   names_network <- names(network)
-  projects <- names_network[vapply(names_network, \(project) is.environment(network[[project]]), FUN.VALUE = logical(1))]
+  # remvoves xafty_containers from the join_graph
+  projects <- names_network[vapply(names_network, \(project) is.environment(network[[project]]) &
+                                                             inherits(network[[project]], "xafty_project"),
+                                   FUN.VALUE = logical(1))]
   project_pairs <- sapply(projects, \(project) names(network[[project]]$joined_projects), simplify = FALSE, USE.NAMES = TRUE)
-  # Remove projects that have not yet been joined with other projects
-  project_pairs <- project_pairs[vapply(projects, \(project) !is.null(project_pairs[[project]]), FUN.VALUE = logical(1))]
   project_pairs
 }
 
@@ -138,20 +139,35 @@ projects_not_in_join_path <- function(sm, network) {
 
 get_shortest_join_path_for <- function(projects, network, sm) {
   graph <- build_join_graph(network)
+  check_graph(graph = graph, check_projects = projects)
   join_paths <- sm$get_join_path()
   for (i in seq_along(projects)) {
     vec_joins <- do.call(c, join_paths)
     start <- projects[i]
     if(start %in% vec_joins) next # if project is already present in join path, the job is already done!
     if(length(vec_joins) > 0) {
+      # Greedy network resolution by looking for the shortest path to a project already in the join path
       possible_paths <- lapply(vec_joins, \(end) bfs_traversal(graph, start = start, end = end))
       join_paths[[start]] <- possible_paths[[which.min(vapply(possible_paths, \(path) length(path), FUN.VALUE = numeric(1)))]]
     } else {
+      # Here we check whether any project can be linked
       end <- projects[i + 1]
       join_paths[[start]] <- bfs_traversal(graph, start = start, end = end)
     }
   }
   join_paths
+}
+
+# check_projects only contains the projects that are in needed to resolve a join path
+check_graph <- function(graph, check_projects) {
+  projects_in_graph <- names(graph)
+  for (project in check_projects) {
+    if(all(!graph[[project]] %in% projects_in_graph)) {
+      stop(paste0("Project: '", project, "' is not joined to any other project in the network.",
+                  " Therefore, building a join path is not possible. You need to add a join function that joins '",
+                  project, "' to another project within the network."))
+    }
+  }
 }
 
 get_chatty_link_from_network <- function(col, project, network) {

@@ -95,11 +95,11 @@ test_that("New environment type xafty_bundle allows to bundle queries with as su
   expect_identical(data_test, data_expected)
 })
 
-test_that("xafty_bundle allows to seamlessly add a column to a ghost project", {
+test_that("xafty_bundle allows to seamlessly add a column to a container project", {
   test_state_1 <- init_network()
   test_state_1$add_project("customer_data")
   test_state_1$add_project("occupation")
-  test_state_1$add_project("value_sheet")
+  test_state_1$add_container("value_sheet")
   test_state_1$customer_data$get(get_sample_data())
   test_state_1$customer_data$add(add_score_category(data = query(customer_data = "score")))
   test_state_1$occupation$get(get_additional_info())
@@ -111,7 +111,7 @@ test_that("xafty_bundle allows to seamlessly add a column to a ghost project", {
   expect_identical(table_test, table_expected)
 })
 
-test_that("xafty_bundle allows to seamlessly add a column to a ghost project", {
+test_that("xafty_bundle allows to seamlessly add a column to a container project", {
   test_state_1 <- init_network()
   test_state_1$add_project("customer_data")
   test_state_1$add_project("occupation")
