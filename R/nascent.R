@@ -116,6 +116,7 @@ bfs_traversal <- function(graph, start, end) {
 set_join_dependencies <- function(network, sm) {
   new_projects <- projects_not_in_join_path(sm = sm, network = network)
   overall_projects <- get_projects(sm$get_query())
+  overall_projects <- overall_projects[vapply(overall_projects, \(project) inherits(network[[project]], "xafty_project"), FUN.VALUE = logical(1))]
   if(length(new_projects) > 0 & length(overall_projects) > 1) {
     join_path <- get_shortest_join_path_for(new_projects, network, sm = sm)
     sm$set_join_path(join_path)
