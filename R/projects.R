@@ -41,8 +41,7 @@ create_add_project <- function(network_env) {
     validate_project_name(name = name, network = network_env)
     project_config <- list(...)
     new_ruleset <- ruleset()
-    new_settings <- settings()
-    .network_env <- add_new_project(project = name, ruleset = new_ruleset, settings = new_settings, network_env = network_env,
+    .network_env <- add_new_project(project = name, ruleset = new_ruleset, network_env = network_env,
                                     link_types = c("get", "add", "join", "add_object"))
     if(length(project_config) > 0) {
       xafty_query <- project_config[[1]]
@@ -73,8 +72,7 @@ create_add_container <- function(network_env) {
     validate_project_name(name = name, network = network_env)
     project_config <- list(...)
     new_ruleset <- ruleset()
-    new_settings <- settings()
-    .network_env <- add_new_project(project = name, ruleset = new_ruleset, settings = new_settings, network_env = network_env,
+    .network_env <- add_new_project(project = name, ruleset = new_ruleset, network_env = network_env,
                                     link_types = c("add", "add_object"))
     project_env <- .network_env[[name]]
     class(project_env) <- c("xafty_container", "environment")
@@ -91,8 +89,8 @@ create_save_project <- function(network_env) {
   save_project
 }
 
-add_new_project <- function(project, ruleset, settings, network_env, link_types = c("get", "add", "join", "add_object")) {
-  env_names <- c("variables", "joined_projects") # These will be environments for frequent look-ups during the nascent process
+add_new_project <- function(project, ruleset, network_env, link_types = c("get", "add", "join", "add_object")) {
+  env_names <- c("variables", "joined_projects", "objects") # These will be environments for frequent look-ups during the nascent process
 
   project_env <- new.env() # This is the environment, where all code will be organized
   class(project_env) <- c("xafty_project", "environment")
@@ -114,7 +112,7 @@ create_add_object <- function(project, env) {
   force(env)
   add_object <- function(name, fun, ...) {
     quosure <- rlang::enquo(fun)
-    register(quosure = quosure, module = "link", network = env, project = project, object_name = name, ...)
+    register(quosure = quosure, module = "object", network = env, project = project, object_name = name, ...)
   }
   add_object
 }

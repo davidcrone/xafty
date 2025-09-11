@@ -6,7 +6,7 @@ add_to_network <- function(item, network, project, ...) {
 
   if("object_name" %in% names(.dots)) {
     added_object <- get_squared_variable(item$added_object)
-    assign(added_object, fun_name, envir = project_env$variables)
+    assign(added_object, fun_name, envir = project_env$objects)
   }
   added_columns <- item$added_columns
   for (new_col in added_columns) {

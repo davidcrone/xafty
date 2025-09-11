@@ -1,9 +1,11 @@
 ruleset <- function() {
   list(
+    "settings" = settings(),
     "modules" = list(
       "link" = list(
+      ),
+      "object" = list(
       )
-      # Modules for future expansion
     )
   )
 }

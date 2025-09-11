@@ -122,3 +122,16 @@ test_that("Add function with a non-query argument works in nascent", {
                          row.names = c(NA, -5L), class = "data.frame")
   expect_identical(test_data, expected_data)
 })
+
+test_that("register can register an object", {
+  test_network <- init_network(projects = "intelligence")
+  test_network$intelligence$get(intelligence_date())
+  filter_active_customers <- function(data) {
+    data[data$intelligence > 100, , drop = FALSE]
+  }
+  test_network$intelligence$add_object(name = "active_customers",
+                                       fun = filter_active_customers(data = query(intelligence = "intelligence")))
+  test_data <- test_network |> nascent(intelligence = "[active_customers]")
+  expected_data <- data.frame(intelligence = c(120, 130), row.names = c(1L, 4L))
+  expect_equal(test_data, expected_data)
+})
