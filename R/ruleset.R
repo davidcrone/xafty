@@ -23,7 +23,6 @@ add_to_ruleset <- function(item, module = "link", env, project, ...) {
   if(!"object_name" %in% names(.dots)) {
     projects <- unique(c(project, get_lead_projects(item)))
   }
-
   new_rule <- list(item)
   new_rule <- setNames(new_rule, function_name)
   for (proj in projects) {
@@ -39,7 +38,7 @@ add_to_ruleset <- function(item, module = "link", env, project, ...) {
         # Add your update code here
       } else {
         # Abort the function
-        stop(paste0("Rule ", names(item), " already exists in ruleset of project '", paste0(projects, collapse = " and "),"'. Cannot register a rule that already exists."))
+        stop(paste0("Function '", item$fun_name, "' exists already in ruleset of project '", paste0(projects, collapse = " and "),"'"))
       }
     }
     add_rules <- c(current_rules, new_rule)

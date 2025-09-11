@@ -81,7 +81,7 @@ build_dependency_codes <- function(link, network, sm) {
     root_node <- setNames(list(character(0)), fun_code)
     return(root_node)
   }
-  scoped_functions <- unique(do.call(c, lapply(link$args, get_scoped_function_order, network = network)))
+  scoped_functions <- unique(do.call(c, lapply(queries, get_scoped_function_order, network = network)))
   li_within_joins <- lapply(queries, get_joins_within_query, network = network)
   for (i in seq_along(li_within_joins)) {
     joins <- li_within_joins[[i]]
