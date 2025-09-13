@@ -131,7 +131,7 @@ test_that("register can register an object", {
   }
   test_network$intelligence$add_object(name = "active_customers",
                                        fun = filter_active_customers(data = query(intelligence = "intelligence")))
-  test_data <- test_network |> nascent(intelligence = "[active_customers]")
+  test_data <- test_network |> nascent(intelligence = c("[active_customers]"))
   expected_data <- data.frame(intelligence = c(120, 130), row.names = c(1L, 4L))
   expect_equal(test_data, expected_data)
 })

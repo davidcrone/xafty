@@ -95,6 +95,7 @@ get_column_order <- function(query) {
 }
 
 return_unscoped_data <- function(data, query, sm) {
+  if(inherits(query, "xafty_object_query")) return(data)
   data_cols <- colnames(data)
   data_select <- interpolate_masks(query = query, mask = sm$get_mask(), data_cols = data_cols)
   data_selected <- data[data_select]

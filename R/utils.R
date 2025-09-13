@@ -194,6 +194,9 @@ build_executable_args <- function(link, get_data, mask) {
     arg <- args[i]
     data <- get_data(project = project)
     data <- unscope(data = data, link = link, arg_name = arg, mask = mask)
+    if(is_xafty_object_variable(link$added_object)) {
+      data <- data[do.call(c, lapply(queries, get_column_order))]
+    }
     func_args[[arg]] <- data
   }
   func_args
@@ -242,7 +245,10 @@ get_added_columns <- function(link, network) {
   func_output <- execute_function(link = link, network = network)
   output_column_names <- colnames(func_output)
   added_columns <- output_column_names[!output_column_names %in% input_column_names]
-  added_columns
+  list(
+    output_columns = output_column_names,
+    added_columns = added_columns
+    )
 }
 
 flatten_list <- function(li) {

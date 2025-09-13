@@ -8,7 +8,7 @@
 #' @export
 query <- function(...) {
   .list_dots <- list(...)
-  list_xafty_links <- lapply(seq_along(.list_dots), \(i) {
+  query_list <- lapply(seq_along(.list_dots), \(i) {
     select <- .list_dots[i]
     project <- names(select)
     if (is.character(select) & length(select) == 1 & is.null(project)) {
@@ -25,15 +25,18 @@ query <- function(...) {
     class(xafty_link) <- c("list", "xafty_query")
     xafty_link
     })
-  list_xafty_links <- purrr::list_flatten(list_xafty_links) # Worth the dependency?
-  names(list_xafty_links) <- vapply(list_xafty_links, \(query) query$from, FUN.VALUE = character(1))
-  class(list_xafty_links) <- c("list", "xafty_query_list")
-  list_xafty_links
+  query_list <- purrr::list_flatten(query_list) # Worth the dependency?
+  names(query_list) <- vapply(query_list, \(query) query$from, FUN.VALUE = character(1))
+  if(has_misuse_of_object_in_query_list(query_list = query_list)){
+    stop("You are querying an object in an unexpected way. Please check {Vignette on objects} on how to query an object correctly.")
+  }
+  query_list <- set_query_list_class(query_list = query_list)
+  query_list
 }
 
 sub_query <- function(...) {
   .list_dots <- list(...)
-  list_xafty_links <- lapply(seq_along(.list_dots), \(i) {
+  query_list <- lapply(seq_along(.list_dots), \(i) {
     select <- .list_dots[i]
     project <- names(select)
     if (is.character(select) & length(select) == 1 & is.null(project)) {
@@ -50,7 +53,7 @@ sub_query <- function(...) {
     class(xafty_link) <- c("list", "xafty_query")
     xafty_link
   })
-  list_xafty_links
+  query_list
 }
 
 add_query <- function(network, ...) {
@@ -72,14 +75,17 @@ remove_query <- function(network) {
   invisible(network)
 }
 
-temper_query <- function(query, network) {
-  sapply(query, \(link) {
+temper_query <- function(query_list, network) {
+  class_input <- class(query_list)
+  query_list <- sapply(query_list, \(link) {
     project <- link$from
     if (any(link$select == "*")) {
       link$select <- names(network[[project]]$variables)
     }
     link
   }, simplify = FALSE, USE.NAMES = TRUE)
+  class(query_list) <- class_input
+  query_list
 }
 
 get_sub_queries <- function(query, network) {
@@ -92,7 +98,6 @@ get_sub_queries <- function(query, network) {
   })
   sub_query_list[!vapply(sub_query_list, \(query) is.null(query), FUN.VALUE = logical(1))]
 }
-
 
 merge_queries <- function(...) {
   li_queries <- list(...)
@@ -114,7 +119,7 @@ merge_queries <- function(...) {
     merged_query[[proj]]$from <- proj
     class(merged_query[[proj]]) <- c("list", "xafty_query")
   }
-  class(merged_query) <- c("list", "xafty_query_list")
+  merged_query <- set_query_list_class(merged_query)
   merged_query
 }
 
@@ -137,11 +142,40 @@ dots_to_query <- function(network, ...)  {
   } else {
     query <- list(...)[[1]]
   }
-  query_order <- temper_query(query = query, network = network)
+  query_order <- temper_query(query_list = query, network = network)
   query_internal <- merge_queries(query_order)
 
   list(
     internal = query_internal,
     order = query_order
   )
+}
+
+is_object_query_list <- function(query_list) {
+  if (length(query_list) != 1) return(FALSE)
+  if (!is_xafty_object_variable(query_list[[1]]$select)) return(FALSE)
+  TRUE
+}
+
+set_query_list_class <- function(query_list) {
+  if (is_object_query_list(query_list = query_list)) {
+    class(query_list) <- c("list", "xafty_query_list", "xafty_object_query")
+  } else {
+    class(query_list) <- c("list", "xafty_query_list")
+  }
+  query_list
+}
+
+has_misuse_of_object_in_query_list <- function(query_list) {
+  n_projects <- length(query_list)
+  misuse_detected <- FALSE
+  for (query in query_list) {
+    project <- query$project
+    select <- query$select
+    object_variable_vec <- vapply(select, is_xafty_object_variable, FUN.VALUE = logical(1))
+    has_object <- any(object_variable_vec)
+    more_than_one <- length(object_variable_vec) > 1
+    if((n_projects > 1 & has_object) | (has_object & more_than_one)) misuse_detected <- TRUE
+  }
+  misuse_detected
 }

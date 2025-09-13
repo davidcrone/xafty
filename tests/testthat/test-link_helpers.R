@@ -70,4 +70,3 @@ test_that("an object can be build as a correct link", {
                                                                                 intelligence = "intelligence")), object_name = "active_customers")
   expect_equal(test_link$added_object, "[active_customers]")
 })
-

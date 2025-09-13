@@ -61,7 +61,7 @@ create_link <- function(quosure, project, network, ...) {
   )
   link<- append(list_args, list_info)
   class(link) <- c("xafty_link", "list")
-
+  # TODO add output columns to object list
   if("object_name" %in% names(.dots)) {
     object_name <- .dots[["object_name"]]
     is_squared_already <- is_squared_variable(object_name)
@@ -71,11 +71,12 @@ create_link <- function(quosure, project, network, ...) {
   } else {
     link$added_object <- NULL
   }
-
   if("added_columns" %in% names(.dots)) {
       link$added_columns <- .dots[["added_columns"]]
   } else {
-      link$added_columns <- get_added_columns(link = link, network = network)
+    li_output_columns <- get_added_columns(link = link, network = network)
+    link$added_columns <- li_output_columns$added_columns
+    link$output_columns <- li_output_columns$output_columns
   }
 
   link
@@ -119,14 +120,19 @@ validate_network_integrity <- function(link, network) {
   }
 }
 
-validate_query <- function(col, project, network) {
+validate_query <- function(col, project, network, env_name = "variables") {
   project_subset <- network[[project]]
   if(is.null(project_subset)) {
     stop(paste0("Project: ", project, " is not contained in the network"))
   }
-  columns_subset <- project_subset$variables[[col]]
+  columns_subset <- project_subset[[env_name]][[col]]
   if(is.null(columns_subset)) {
     stop(paste0("Column: ", col, " is not contained in project: ", project))
   }
   invisible(TRUE)
+}
+
+# The function returns all input and output columns as scoped
+get_link_column_package <- function(link) {
+
 }

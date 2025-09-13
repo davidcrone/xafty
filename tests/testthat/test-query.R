@@ -53,3 +53,12 @@ test_that("passing just a character vecror into xafty_query returns the query wi
   expect_equal(xafty_query$customer_data$from, "customer_data")
 })
 
+test_that("an object query correctly adds the class xafty_object_query to the class vector", {
+  xafty_query <- query(customer_data = "[my_object]")
+  expect_in(c("xafty_object_query"), class(xafty_query))
+})
+
+test_that("trying to query an object and any other column or object gives an informative error", {
+  expect_error(query(customer_data = c("[my_object]", "column")))
+  expect_error(query(customer_data = "column", occupation = "[my_object]"))
+})

@@ -9,16 +9,8 @@ nascent <- function(network, ...) {
   tree_sm <- resolve_dependencies(query = li_query$internal, network = network)
   dag <- build_dag(tree_sm)
   data_sm <- evaluate_dag(dag)
-
-  data_keys <- unique(vapply(get_projects(tree_sm$get_query()), \(project) data_sm$get_data_key(project), FUN.VALUE = character(1)))
-  if (length(data_keys) > 1) {
-    key_salad <- vapply(data_keys, \(key) paste0(data_sm$get_projects_by_key(key), collapse = "_"), FUN.VALUE = character(1))
-    data_list <- lapply(data_keys, \(key) data_sm$get_data_by_key(key))
-    names(data_list) <- key_salad
-    data_list
-  } else {
-    return_unscoped_data(data = data_sm$get_data_by_key(data_keys), query = li_query$order, sm = tree_sm)
-  }
+  data_key <- unique(vapply(get_projects(tree_sm$get_query()), \(project) data_sm$get_data_key(project), FUN.VALUE = character(1)))
+  return_unscoped_data(data = data_sm$get_data_by_key(data_key), query = li_query$order, sm = tree_sm)
 }
 
 sort_links <- function(codes, sm) {
@@ -30,7 +22,6 @@ resolve_dependencies <- function(query, network, sm = build_tree()) {
   dependencies(query, network = network, tree_sm = sm)
   set_join_dependencies(network = network, sm = sm)
   build_join_bridges(sm = sm, network = network)
-
   sm
 }
 
@@ -172,15 +163,21 @@ check_graph <- function(graph, check_projects) {
 }
 
 get_chatty_link_from_network <- function(col, project, network) {
-  validate_query(col = col, project = project, network = network)
+  validate_query(col = col, project = project, network = network, env_name = "variables")
   columns_subset <- network[[project]]$variables[[col]]
   network[[project]]$ruleset[["modules"]][["link"]][[columns_subset]]
 }
 
 get_chatty_func_name_from_network <- function(col, project, network) {
-  validate_query(col = col, project = project, network = network)
+  validate_query(col = col, project = project, network = network, env_name = "variables")
   columns_subset <- network[[project]]$variables[[col]]
   columns_subset
+}
+
+get_chatty_object_from_network <- function(name, project, network) {
+  validate_query(col = name, project = project, network = network, env_name = "objects")
+  columns_subset <- network[[project]]$objects[[name]]
+  network[[project]]$ruleset[["modules"]][["object"]][[columns_subset]]
 }
 
 build_join_bridges <- function(sm, network) {
@@ -226,8 +223,7 @@ build_join_bridges <- function(sm, network) {
 
 execute_stack <- function(link, mask, data_sm) {
   projects <- unique(c(link$project, get_lead_projects(link)))
-  executable_args <-  build_executable_args(link, get_data = data_sm$get_data, mask = mask)
-
+  executable_args <- build_executable_args(link, get_data = data_sm$get_data, mask = mask)
   # Doing this to avoid too much memory use, is this necessary?
   for (project in projects) {
     if(!is.null(data_sm$get_data_key(project))) {
@@ -236,7 +232,9 @@ execute_stack <- function(link, mask, data_sm) {
   }
   new_key <- paste0(projects, collapse = "_")
   data <- do.call(link$fun, executable_args)
-  data <- scope(data = data, link = link, mask = mask)
+  if(!length(link$added_object) == 1) {
+    data <- scope(data = data, link = link, mask = mask)
+  }
   projects_update_key <- do.call(c, lapply(projects, \(project) {
     key <- data_sm$get_data_key(project)
     if(is.null(key)) return(project)

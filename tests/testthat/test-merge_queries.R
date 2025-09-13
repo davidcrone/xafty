@@ -32,3 +32,9 @@ test_that("Merging with an empty list returns a named empty xafty query", {
   expected_query <- query()
   expect_identical(test_query, expected_query)
 })
+
+test_that("merge_queries respects xafty_object_query class", {
+  test_query <- merge_queries(query(project = "[object]"))
+  expected_query <- query(project = "[object]")
+  expect_identical(test_query, expected_query)
+})

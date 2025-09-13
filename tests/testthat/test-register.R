@@ -142,7 +142,7 @@ test_that("register can register an object", {
   filter_active_customers <- function(data) {
     data[data$intelligence > 100, ]
   }
-  test_network$intelligence$add_object("active_customers2", filter_active_customers(data = query(intelligence = "intelligence")))
+  test_network$intelligence$add_object("active_customers", filter_active_customers(data = query(intelligence = "intelligence")))
   expect_equal(test_network$intelligence$objects$active_customers, "filter_active_customers")
   expect_equal(test_network$intelligence$ruleset$modules$object$filter_active_customers$added_object, "[active_customers]")
 })
