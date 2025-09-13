@@ -2,6 +2,7 @@
 
 dependencies <- function(query_list, network, tree_sm = build_tree()) {
   tree_sm$set_query(query_list)
+  browser()
   links <- get_dependend_links(query_list, network)
   codes <- lapply(links, build_dependency_codes, network = network, sm = tree_sm)
   out <- mapply(tree_sm$set_nodes, links, codes, SIMPLIFY = FALSE)

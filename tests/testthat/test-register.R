@@ -146,3 +146,18 @@ test_that("register can register an object", {
   expect_equal(test_network$intelligence$objects$active_customers, "filter_active_customers")
   expect_equal(test_network$intelligence$ruleset$modules$object$filter_active_customers$added_object, "[active_customers]")
 })
+
+test_that("register can register a function with an object as dependency", {
+  test_network <- init_network(projects = "intelligence")
+  test_network$intelligence$get(intelligence_date())
+  filter_active_customers <- function(data) {
+    data[data$intelligence > 100, ]
+  }
+  test_network$intelligence$add_object("active_customers", filter_active_customers(data = query(intelligence = "intelligence")))
+  build_kpi <- function(active_customers) {
+    mean(data$intelligence)
+  }
+  test_network$intelligence$add_object("mean_intelligence", build_kpi(active_customers = query(intelligence = c("[active_customers]"))))
+  expect_equal(test_network$intelligence$objects$mean_intelligence, "build_kpi")
+  expect_equal(test_network$intelligence$ruleset$modules$object$build_kpi$added_object, "[mean_intelligence]")
+})

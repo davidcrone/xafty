@@ -114,8 +114,12 @@ validate_network_integrity <- function(link, network) {
   for (query in flat_queries) {
     project <- query$from
     selection <- query$select
-    for (col in selection) {
-      validate_query(col = col, project = project, network = network)
+    if (is_xafty_object_variable(selection)) {
+      validate_query(col = get_squared_variable(selection), project = project, network = network, env_name = "objects")
+    } else {
+      for (col in selection) {
+        validate_query(col = col, project = project, network = network, env_name = "variables")
+      }
     }
   }
 }

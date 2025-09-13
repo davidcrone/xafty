@@ -72,7 +72,12 @@ get_scoped_column_order <- function(query) {
 get_scoped_function_order <- function(query, network) {
   columns <- get_column_order(query)
   projects <- get_project_order(query)
-  functions <- do.call(c, mapply(get_chatty_func_name_from_network, columns, projects, MoreArgs = list(network = network), SIMPLIFY = FALSE, USE.NAMES = TRUE))
+  if(inherits(query, "xafty_object_query")) {
+    functions <- get_chatty_func_name_from_network(col = get_squared_variable(columns), project = projects, network = network, env_name = "objects")
+  } else {
+    functions <- do.call(c, mapply(get_chatty_func_name_from_network, columns, projects, MoreArgs = list(network = network, env_name = "variables"),
+                                   SIMPLIFY = FALSE, USE.NAMES = TRUE))
+  }
   paste0(projects, ".", functions)
 }
 

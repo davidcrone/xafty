@@ -168,16 +168,16 @@ get_chatty_link_from_network <- function(col, project, network) {
   network[[project]]$ruleset[["modules"]][["link"]][[columns_subset]]
 }
 
-get_chatty_func_name_from_network <- function(col, project, network) {
-  validate_query(col = col, project = project, network = network, env_name = "variables")
-  columns_subset <- network[[project]]$variables[[col]]
-  columns_subset
-}
-
 get_chatty_object_from_network <- function(name, project, network) {
   validate_query(col = name, project = project, network = network, env_name = "objects")
   columns_subset <- network[[project]]$objects[[name]]
   network[[project]]$ruleset[["modules"]][["object"]][[columns_subset]]
+}
+
+get_chatty_func_name_from_network <- function(col, project, network, env_name = "variables") {
+  validate_query(col = col, project = project, network = network, env_name = env_name)
+  columns_subset <- network[[project]][[env_name]][[col]]
+  columns_subset
 }
 
 build_join_bridges <- function(sm, network) {
