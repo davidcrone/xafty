@@ -1,6 +1,5 @@
 ruleset <- function() {
   list(
-    "settings" = settings(),
     "modules" = list(
       "link" = list(
       ),
@@ -10,10 +9,11 @@ ruleset <- function() {
   )
 }
 
-settings <- function() {
+settings <- function(network_name) {
+  if(length(network_name) == 0 | length(network_name) > 1) stop("Please enter the network's name.")
+  if(!identical(network_name, make.names(network_name))) stop("Please enter a valid network name")
     list(
-      "meta_data_name" = "meta_data",
-      "path_project_env" = NULL
+      "network_name" = network_name
     )
 }
 

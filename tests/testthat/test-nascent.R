@@ -33,7 +33,7 @@ test_that("nascent can resolve a tornado", {
 
 test_that("nascent can resolve a large network", {
 
-  large_network <- merge_networks(test_network, main_network)
+  large_network <- merge_networks(name = "merged_network", test_network, main_network)
 
   large_network$map$join(join_datasets(main_data = query(map = "id"), extra_data = query(main = "id")))
   test_table <- large_network |> nascent(query(map = "id", intelligence = "new_column",
@@ -49,7 +49,7 @@ test_that("nascent can resolve a large network", {
 })
 
 test_that("Querying a project with star retrieves all columns associated with the project", {
-  test_state_1 <- init_network()
+  test_state_1 <- init_network("test_state_1")
   test_state_1$add_project("customer_data")
   test_state_1$add_project("occupation")
   test_state_1$customer_data$get(get_sample_data())
@@ -88,7 +88,7 @@ test_that("projects with same column names can be pulled", {
 })
 
 test_that("nascent two projects that have not yet been joined will raise an errors", {
-  test_network <- init_network(projects = c("customer_data", "occupations"))
+  test_network <- init_network(name = "test_network", projects = c("customer_data", "occupations"))
   test_network$customer_data$get(get_sample_data())
   test_network$customer_data$add(add_score_category(data = query(customer_data = c("score", "name"))))
   test_network$occupations$get(get_additional_info())
@@ -96,7 +96,7 @@ test_that("nascent two projects that have not yet been joined will raise an erro
 })
 
 test_that("An unjoined project and a container work seamlessly together in nascent", {
-  test_network <- init_network(projects = "customer_data", containers = "occupations")
+  test_network <- init_network(name = "test_network", projects = "customer_data", containers = "occupations")
   test_network$customer_data$get(get_sample_data())
   test_network$occupations$add(add_score_category(data = query(customer_data = "score")))
   test_data <- nascent(test_network, customer_data = "name", occupations= "category")
@@ -107,7 +107,7 @@ test_that("An unjoined project and a container work seamlessly together in nasce
 })
 
 test_that("Add function with a non-query argument works in nascent", {
-  test_network <- init_network(projects = "customer_data")
+  test_network <- init_network(name = "test_network", projects = "customer_data")
   test_network$customer_data$get(get_sample_data())
   add_score_category <- function(data, na_as_negative = FALSE) {
     if (na_as_negative) {
@@ -124,7 +124,7 @@ test_that("Add function with a non-query argument works in nascent", {
 })
 
 test_that("nascent can query an object from the network", {
-  test_network <- init_network(projects = "intelligence")
+  test_network <- init_network(name = "test_network", projects = "intelligence")
   test_network$intelligence$get(intelligence_date())
   filter_active_customers <- function(data) {
     data[data$intelligence > 100, , drop = FALSE]
@@ -138,7 +138,7 @@ test_that("nascent can query an object from the network", {
 
 test_that("nascent can query an object from the network which has an object as dependency", {
   skip("Feature not implemented yet")
-  test_network <- init_network(projects = "intelligence")
+  test_network <- init_network(name = "test_network", projects = "intelligence")
   test_network$intelligence$get(intelligence_date())
   filter_active_customers <- function(data) {
     data[data$intelligence > 100, , drop = FALSE]

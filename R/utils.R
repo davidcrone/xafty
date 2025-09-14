@@ -3,10 +3,11 @@
 #' S3 method to print a xafty network.
 #' @export
 print.xafty_network <- function(x, ...) {
+  network_name <- x$settings$network_name
   values_in_x <- names(x)
   logcal_env <- vapply(values_in_x, \(project) is.environment(x[[project]]), FUN.VALUE = logical(1))
   projects <- names(logcal_env)[logcal_env]
-  cat(paste0("Number of projects in network: ", length(projects), "\n"))
+  cat(paste0("Number of projects in ", network_name, ": ", length(projects), "\n"))
   cat("\n")
   for(project in projects) {
     is_sub <- "xafty_bundle" %in% class(x[[project]])

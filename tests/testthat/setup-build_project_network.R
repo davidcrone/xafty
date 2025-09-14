@@ -62,7 +62,7 @@ join_datasets_map <- function(intelligence, map) {
   merged
 }
 
-test_network <- init_network()
+test_network <- init_network("test_network")
 ## Project 1 ##
 test_network$add_project("customer_data")
 test_network$customer_data$get(get_sample_data())

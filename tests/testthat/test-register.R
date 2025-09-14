@@ -3,7 +3,7 @@ test_that("Register builds a get node in the network environment correctly", {
       data.frame(a = c(1:10),
                  b = sample(c("1", "2", "3"), size = 10, replace = TRUE))
     }
-    project_env <- init_network()
+    project_env <- init_network(name = "project_env")
     project_env$add_project("test")
     project_env$test$get(test_get_function(arg1 = list(1, 2), arg2 = TRUE, comment = "clear", 1:3))
     expect_equal(names(project_env$test$variables), c("a", "b"))
@@ -20,7 +20,7 @@ test_that("Register builds a add node in the network environment correctly", {
     arg1$c <- rep(c("value1", "value2"), 5, each = TRUE)
     arg1
   }
-  project_env <- init_network()
+  project_env <- init_network(name = "project_env")
   project_env$add_project("test")
   project_env$test$get(test_get_function(arg1 = list(1, 2), arg2 = TRUE, comment = "clear", 1:3))
   project_env$test$add(test_add_function(arg1 = test_get_function()))
@@ -44,7 +44,7 @@ test_that("Register builds a join node in the network environment correctly", {
   test_join_function <- function(data_left, data_right) {
     base::merge(data_left, data_right, by = intersect(names(data_left), names(data_right)), all.x = TRUE, sort = FALSE)
   }
-  project_env <- init_network()
+  project_env <- init_network(name = "project_env")
   project_env$add_project("test")
   project_env$test$get(test_get_function(arg1 = list(1, 2), arg2 = TRUE, comment = "clear", 1:3), added_columns = c("a", "b"))
   project_env$test$add(test_add_function(arg1 = test_get_function()))
@@ -60,7 +60,7 @@ test_that("Register builds a join node in the network environment correctly", {
 })
 
 test_that("register add also works with xafty link instead of passing data into the to be registered function", {
-  test_state_1 <- init_network()
+  test_state_1 <- init_network(name = "project_env")
   test_state_1$add_project("customer_data")
   test_state_1$customer_data$get(get_sample_data())
   xafty_link <- query(customer_data = c("score", "name"))
@@ -76,7 +76,7 @@ test_that("register add also works with xafty link instead of passing data into 
 })
 
 test_that("New environment type xafty_bundle allows to bundle queries with as sub projects", {
-  test_state_1 <- init_network()
+  test_state_1 <- init_network(name = "project_env")
   test_state_1$add_project("customer_data")
   test_state_1$add_project("occupation")
   test_state_1$customer_data$get(get_sample_data())
@@ -96,7 +96,7 @@ test_that("New environment type xafty_bundle allows to bundle queries with as su
 })
 
 test_that("xafty_bundle allows to seamlessly add a column to a container project", {
-  test_state_1 <- init_network()
+  test_state_1 <- init_network(name = "project_env")
   test_state_1$add_project("customer_data")
   test_state_1$add_project("occupation")
   test_state_1$add_container("value_sheet")
@@ -112,7 +112,7 @@ test_that("xafty_bundle allows to seamlessly add a column to a container project
 })
 
 test_that("xafty_bundle allows to seamlessly add a column to a container project", {
-  test_state_1 <- init_network()
+  test_state_1 <- init_network(name = "project_env")
   test_state_1$add_project("customer_data")
   test_state_1$add_project("occupation")
   test_state_1$add_container("value_sheet")
@@ -137,7 +137,7 @@ test_that("register throws an error when a column within a query is not present 
 })
 
 test_that("register can register an object", {
-  test_network <- init_network(projects = "intelligence")
+  test_network <- init_network(name = "test_network", projects = "intelligence")
   test_network$intelligence$get(intelligence_date())
   filter_active_customers <- function(data) {
     data[data$intelligence > 100, ]
@@ -148,7 +148,7 @@ test_that("register can register an object", {
 })
 
 test_that("register can register a function with an object as dependency", {
-  test_network <- init_network(projects = "intelligence")
+  test_network <- init_network(name = "test_network", projects = "intelligence")
   test_network$intelligence$get(intelligence_date())
   filter_active_customers <- function(data) {
     data[data$intelligence > 100, ]

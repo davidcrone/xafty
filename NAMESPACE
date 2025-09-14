@@ -2,5 +2,7 @@
 
 S3method(print,xafty_network)
 export(init_network)
+export(merge_networks)
 export(nascent)
 export(query)
+export(register)

@@ -34,7 +34,7 @@ test_join_car_id <- function(data_left, data_right) {
   base::merge(data_left, data_right, by = intersect(names(data_left), names(data_right)), all.x = TRUE, sort = FALSE)
 }
 
-xafty_network <- init_network()
+xafty_network <- init_network("xafty_network")
 xafty_network$add_project("test1")
 
 xafty_network$test1$get(test_get_car_data(conn = TRUE))
@@ -83,7 +83,7 @@ join_main3 <- function(main, join3) {
   base::merge(main, join3, by = intersect(names(main), names(join3)), all.x = TRUE, sort = FALSE)
 }
 
-main_network <- init_network()
+main_network <- init_network("main_network")
 main_network$add_project("main")
 main_network$add_project("side1")
 main_network$add_project("side2")

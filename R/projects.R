@@ -1,19 +1,21 @@
 #' Initialize a New xafty Network
 #' @description
 #' Use this function to initialize a new xafty network.
+#' @param name Character vector of length 1. A valid name for the network
 #' @param projects Character vector of project names that should be added to the network
 #' @param containers Character vector of container names that should be added to the network
 #' @returns A 'xafty_network' environment
 #' @examples
 #' # Initialize the project
-#' new_network <- init_network()
+#' new_network <- init_network(name = "network_1")
 #'
 #' # Add a new project
 #' new_network$add_project("project1")
 #'
 #' @export
-init_network <- function(projects = NULL, containers = NULL) {
+init_network <- function(name, projects = NULL, containers = NULL) {
   network_env <- new.env() # This is the list where all projects will be merged together
+  network_env$settings <- settings(network_name = name)
   add_project <- create_add_project(network_env = network_env)
   add_container <- create_add_container(network_env = network_env)
   save_project <- create_save_project(network_env = network_env)
@@ -159,8 +161,15 @@ bundle_link_functions <- function(project, env) {
 }
 
 
-merge_networks <- function(...) {
-  new_network_env <- init_network()
+#' Merge networks into one
+#' @description
+#' The function allows the merging of any numbers of networks into one network. The return value is therefore always one network.
+#' @param name Character vector of length 1. Name of the merged network
+#' @param ... Networks that should be merged
+#' @returns A xafty network
+#' @export
+merge_networks <- function(name, ...) {
+  new_network_env <- init_network(name = name)
   passed_networks <- list(...)
   li_projects <- lapply(passed_networks, \(project_env) {
     network_names <- names(project_env)

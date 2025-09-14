@@ -4,7 +4,14 @@
 \alias{init_network}
 \title{Initialize a New xafty Network}
 \usage{
-init_network()
+init_network(name, projects = NULL, containers = NULL)
+}
+\arguments{
+\item{name}{Character vector of length 1. A valid name for the network}
+
+\item{projects}{Character vector of project names that should be added to the network}
+
+\item{containers}{Character vector of container names that should be added to the network}
 }
 \value{
 A 'xafty_network' environment
@@ -14,7 +21,7 @@ Use this function to initialize a new xafty network.
 }
 \examples{
 # Initialize the project
-new_network <- init_network()
+new_network <- init_network(name = "network_1")
 
 # Add a new project
 new_network$add_project("project1")

@@ -25,7 +25,7 @@ join_engine_details <- function(mtcars, engine) {
 }
 
 ## Initialize the network
-xafty_network <- init_network()
+xafty_network <- init_network("xafty_network")
 
 ## Register the functions in project 1
 xafty_network$add_project("mtcars")
