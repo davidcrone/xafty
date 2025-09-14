@@ -20,7 +20,7 @@ A 'xafty_network' environment
 Use this function to initialize a new xafty network.
 }
 \examples{
-# Initialize the project
+# Initialize the network
 new_network <- init_network(name = "network_1")
 
 # Add a new project

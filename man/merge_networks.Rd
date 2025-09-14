@@ -12,7 +12,7 @@ merge_networks(name, ...)
 \item{...}{Networks that should be merged}
 }
 \value{
-A xafty network
+A 'xafty_network' environment
 }
 \description{
 The function allows the merging of any numbers of networks into one network. The return value is therefore always one network.

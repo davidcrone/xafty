@@ -6,7 +6,7 @@
 #' @param containers Character vector of container names that should be added to the network
 #' @returns A 'xafty_network' environment
 #' @examples
-#' # Initialize the project
+#' # Initialize the network
 #' new_network <- init_network(name = "network_1")
 #'
 #' # Add a new project
@@ -166,7 +166,7 @@ bundle_link_functions <- function(project, env) {
 #' The function allows the merging of any numbers of networks into one network. The return value is therefore always one network.
 #' @param name Character vector of length 1. Name of the merged network
 #' @param ... Networks that should be merged
-#' @returns A xafty network
+#' @returns A 'xafty_network' environment
 #' @export
 merge_networks <- function(name, ...) {
   new_network_env <- init_network(name = name)
@@ -201,7 +201,7 @@ merge_networks <- function(name, ...) {
 validate_project_name <- function(name, network) {
   if(length(name) == 0 | length(name) > 1) stop("Please enter the project's name.")
   if(!identical(name, make.names(name))) stop("Please enter a valid project name")
-  reserved_names <- c("save", "add_project", "query")
+  reserved_names <- c("save", "add_project", "query", "settings")
   if(name %in% reserved_names) stop(paste0("Please don't use any of the following reserved names as project names: ", paste0(reserved_names, collapse = ", "), "."))
   names_network <- names(network)
   existing_projects <- names_network[vapply(names_network, \(project) is.environment(network[[project]]), FUN.VALUE = logical(1))]
