@@ -137,7 +137,6 @@ test_that("nascent can query an object from the network", {
 })
 
 test_that("nascent can query an object from the network which has an object as dependency", {
-  skip("Feature not implemented yet")
   test_network <- init_network(name = "test_network", projects = "intelligence")
   test_network$intelligence$get(intelligence_date())
   filter_active_customers <- function(data) {

@@ -6,6 +6,10 @@
 nascent <- function(network, ...) {
   stopifnot(inherits(network, "xafty_network"))
   li_query <- dots_to_query(network = network, ... = ...)
+  if(inherits(li_query$internal, "xafty_object_query")) {
+    return(nascent_object(query_list = li_query$internal, network = network))
+  }
+
   tree_sm <- resolve_dependencies(query = li_query$internal, network = network)
   dag <- build_dag(tree_sm)
   data_sm <- evaluate_dag(dag)
@@ -16,6 +20,13 @@ nascent <- function(network, ...) {
 sort_links <- function(codes, sm) {
   links <- sm$get_links()
   lapply(codes, \(code) links[[code]])
+}
+
+nascent_object <- function(query_list, network) {
+  link <- get_dependend_links(query_list, network)
+  fun <- link[[1]]$fun
+  args <- eval_args(link[[1]], network = network)
+  do.call(fun, args)
 }
 
 resolve_dependencies <- function(query, network, sm = build_tree()) {
