@@ -124,31 +124,18 @@ test_that("Add function with a non-query argument works in nascent", {
 })
 
 test_that("nascent can query an object from the network", {
-  test_network <- init_network(name = "test_network", projects = "intelligence")
-  test_network$intelligence$get(intelligence_date())
-  filter_active_customers <- function(data) {
-    data[data$intelligence > 100, , drop = FALSE]
-  }
-  test_network$intelligence$add_object(name = "active_customers",
-                                       fun = filter_active_customers(data = query(intelligence = "intelligence")))
   test_data <- test_network |> nascent(intelligence = c("[active_customers]"))
   expected_data <- data.frame(intelligence = c(120, 130), row.names = c(1L, 4L))
   expect_equal(test_data, expected_data)
 })
 
 test_that("nascent can query an object from the network which has an object as dependency", {
-  test_network <- init_network(name = "test_network", projects = "intelligence")
-  test_network$intelligence$get(intelligence_date())
-  filter_active_customers <- function(data) {
-    data[data$intelligence > 100, , drop = FALSE]
-  }
-  test_network$intelligence$add_object(name = "active_customers",
-                                       fun = filter_active_customers(data = query(intelligence = "intelligence")))
-  build_kpi <- function(active_customers) {
-    mean(data$intelligence)
-  }
-  test_network$intelligence$add_object("mean_intelligence", build_kpi(active_customers = query(intelligence = c("[active_customers]"))))
   test_data <- test_network |> nascent(intelligence = c("[mean_intelligence]"))
-  expected_data <- 105.8
+  expected_data <- 125
   expect_equal(test_data, expected_data)
+})
+
+test_that("An interwoven object in a network query does execute the object by itself", {
+  skip("not implemented yet")
+  test_data <- test_network |> nascent(intelligence = c("intelligence_plus_mean"))
 })

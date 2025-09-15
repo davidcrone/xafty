@@ -74,9 +74,7 @@ create_link <- function(quosure, project, network, ...) {
   if("added_columns" %in% names(.dots)) {
       link$added_columns <- .dots[["added_columns"]]
   } else {
-    li_output_columns <- get_added_columns(link = link, network = network)
-    link$added_columns <- li_output_columns$added_columns
-    link$output_columns <- li_output_columns$output_columns
+    link$added_columns <- get_added_columns(link = link, network = network)
   }
 
   link

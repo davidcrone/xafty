@@ -6,10 +6,9 @@
 nascent <- function(network, ...) {
   stopifnot(inherits(network, "xafty_network"))
   li_query <- dots_to_query(network = network, ... = ...)
-  if(inherits(li_query$internal, "xafty_object_query")) {
+   if(inherits(li_query$internal, "xafty_object_query")) {
     return(nascent_object(query_list = li_query$internal, network = network))
   }
-
   tree_sm <- resolve_dependencies(query = li_query$internal, network = network)
   dag <- build_dag(tree_sm)
   data_sm <- evaluate_dag(dag)

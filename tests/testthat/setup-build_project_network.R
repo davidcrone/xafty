@@ -121,4 +121,23 @@ add_column_to_intelligence <- function(data) {
 }
 
 test_network$intelligence$add(add_column_to_intelligence(data = new_query))
-test_network |> nascent(query(intelligence = "new_column", customer_data = "mean_nickname"))
+
+
+# Add objects!
+filter_active_customers <- function(data) {
+  data[data$intelligence > 100, , drop = FALSE]
+}
+build_kpi <- function(active_customers) {
+  mean(active_customers$intelligence)
+}
+test_network$intelligence$add_object(name = "active_customers",
+                                     fun = filter_active_customers(data = query(intelligence = "intelligence")))
+test_network$intelligence$add_object("mean_intelligence", build_kpi(active_customers = query(intelligence = c("[active_customers]"))))
+
+add_mean_intelligence <- function(data, mean_intelligence) {
+  data$intelligence_plus_mean <- data$intelligence + mean_intelligence
+  data
+}
+
+test_network$intelligence$add(add_mean_intelligence(data = query(intelligence = "intelligence"),
+                                                    mean_intelligence = query(intelligence = "[mean_intelligence]")))

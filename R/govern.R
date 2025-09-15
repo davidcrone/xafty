@@ -47,6 +47,7 @@ build_tree <- function() {
   tree_env <- new.env()
   tree_env$query <- query()
 
+  # Nodes of the directed (hopefully) acyclic graph
   set_nodes <- function(link, code) {
     node_name <- names(code)
     node_dependencies <- code[[node_name]]

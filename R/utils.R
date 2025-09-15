@@ -62,6 +62,7 @@ handle_dots_args <- function(fun_args, matched_call, env) {
   fun_args
 }
 
+#unused
 validate_link_type <- function(link_type, unpacked) {
   if (!"data.frame" %in% unpacked$output$class) stop(paste0("Return value of function '", unpacked$fun_name, "' must be a data.frame"))
   if (link_type == "add") {
@@ -81,6 +82,7 @@ validate_link_type <- function(link_type, unpacked) {
 build_dependency_codes <- function(link, network, sm) {
   queries <- get_queries(link)
   fun_code <- paste0(link$project, ".", link$fun_name)
+  # Early termination of function execution for a root node
   if (length(queries) == 0) {
     root_node <- setNames(list(character(0)), fun_code)
     return(root_node)
@@ -246,10 +248,7 @@ get_added_columns <- function(link, network) {
   func_output <- execute_function(link = link, network = network)
   output_column_names <- colnames(func_output)
   added_columns <- output_column_names[!output_column_names %in% input_column_names]
-  list(
-    output_columns = output_column_names,
-    added_columns = added_columns
-    )
+  added_columns
 }
 
 flatten_list <- function(li) {
