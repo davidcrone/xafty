@@ -1,18 +1,18 @@
 
 
-dependencies <- function(query_list, network, tree_sm = build_tree()) {
+dependencies <- function(query_list, network, dag_sm = build_tree()) {
   # The query is merged with already queried objects and is used for already visited nodes in the dag
-  tree_sm$set_query(query_list)
-  # query_list <- extract_objects(query_list = query_list, tree_sm = tree_sm)
+  dag_sm$set_query(query_list)
+  # query_list <- extract_objects(query_list = query_list, dag_sm = dag_sm)
   links <- get_dependend_links(query_list, network)
-  codes <- lapply(links, build_dependency_codes, network = network, sm = tree_sm)
-  set_nodes(links = links, codes = codes, tree_sm = tree_sm)
+  codes <- lapply(links, build_dependency_codes, network = network, dag_sm = dag_sm)
+  set_nodes(links = links, codes = codes, dag_sm = dag_sm)
   queries <- flatten_list(remove_empty_lists(get_dependend_queries(links = links)))
   query <- do.call(merge_queries, queries)
-  if (length(query) == 0) return(tree_sm)
+  if (length(query) == 0) return(dag_sm)
   # removes already visited nodes leading to an eventual termination of the recursive function
-  query_pruned <- prune_query(query = query, compare = tree_sm$get_query())
-  dependencies(query_list = query_pruned, network = network, tree_sm = tree_sm)
+  query_pruned <- prune_query(query = query, compare = dag_sm$get_query())
+  dependencies(query_list = query_pruned, network = network, dag_sm = dag_sm)
 }
 
 prune_query <- function(query, compare) {
@@ -61,8 +61,8 @@ remove_empty_lists <- function(li) {
   li[vapply(li, \(l) length(l) > 0, FUN.VALUE = logical(1))]
 }
 
-set_nodes <- function(links, codes, tree_sm) {
-  mapply(tree_sm$set_nodes, links, codes, SIMPLIFY = FALSE)
+set_nodes <- function(links, codes, dag_sm) {
+  mapply(dag_sm$set_nodes, links, codes, SIMPLIFY = FALSE)
   invisible(TRUE)
 }
 

@@ -5,15 +5,11 @@
 #' @export
 nascent <- function(network, ...) {
   stopifnot(inherits(network, "xafty_network"))
-  li_query <- dots_to_query(network = network, ... = ...)
-   if(inherits(li_query$internal, "xafty_object_query")) {
-    return(nascent_object(query_list = li_query$internal, network = network))
+  query_list <- dots_to_query(network = network, ... = ...)
+  if(inherits(query_list$internal, "xafty_object_query")) {
+    return(nascent_object(query_list = query_list$internal, network = network))
   }
-  tree_sm <- resolve_dependencies(query = li_query$internal, network = network)
-  dag <- build_dag(tree_sm)
-  data_sm <- evaluate_dag(dag)
-  data_key <- unique(vapply(get_projects(tree_sm$get_query()), \(project) data_sm$get_data_key(project), FUN.VALUE = character(1)))
-  return_unscoped_data(data = data_sm$get_data_by_key(data_key), query = li_query$order, sm = tree_sm)
+  nascent_query(query_list = query_list, network = network, return = "df")
 }
 
 sort_links <- function(codes, sm) {
@@ -28,11 +24,26 @@ nascent_object <- function(query_list, network) {
   do.call(fun, args)
 }
 
-resolve_dependencies <- function(query, network, sm = build_tree()) {
-  dependencies(query, network = network, tree_sm = sm)
-  set_join_dependencies(network = network, sm = sm)
-  build_join_bridges(sm = sm, network = network)
-  sm
+nascent_query <- function(query_list, network, return = c("df", "dag")) {
+  sm <- resolve_dependencies(query = query_list$internal, network = network)
+  dag_sm <- sm$dag_sm
+  dag <- build_dag(dag_sm)
+  if(all(return == "dag")) return(dag)
+  data_sm <- evaluate_dag(dag, data_sm = sm$data_sm)
+  data_key <- unique(vapply(get_projects(dag_sm$get_query()), \(project) data_sm$get_data_key(project), FUN.VALUE = character(1)))
+  data <- return_unscoped_data(data = data_sm$get_data_by_key(data_key), query = query_list$order, sm = dag_sm)
+  data
+}
+
+resolve_dependencies <- function(query, network, dag_sm = build_tree()) {
+  data_sm <- data_sm()
+  dependencies(query, network = network, dag_sm = dag_sm)
+  set_join_dependencies(network = network, dag_sm = dag_sm)
+  build_join_bridges(dag_sm = dag_sm, network = network)
+  list(
+    dag_sm = dag_sm,
+    data_sm = data_sm
+  )
 }
 
 resolve_function_stack <- function(sm) {
@@ -65,14 +76,14 @@ get_join_functions <- function(from, to, network, sm) {
   # Here the potential new dependencies will be resolved calling dependencies and join functions again.
   queries <- get_queries(link)
   for (query in queries) {
-    dependencies(query_list = query, network = network, tree_sm = sm)
+    dependencies(query_list = query, network = network, dag_sm = sm)
   }
 }
 
 join_code_generator <- function(link, network, sm) {
   fused_projects <- get_lead_projects(link)
   join_code <- paste0("fuse.", paste0(fused_projects, collapse = "."))
-  join_dependencies <- build_dependency_codes(link = link, network = network, sm = sm)
+  join_dependencies <- build_dependency_codes(link = link, network = network, dag_sm = sm)
   join_list_main <- setNames(join_dependencies, join_code)
   fun_codes <- vapply(get_ordered_join_pairs(link), \(pair) paste0("join.", pair[1], ".", pair[2]), FUN.VALUE = character(1))
   join_list_help <- sapply(fun_codes, \(code) join_code, simplify = FALSE, USE.NAMES = TRUE)
@@ -114,20 +125,20 @@ bfs_traversal <- function(graph, start, end) {
   return(NULL)
 }
 
-set_join_dependencies <- function(network, sm) {
-  new_projects <- projects_not_in_join_path(sm = sm, network = network)
-  overall_projects <- get_projects(sm$get_query())
+set_join_dependencies <- function(network, dag_sm) {
+  new_projects <- projects_not_in_join_path(sm = dag_sm, network = network)
+  overall_projects <- get_projects(dag_sm$get_query())
   overall_projects <- overall_projects[vapply(overall_projects, \(project) inherits(network[[project]], "xafty_project"), FUN.VALUE = logical(1))]
   if(length(new_projects) > 0 & length(overall_projects) > 1) {
-    join_path <- get_shortest_join_path_for(new_projects, network, sm = sm)
-    sm$set_join_path(join_path)
+    join_path <- get_shortest_join_path_for(new_projects, network, sm = dag_sm)
+    dag_sm$set_join_path(join_path)
     lapply(join_path, \(path) {
       from <- path[-length(path)]
       to <- path[-1]
-      mapply(get_join_functions, from, to, MoreArgs = list(network = network, sm = sm))
+      mapply(get_join_functions, from, to, MoreArgs = list(network = network, sm = dag_sm))
     })
   }
-  invisible(sm)
+  invisible(dag_sm)
 }
 
 projects_not_in_join_path <- function(sm, network) {
@@ -190,11 +201,11 @@ get_chatty_func_name_from_network <- function(col, project, network, env_name = 
   columns_subset
 }
 
-build_join_bridges <- function(sm, network) {
-  projects <- get_projects(sm$get_query())
-  codes <- sm$get_codes()
+build_join_bridges <- function(dag_sm, network) {
+  projects <- get_projects(dag_sm$get_query())
+  codes <- dag_sm$get_codes()
   join_codes <- names(codes)[grepl("^join.", names(codes))]
-  join_paths <- sm$get_join_path()
+  join_paths <- dag_sm$get_join_path()
   unresolved_join_codes <- do.call(c, lapply(codes, \(stack) stack[grepl("^join.", stack)]))
   unresolved_bridges <- unresolved_join_codes[!unresolved_join_codes %in% join_codes]
 
@@ -206,7 +217,7 @@ build_join_bridges <- function(sm, network) {
 
   pairs <- lapply(seq_along(unresolved_bridges), \(i) {
     start_bridge <- unresolved_bridges[i]
-    sm$get_join_pairs()[[start_bridge]]
+    dag_sm$get_join_pairs()[[start_bridge]]
   })
 
   additional_paths <- lapply(pairs, \(par) bfs_traversal(join_graph, start = par[1], end = par[2]))
@@ -227,7 +238,7 @@ build_join_bridges <- function(sm, network) {
 
   for (i in seq_along(additional_join_list)) {
     add_join <- additional_join_list[i]
-    sm$set_nodes(link = NULL, code = add_join)
+    dag_sm$set_nodes(link = NULL, code = add_join)
   }
 }
 
@@ -268,10 +279,9 @@ build_dag <- function(tree_sm) {
   )
 }
 
-evaluate_dag <- function(dag) {
+evaluate_dag <- function(dag, data_sm) {
   links <- dag$sorted_links
   mask <- dag$masked_columns
-  data_sm <- data_sm()
   lapply(links, execute_stack, mask = mask, data_sm = data_sm)
   data_sm
 }

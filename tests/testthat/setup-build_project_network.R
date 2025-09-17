@@ -141,3 +141,4 @@ add_mean_intelligence <- function(data, mean_intelligence) {
 
 test_network$intelligence$add(add_mean_intelligence(data = query(intelligence = "intelligence"),
                                                     mean_intelligence = query(intelligence = "[mean_intelligence]")))
+

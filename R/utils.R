@@ -79,9 +79,9 @@ validate_link_type <- function(link_type, unpacked) {
   invisible(TRUE)
 }
 
-build_dependency_codes <- function(link, network, sm) {
+build_dependency_codes <- function(link, network, dag_sm) {
   queries <- get_queries(link)
-  fun_code <- paste0(link$project, ".", link$fun_name)
+  fun_code <- build_fun_code(link)
   # Early termination of function execution for a root node
   if (length(queries) == 0) {
     root_node <- setNames(list(character(0)), fun_code)
@@ -97,7 +97,7 @@ build_dependency_codes <- function(link, network, sm) {
     li_within_joins[[i]] <- join_codes
     li_pairs <- setNames(unordered_pairs, join_codes)
     for (i in seq_along(li_pairs)) {
-      sm$set_join_pairs(li_pairs[i])
+      dag_sm$set_join_pairs(li_pairs[i])
     }
   }
   join_depends <- do.call(c, li_within_joins)
