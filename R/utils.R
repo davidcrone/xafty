@@ -281,3 +281,7 @@ list_graph_to_edges <- function(dag) {
   })
   do.call(rbind, edgelist)
 }
+
+is_object_link <- function(link) {
+  length(link$added_object) > 0
+}
