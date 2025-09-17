@@ -285,3 +285,7 @@ list_graph_to_edges <- function(dag) {
 is_object_link <- function(link) {
   length(link$added_object) > 0
 }
+
+build_fun_code <- function(link) {
+  paste0(link$project, ".", link$fun_name)
+}
