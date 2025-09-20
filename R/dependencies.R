@@ -5,9 +5,11 @@ dependencies <- function(query_list, network, dag_sm = build_tree()) {
   dag_sm$set_query(query_list)
   # query_list <- extract_objects(query_list = query_list, dag_sm = dag_sm)
   links <- get_dependend_links(query_list, network)
-  codes <- lapply(links, build_dependency_codes, network = network, dag_sm = dag_sm)
+  split_queries <- lapply(links, split_args)
+  codes <- mapply(build_dependency_codes, links, split_queries, MoreArgs = list(network = network, dag_sm = dag_sm), SIMPLIFY = FALSE)
   set_nodes(links = links, codes = codes, dag_sm = dag_sm)
-  queries <- flatten_list(remove_empty_lists(get_dependend_queries(links = links)))
+  set_objects(split_queries = split_queries, dag_sm = dag_sm)
+  queries <- flatten_list(lapply(split_queries, \(query) query$xafty_query)) #flatten_list(remove_empty_lists(get_dependend_queries(links = links)))
   query <- do.call(merge_queries, queries)
   if (length(query) == 0) return(dag_sm)
   # removes already visited nodes leading to an eventual termination of the recursive function
@@ -65,6 +67,26 @@ set_nodes <- function(links, codes, dag_sm) {
   mapply(dag_sm$set_nodes, links, codes, SIMPLIFY = FALSE)
   invisible(TRUE)
 }
+
+set_objects <- function(split_queries, dag_sm) {
+  split_queries <- remove_empty_lists(split_queries)
+  if(!length(split_queries) == 0) {
+    lapply(split_queries, \(query) dag_sm$set_objects(query$xafty_object))
+  }
+}
+
+# set_objects <- function(link, data_sm, network) {
+#   xafty_objects <- get_xafty_objects_vec(link)
+#   for(arg_name in names(link$args)) {
+#     xo <- xafty_objects[[arg_name]]
+#     if(xo == "xafty_object") {
+#       object_query <- link$args[[arg_name]]
+#       data <- nascent(network = network, object_query)
+#       object_key <- paste0(object_query[[1]]$from, ".", get_squared_variable(object_query[[1]]$select))
+#       data_sm$set_object(object_key = object_key, data = data)
+#     }
+#   }
+# }
 
 extract_objects <- function(query_list, tree_sm) {
   for (i in seq_along(query_list)) {

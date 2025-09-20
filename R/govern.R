@@ -33,25 +33,40 @@ data_sm <- function() {
     names(contains_key)[contains_key]
   }
 
+  set_object <- function(object_key, data) {
+    state_env$objects[[object_key]] <- data
+  }
+
+  get_object <- function(object_key) {
+    state_env$objects[[object_key]]
+  }
+
+  get_object_names <- function() {
+    names(state_env$objects)
+  }
+
   list(
     set_data_key = set_data_key,
     get_data_key = get_data_key,
     set_data = set_data,
     get_data = get_data,
     get_projects_by_key = get_projects_by_key,
-    get_data_by_key = get_data_by_key
+    get_data_by_key = get_data_by_key,
+    set_object = set_object,
+    get_object = get_object,
+    get_object_names = get_object_names
   )
 }
 
 build_tree <- function() {
   tree_env <- new.env()
   tree_env$query <- query()
+  tree_env$objects <- query()
 
   # Nodes of the directed (hopefully) acyclic graph
   set_nodes <- function(link, code) {
     node_name <- names(code)
-    node_dependencies <- code[[node_name]]
-    tree_env$codes[[node_name]] <- node_dependencies
+    tree_env$codes[[node_name]] <- code[[node_name]]
     tree_env$links[[node_name]] <- link
   }
 
@@ -61,6 +76,21 @@ build_tree <- function() {
 
   get_links <- function() {
     tree_env$links
+  }
+
+  set_objects <- function(object_query) {
+    for (oq in object_query) {
+      object_key <- paste0(oq[[1]]$from, ".", get_squared_variable(oq[[1]]$select))
+      tree_env$objects[[object_key]] <- oq
+    }
+  }
+
+  get_object_names <- function() {
+    names(tree_env$objects)
+  }
+
+  get_object_query <- function(object_key) {
+    tree_env$objects[[object_key]]
   }
 
   set_query <- function(query) {
@@ -109,6 +139,9 @@ build_tree <- function() {
     get_links = get_links,
     get_query = get_query,
     set_query = set_query,
+    set_objects = set_objects,
+    get_object_names = get_object_names,
+    get_object_query = get_object_query,
     set_join_path = set_join_path,
     get_join_path = get_join_path,
     set_join_pairs = set_join_pairs,

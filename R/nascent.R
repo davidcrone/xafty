@@ -7,14 +7,37 @@ nascent <- function(network, ...) {
   stopifnot(inherits(network, "xafty_network"))
   query_list <- dots_to_query(network = network, ... = ...)
   if(inherits(query_list$internal, "xafty_object_query")) {
-    return(nascent_object(query_list = query_list$internal, network = network))
+    data <- nascent_object(query_list = query_list$internal, network = network)
+  } else {
+    data <- nascent_query(query_list = query_list, network = network, return = "df", data_sm = data_sm())
   }
-  nascent_query(query_list = query_list, network = network, return = "df")
+  data
 }
 
 sort_links <- function(codes, sm) {
   links <- sm$get_links()
   lapply(codes, \(code) links[[code]])
+}
+
+nascent_query <- function(query_list, network, return = c("df", "dag"), data_sm = data_sm()) {
+  sm <- resolve_dependencies(query = query_list$internal, network = network, data_sm = data_sm)
+  dag_sm <- sm$dag_sm
+  dag <- build_dag(dag_sm)
+  if(all(return == "dag")) return(dag)
+  data_sm <- evaluate_objects(data_sm, dag_sm, network)
+  data_sm <- evaluate_dag(dag, data_sm = sm$data_sm)
+  data_key <- unique(vapply(get_projects(dag_sm$get_query()), \(project) data_sm$get_data_key(project), FUN.VALUE = character(1)))
+  data <- return_unscoped_data(data = data_sm$get_data_by_key(data_key), query = query_list$order, sm = dag_sm)
+  if(all(c("df", "dag") %in% return)) {
+    return(
+      list(
+        dag = dag,
+        data = data
+      )
+    )
+  }
+  # Nicht data sm muss ganz nach unten, sondern nur die objects
+  data
 }
 
 nascent_object <- function(query_list, network) {
@@ -24,19 +47,7 @@ nascent_object <- function(query_list, network) {
   do.call(fun, args)
 }
 
-nascent_query <- function(query_list, network, return = c("df", "dag")) {
-  sm <- resolve_dependencies(query = query_list$internal, network = network)
-  dag_sm <- sm$dag_sm
-  dag <- build_dag(dag_sm)
-  if(all(return == "dag")) return(dag)
-  data_sm <- evaluate_dag(dag, data_sm = sm$data_sm)
-  data_key <- unique(vapply(get_projects(dag_sm$get_query()), \(project) data_sm$get_data_key(project), FUN.VALUE = character(1)))
-  data <- return_unscoped_data(data = data_sm$get_data_by_key(data_key), query = query_list$order, sm = dag_sm)
-  data
-}
-
-resolve_dependencies <- function(query, network, dag_sm = build_tree()) {
-  data_sm <- data_sm()
+resolve_dependencies <- function(query, network, dag_sm = build_tree(), data_sm = data_sm()) {
   dependencies(query, network = network, dag_sm = dag_sm)
   set_join_dependencies(network = network, dag_sm = dag_sm)
   build_join_bridges(dag_sm = dag_sm, network = network)
@@ -83,7 +94,9 @@ get_join_functions <- function(from, to, network, sm) {
 join_code_generator <- function(link, network, sm) {
   fused_projects <- get_lead_projects(link)
   join_code <- paste0("fuse.", paste0(fused_projects, collapse = "."))
-  join_dependencies <- build_dependency_codes(link = link, network = network, dag_sm = sm)
+  split_queries <- split_args(link)
+  set_objects(split_queries = split_queries, dag_sm = sm)
+  join_dependencies <- build_dependency_codes(link = link, split_queries = split_queries, network = network, dag_sm = sm)
   join_list_main <- setNames(join_dependencies, join_code)
   fun_codes <- vapply(get_ordered_join_pairs(link), \(pair) paste0("join.", pair[1], ".", pair[2]), FUN.VALUE = character(1))
   join_list_help <- sapply(fun_codes, \(code) join_code, simplify = FALSE, USE.NAMES = TRUE)
@@ -244,7 +257,7 @@ build_join_bridges <- function(dag_sm, network) {
 
 execute_stack <- function(link, mask, data_sm) {
   projects <- unique(c(link$project, get_lead_projects(link)))
-  executable_args <- build_executable_args(link, get_data = data_sm$get_data, mask = mask)
+  executable_args <- build_executable_args(link, data_sm = data_sm, mask = mask)
   # Doing this to avoid too much memory use, is this necessary?
   for (project in projects) {
     if(!is.null(data_sm$get_data_key(project))) {
@@ -283,5 +296,15 @@ evaluate_dag <- function(dag, data_sm) {
   links <- dag$sorted_links
   mask <- dag$masked_columns
   lapply(links, execute_stack, mask = mask, data_sm = data_sm)
+  data_sm
+}
+
+evaluate_objects <- function(data_sm, dag_sm, network) {
+  object_keys <- dag_sm$get_object_names()
+  for (key in object_keys) {
+    object_query <- dag_sm$get_object_query(key)
+    data <- nascent(network, object_query)
+    data_sm$set_object(object_key = key, data = data)
+  }
   data_sm
 }

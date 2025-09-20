@@ -136,6 +136,8 @@ test_that("nascent can query an object from the network which has an object as d
 })
 
 test_that("An interwoven object in a network query does execute the object by itself", {
-  skip("not implemented yet")
   test_data <- test_network |> nascent(intelligence = c("intelligence_plus_mean"))
+  expected_data <- structure(list(intelligence_plus_mean = c(245, 224, 225, 255, 205)),
+                             row.names = c(NA, -5L), class = "data.frame")
+  expect_equal(test_data, expected_data)
 })

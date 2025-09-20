@@ -33,7 +33,7 @@ print.xafty_network <- function(x, ...) {
 }
 
 evaluate_arg <- function(arg, xo, network) {
-  if(xo == "xafty_query") {
+  if(grepl("^xafty", xo)) {
     nascent(network, arg)
   } else {
     arg
@@ -79,14 +79,15 @@ validate_link_type <- function(link_type, unpacked) {
   invisible(TRUE)
 }
 
-build_dependency_codes <- function(link, network, dag_sm) {
-  queries <- get_queries(link)
+build_dependency_codes <- function(link, split_queries, network, dag_sm) {
+  queries <- split_queries$xafty_query
   fun_code <- build_fun_code(link)
   # Early termination of function execution for a root node
   if (length(queries) == 0) {
     root_node <- setNames(list(character(0)), fun_code)
     return(root_node)
   }
+  # This splits queries from object queries which need to be treated differently
   scoped_functions <- unique(do.call(c, lapply(queries, get_scoped_function_order, network = network)))
   li_within_joins <- lapply(queries, get_joins_within_query, network = network)
   for (i in seq_along(li_within_joins)) {
@@ -106,10 +107,24 @@ build_dependency_codes <- function(link, network, dag_sm) {
   node
 }
 
+split_args <- function(link, xafty_objects) {
+  args <- get_queries(link)
+  if(length(args) == 0) return(args)
+  xafty_objects <- get_xafty_objects_vec(link)
+  query_types <- c("xafty_query", "xafty_object")
+  split_queries <- sapply(query_types, \(qt) {
+    arg_names <- names(xafty_objects)[xafty_objects == qt]
+    selected_queries <- lapply(arg_names, \(name) args[[name]])
+    selected_queries
+  }, simplify = FALSE, USE.NAMES = TRUE)
+  split_queries
+}
+
+
 find_xafty_objects <- function(arg) {
-  if("xafty_query_list" %in% class(arg)) return("xafty_query")
   if(is_xafty_state_variable(arg)) return("xafty_state")
-  if(is_xafty_object_variable(arg)) return("xafty_object")
+  if(inherits(arg, "xafty_object_query")) return("xafty_object")
+  if("xafty_query_list" %in% class(arg)) return("xafty_query")
   "none_xafty_object"
 }
 
@@ -121,7 +136,7 @@ get_xafty_objects_vec <- function(link) {
 
 get_queries <- function(link) {
   xafty_objects_vec <- get_xafty_objects_vec(link)
-  arg_names_w_query <- names(xafty_objects_vec)[xafty_objects_vec == "xafty_query"]
+  arg_names_w_query <- names(xafty_objects_vec)[xafty_objects_vec == "xafty_query" | xafty_objects_vec == "xafty_object"]
   if(length(arg_names_w_query) <= 0) return(list())
   arg_w_query <- sapply(arg_names_w_query, \(arg_name) link$args[[arg_name]], simplify = FALSE, USE.NAMES = TRUE)
   arg_w_query
@@ -187,18 +202,23 @@ build_join_pairs <- function(li_pairs) {
   }))
 }
 
-build_executable_args <- function(link, get_data, mask) {
+build_executable_args <- function(link, data_sm, mask) {
   func_args <- link$args
   lead_projects <- get_lead_projects(link)
   queries <- get_queries(link)
   args <- names(queries)
+  xafyt_objects <- get_xafty_objects_vec(link)
   for (i in seq_along(queries)) {
     project <- lead_projects[i]
     arg <- args[i]
-    data <- get_data(project = project)
-    data <- unscope(data = data, link = link, arg_name = arg, mask = mask)
-    if(is_xafty_object_variable(link$added_object)) {
-      data <- data[do.call(c, lapply(queries, get_column_order))]
+    xo <- xafyt_objects[[arg]]
+    if(xo == "xafty_query") {
+      data <- data_sm$get_data(project = project)
+      data <- unscope(data = data, link = link, arg_name = arg, mask = mask)
+    } else if (xo == "xafty_object") {
+      object_query <- link$args[[arg]]
+      object_key <- paste0(object_query[[1]]$from, ".", get_squared_variable(object_query[[1]]$select))
+      data <- data_sm$get_object(object_key)
     }
     func_args[[arg]] <- data
   }
