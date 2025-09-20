@@ -27,7 +27,7 @@ test_that("dependencies works with an empty list and returns a named empty query
 
 test_that("dependencies from two projects can be retrieved and hidden dependencies revieled", {
     query <- query(customer_data = "category", occupations = "department")
-    sm <- resolve_dependencies(query = query, network = test_network, dag_sm = build_tree(), data_sm = data_sm())
+    sm <- resolve_dependencies(query = query, network = test_network, dag_sm = build_tree())
     expected_query <- query(customer_data = c("category", "score", "name", "id"), occupations = c("department", "id"))
-    expect_identical(sm$dag_sm$get_query(), expected_query)
+    expect_identical(sm$get_query(), expected_query)
 })

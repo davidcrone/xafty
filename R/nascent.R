@@ -7,9 +7,9 @@ nascent <- function(network, ...) {
   stopifnot(inherits(network, "xafty_network"))
   query_list <- dots_to_query(network = network, ... = ...)
   if(inherits(query_list$internal, "xafty_object_query")) {
-    data <- nascent_object(query_list = query_list$internal, network = network)
+    data <- nascent_object(query_list = query_list, network = network)
   } else {
-    data <- nascent_query(query_list = query_list, network = network, return = "df", data_sm = data_sm())
+    data <- nascent_query(query_list = query_list, network = network, return = "df")
   }
   data
 }
@@ -19,13 +19,13 @@ sort_links <- function(codes, sm) {
   lapply(codes, \(code) links[[code]])
 }
 
-nascent_query <- function(query_list, network, return = c("df", "dag"), data_sm = data_sm()) {
-  sm <- resolve_dependencies(query = query_list$internal, network = network, data_sm = data_sm)
-  dag_sm <- sm$dag_sm
+nascent_query <- function(query_list, network, return = c("df", "dag")) {
+  dag_sm <- resolve_dependencies(query = query_list$internal, network = network)
   dag <- build_dag(dag_sm)
   if(all(return == "dag")) return(dag)
-  data_sm <- evaluate_objects(data_sm, dag_sm, network)
-  data_sm <- evaluate_dag(dag, data_sm = sm$data_sm)
+  data_sm <- data_sm()
+  data_sm <- evaluate_objects(data_sm = data_sm, dag_sm = dag_sm, network = network)
+  data_sm <- evaluate_dag(dag = dag, data_sm = data_sm)
   data_key <- unique(vapply(get_projects(dag_sm$get_query()), \(project) data_sm$get_data_key(project), FUN.VALUE = character(1)))
   data <- return_unscoped_data(data = data_sm$get_data_by_key(data_key), query = query_list$order, sm = dag_sm)
   if(all(c("df", "dag") %in% return)) {
@@ -41,20 +41,18 @@ nascent_query <- function(query_list, network, return = c("df", "dag"), data_sm 
 }
 
 nascent_object <- function(query_list, network) {
+  query_list <- query_list$internal
   link <- get_dependend_links(query_list, network)
   fun <- link[[1]]$fun
   args <- eval_args(link[[1]], network = network)
   do.call(fun, args)
 }
 
-resolve_dependencies <- function(query, network, dag_sm = build_tree(), data_sm = data_sm()) {
+resolve_dependencies <- function(query, network, dag_sm = build_tree()) {
   dependencies(query, network = network, dag_sm = dag_sm)
   set_join_dependencies(network = network, dag_sm = dag_sm)
   build_join_bridges(dag_sm = dag_sm, network = network)
-  list(
-    dag_sm = dag_sm,
-    data_sm = data_sm
-  )
+  dag_sm
 }
 
 resolve_function_stack <- function(sm) {

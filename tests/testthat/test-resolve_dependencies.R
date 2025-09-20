@@ -1,8 +1,7 @@
 test_that("resolve dependencies works with a root dependency", {
   sm <- build_tree()
   query <- query(customer_data = "id")
-  sm <- resolve_dependencies(query = query, network = test_network, dag_sm = sm, data_sm = data_sm())
-  sm <- sm$dag_sm
+  sm <- resolve_dependencies(query = query, network = test_network, dag_sm = sm)
   query <- sm$get_query()
   projects <- get_projects(query)
   expect_in(query[["customer_data"]]$select, c("id", "name", "score"))
@@ -14,8 +13,7 @@ test_that("resolve dependencies works with a root dependency", {
 test_that("resolve dependencies works with an add link", {
   sm <- build_tree()
   query <- query(customer_data = "category")
-  sm <- resolve_dependencies(query = query, network = test_network, dag_sm = sm, data_sm = data_sm())
-  sm <- sm$dag_sm
+  sm <- resolve_dependencies(query = query, network = test_network, dag_sm = sm)
   query <- sm$get_query()
   projects <- get_projects(query)
   expect_in(query[["customer_data"]]$select, c("category", "score", "name", "id"))
@@ -28,8 +26,7 @@ test_that("resolve_dependencies can correctly resolve a join link", {
   network <- test_network
   sm <- build_tree()
   query <- query(customer_data = "category", occupations = "department")
-  sm <- resolve_dependencies(query = query, network = network, dag_sm = sm, data_sm = data_sm())
-  sm <- sm$dag_sm
+  sm <- resolve_dependencies(query = query, network = network, dag_sm = sm)
   query <- sm$get_query()
   projects <- get_projects(query)
   expect_in(query[["customer_data"]]$select, c("category", "score", "name", "id"))
@@ -43,8 +40,7 @@ test_that("resolve_dependencies can correctly resolve a column that depends on t
   network <- test_network
   sm <-  build_tree()
   query <- query(customer_data = c("name", "nickname"), occupations = "department")
-  sm <- resolve_dependencies(query = query, network = network, dag_sm = sm, data_sm = data_sm())
-  sm <- sm$dag_sm
+  sm <- resolve_dependencies(query = query, network = network, dag_sm = sm)
   query <- sm$get_query()
   projects <- get_projects(query)
   expect_in(query[["customer_data"]]$select, c("category", "score", "name", "id", "nickname"))
@@ -59,8 +55,7 @@ test_that("resolve_dependencies can correctly resolve a column that depends on t
   network <- test_network
   sm <- build_tree()
   query <- query(customer_data = "nickname")
-  sm <- resolve_dependencies(query = query, network = network, dag_sm = sm, data_sm = data_sm())
-  sm <- sm$dag_sm
+  sm <- resolve_dependencies(query = query, network = network, dag_sm = sm)
   query <- sm$get_query()
   projects <- get_projects(query)
   expect_in(query[["customer_data"]]$select, c("category", "score", "name", "id", "nickname"))
@@ -76,8 +71,7 @@ test_that("resolve_dependencies can correctly resolve a column that depends on t
   network <- test_network
   sm <-  build_tree()
   query <- query(occupations = "department", intelligence = "intelligence", customer_data = c("name", "nickname"))
-  sm <- resolve_dependencies(query = query, network = network, dag_sm = sm, data_sm = data_sm())
-  sm <- sm$dag_sm
+  sm <- resolve_dependencies(query = query, network = network, dag_sm = sm)
   query <- sm$get_query()
   projects <- get_projects(query)
   expect_in(query[["customer_data"]]$select, c("category", "score", "name", "id", "nickname"))
