@@ -15,8 +15,3 @@ A character vector of package names where the function is found, or `NA` if the 
 \description{
 This function determines the package where a given function is defined.
 }
-\examples{
-get_function_package("mean")   # Returns "base"
-get_function_package("filter") # Returns "dplyr" (if dplyr is loaded)
-get_function_package("non_existent_function") # Returns NA
-}

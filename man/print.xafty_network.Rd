@@ -6,6 +6,11 @@
 \usage{
 \method{print}{xafty_network}(x, ...)
 }
+\arguments{
+\item{x}{an object with the class "xafty_network"}
+
+\item{...}{further arguments passed to or from other methods.}
+}
 \description{
 S3 method to print a xafty network.
 }

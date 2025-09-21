@@ -34,7 +34,7 @@ init_network <- function(name, projects = NULL, containers = NULL) {
       network_env$add_container(container)
     }
   }
-  invisible(network_env)
+  network_env
 }
 
 create_add_project <- function(network_env) {
@@ -160,7 +160,7 @@ merge_networks <- function(name, ...) {
   index <- seq_along(passed_networks)
   lapply(index, \(i) {
     vec_projects <-  li_projects[[i]]
-    if(length(vec_projects) <= 0) next
+    if(length(vec_projects) <= 0) return(NULL)
     network_env <- passed_networks[[i]]
     for (project in vec_projects) {
       link_funs <- bundle_link_functions(project = project, env = new_network_env)

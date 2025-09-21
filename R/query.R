@@ -1,4 +1,3 @@
-
 #' Build a xafty Query
 #' @description
 #' A xafty query will be passed to the nascent function in order to retrieve data from the network
@@ -77,6 +76,7 @@ get_sub_queries <- function(query, network) {
   sub_query_list[!vapply(sub_query_list, \(query) is.null(query), FUN.VALUE = logical(1))]
 }
 
+#' @importFrom stats setNames
 merge_queries <- function(...) {
   li_queries <- list(...)
   merged_query <- setNames(list(), character(0))
@@ -116,11 +116,11 @@ get_joins_within_query <- function(query, network) {
 dots_to_query <- function(network, ...)  {
   query_raw <- list(...)
   if(!inherits(query_raw[[1]], what = "xafty_query_list")) {
-    query <- query(query_raw)
+    query_list <- query(query_raw)
   } else {
-    query <- list(...)[[1]]
+    query_list <- list(...)[[1]]
   }
-  query_order <- temper_query(query_list = query, network = network)
+  query_order <- temper_query(query_list = query_list, network = network)
   query_internal <- merge_queries(query_order)
   list(
     internal = query_internal,

@@ -1,6 +1,8 @@
 #' Print a xafty Network
 #' @description
 #' S3 method to print a xafty network.
+#' @param x an object with the class "xafty_network"
+#' @param ... further arguments passed to or from other methods.
 #' @export
 print.xafty_network <- function(x, ...) {
   network_name <- x$settings$network_name
@@ -29,17 +31,17 @@ print.xafty_network <- function(x, ...) {
   }
 }
 
+eval_args <- function(link, network) {
+  xo <- get_xafty_objects_vec(link)
+  mapply(evaluate_arg, link$args, xo, MoreArgs = list(network = network), SIMPLIFY = FALSE, USE.NAMES = TRUE)
+}
+
 evaluate_arg <- function(arg, xo, network) {
   if(grepl("^xafty", xo)) {
     nascent(network, arg)
   } else {
     arg
   }
-}
-
-eval_args <- function(link, network) {
-  xo <- get_xafty_objects_vec(link)
-  mapply(evaluate_arg, link$args, xo, MoreArgs = list(network = network), SIMPLIFY = FALSE, USE.NAMES = TRUE)
 }
 
 execute_function <- function(link, network) {
@@ -63,7 +65,7 @@ handle_dots_args <- function(fun_args, matched_call, env) {
 validate_link_type <- function(link_type, unpacked) {
   if (!"data.frame" %in% unpacked$output$class) stop(paste0("Return value of function '", unpacked$fun_name, "' must be a data.frame"))
   if (link_type == "add") {
-    if(!"data.frame" %in% unpacked$first$class) stop(paste0("When registering a function with link type 'add', the first argument of function '", specifics$fun_name,"' must be a data.frame."))
+    if(!"data.frame" %in% unpacked$first$class) stop(paste0("When registering a function with link type 'add', the first argument of function '", unpacked$fun_name,"' must be a data.frame."))
     if(!unpacked$output$rows == unpacked$first$rows) stop("When registering a function with link type 'add', both input and output data.frames must have the same number of observations (rows).")
     if(!all(unpacked$first$cols %in% unpacked$output$cols)) stop("All passed columns need to be present in the output")
   }
@@ -305,4 +307,29 @@ is_object_link <- function(link) {
 
 build_fun_code <- function(link) {
   paste0(link$project, ".", link$fun_name)
+}
+
+bfs_traversal <- function(graph, start, end) {
+  # Breadth-First Search
+  visited <- list()
+  queue <- list(list(node = as.character(start), path = as.character(c(start))))
+  while (length(queue) > 0) {
+    current <- queue[[1]]
+    queue <- queue[-1]
+    node <- current$node
+    path <- current$path
+    if (node == as.character(end)) {
+      return(path)
+    }
+    if (is.null(visited[[node]])) {
+      visited[[node]] <- TRUE
+      neighbors <- graph[[node]]
+      for (neighbor in neighbors) {
+        if (is.null(visited[[neighbor]])) {
+          queue <- append(queue, list(list(node = neighbor, path = c(path, neighbor))))
+        }
+      }
+    }
+  }
+  return(NULL)
 }

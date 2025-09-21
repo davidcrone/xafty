@@ -20,13 +20,13 @@ sort_links <- function(codes, sm) {
 }
 
 nascent_query <- function(query_list, network, return = c("df", "dag")) {
-  dag_sm <- resolve_dependencies(query = query_list$internal, network = network)
-  dag <- build_dag(dag_sm)
+  dag_sm <- resolve_dependencies(query_list = query_list$internal, network = network)
+  dag <- build_dag(dag_sm = dag_sm)
   if(all(return == "dag")) return(dag)
   data_sm <- data_sm()
   data_sm <- evaluate_objects(data_sm = data_sm, dag_sm = dag_sm, network = network)
   data_sm <- evaluate_dag(dag = dag, data_sm = data_sm)
-  data_key <- unique(vapply(get_projects(dag_sm$get_query()), \(project) data_sm$get_data_key(project), FUN.VALUE = character(1)))
+  data_key <- get_data_key(data_sm = data_sm, dag_sm = dag_sm)
   data <- return_unscoped_data(data = data_sm$get_data_by_key(data_key), query = query_list$order, sm = dag_sm)
   if(all(c("df", "dag") %in% return)) {
     return(
@@ -48,9 +48,9 @@ nascent_object <- function(query_list, network) {
   do.call(fun, args)
 }
 
-resolve_dependencies <- function(query, network) {
+resolve_dependencies <- function(query_list, network) {
   dag_sm <- build_tree()
-  dependencies(query, network = network, dag_sm = dag_sm)
+  dependencies(query_list = query_list, network = network, dag_sm = dag_sm)
   set_join_dependencies(network = network, dag_sm = dag_sm)
   build_join_bridges(dag_sm = dag_sm, network = network)
   dag_sm
@@ -110,31 +110,6 @@ build_join_graph <- function(network) {
                                    FUN.VALUE = logical(1))]
   project_pairs <- sapply(projects, \(project) names(network[[project]]$joined_projects), simplify = FALSE, USE.NAMES = TRUE)
   project_pairs
-}
-
-bfs_traversal <- function(graph, start, end) {
-  # Breadth-First Search
-  visited <- list()
-  queue <- list(list(node = as.character(start), path = as.character(c(start))))
-  while (length(queue) > 0) {
-    current <- queue[[1]]
-    queue <- queue[-1]
-    node <- current$node
-    path <- current$path
-    if (node == as.character(end)) {
-      return(path)
-    }
-    if (is.null(visited[[node]])) {
-      visited[[node]] <- TRUE
-      neighbors <- graph[[node]]
-      for (neighbor in neighbors) {
-        if (is.null(visited[[neighbor]])) {
-          queue <- append(queue, list(list(node = neighbor, path = c(path, neighbor))))
-        }
-      }
-    }
-  }
-  return(NULL)
 }
 
 set_join_dependencies <- function(network, dag_sm) {
@@ -279,15 +254,15 @@ execute_stack <- function(link, mask, data_sm) {
   data_sm$set_data(data = data, key = new_key)
 }
 
-build_dag <- function(tree_sm) {
-  topological_sorted_codes <- resolve_function_stack(sm = tree_sm)
-  list_links <- sort_links(topological_sorted_codes, sm = tree_sm)
+build_dag <- function(dag_sm) {
+  topological_sorted_codes <- resolve_function_stack(sm = dag_sm)
+  list_links <- sort_links(topological_sorted_codes, sm = dag_sm)
   list(
-    full_query = tree_sm$get_query(),
-    dag = tree_sm$get_codes(),
+    full_query = dag_sm$get_query(),
+    dag = dag_sm$get_codes(),
     execution_order = topological_sorted_codes,
     sorted_links = list_links,
-    masked_columns = tree_sm$get_mask()
+    masked_columns = dag_sm$get_mask()
   )
 }
 
@@ -306,4 +281,8 @@ evaluate_objects <- function(data_sm, dag_sm, network) {
     data_sm$set_object(object_key = key, data = data)
   }
   data_sm
+}
+
+get_data_key <- function(data_sm, dag_sm) {
+  unique(vapply(get_projects(dag_sm$get_query()), \(project) data_sm$get_data_key(project), FUN.VALUE = character(1)))
 }
