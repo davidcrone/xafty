@@ -214,7 +214,6 @@ build_join_bridges <- function(dag_sm, network) {
     to <- path[-1]
     do.call(c, mapply(\(from, to) {
       fun_name <- network[[from]]$joined_projects[[to]]
-      # TODO Ruleset is hardcoded here
       link <- network[[from]]$ruleset$modules$link[[fun_name]]
       fused_projects <- get_lead_projects(link)
       join_code <- paste0("fuse.", paste0(fused_projects, collapse = "."))

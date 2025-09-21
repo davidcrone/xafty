@@ -21,15 +21,6 @@ may change significantly in future versions.
  pak::pkg_install("davidcrone/xafty")
 ```
 
-## Get Involved
-
-**xafty** is in active development, and your feedback is incredibly
-valuable.  
-If you’re curious, testing it out, or have ideas to improve it [get in
-touch](mailto:davidjvcrone@gmail.com) or [open an
-issue](https://github.com/davidcrone/xafty/issues). Whether it’s bugs,
-feature requests, or just to chat, I’d love to hear from you! :)
-
 ## Basic Functionality
 
 ``` r
@@ -68,7 +59,7 @@ join_engine_details <- function(mtcars, engine) {
 ######################
 
 ## Initialize the network
-xafty_network <- init_network()
+xafty_network <- init_network("example_network")
 
 ## Register the functions in project 1
 xafty_network$add_project("mtcars")
@@ -90,3 +81,12 @@ xafty_network
 xafty_network |> nascent(mtcars = c("hp", "wt", "vs"), engine = "type", mtcars = "power_to_weight")
  
 ```
+
+## Get Involved
+
+**xafty** is in active development, and your feedback is incredibly
+valuable.  
+If you’re curious, testing it out, or have ideas to improve it [get in
+touch](mailto:davidjvcrone@gmail.com) or [open an
+issue](https://github.com/davidcrone/xafty/issues). Whether it’s bugs,
+feature requests, or just to chat, I’d love to hear from you! :)

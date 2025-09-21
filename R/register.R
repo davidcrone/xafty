@@ -58,7 +58,6 @@ create_link <- function(quosure, project, network, ...) {
   )
   link<- append(list_args, list_info)
   class(link) <- c("xafty_link", "list")
-  # TODO add output columns to object list
   if("object_name" %in% names(.dots)) {
     object_name <- .dots[["object_name"]]
     is_squared_already <- is_squared_variable(object_name)
@@ -129,9 +128,4 @@ validate_query <- function(col, project, network, env_name = "variables") {
     stop(paste0("Column: ", col, " is not contained in project: ", project))
   }
   invisible(TRUE)
-}
-
-# The function returns all input and output columns as scoped
-get_link_column_package <- function(link) {
-
 }
