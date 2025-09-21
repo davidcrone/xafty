@@ -48,7 +48,8 @@ nascent_object <- function(query_list, network) {
   do.call(fun, args)
 }
 
-resolve_dependencies <- function(query, network, dag_sm = build_tree()) {
+resolve_dependencies <- function(query, network) {
+  dag_sm <- build_tree()
   dependencies(query, network = network, dag_sm = dag_sm)
   set_join_dependencies(network = network, dag_sm = dag_sm)
   build_join_bridges(dag_sm = dag_sm, network = network)

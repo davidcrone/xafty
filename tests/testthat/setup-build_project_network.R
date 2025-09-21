@@ -66,20 +66,17 @@ test_network <- init_network("test_network")
 ## Project 1 ##
 test_network$add_project("customer_data")
 test_network$customer_data$get(get_sample_data())
-score_name_query<- query(customer_data = c("score", "name"))
-test_network$customer_data$add(add_score_category(data = score_name_query))
+test_network$customer_data$add(add_score_category(data = query(customer_data = c("score", "name"))))
 
 ## Project 2 ##
 test_network$add_project("occupations")
 test_network$occupations$get(get_additional_info())
 
 # Join  projects
-test_network$customer_data$join(join_datasets(main_data = query(customer_data = c("id", "category")), extra_data = query(occupations = "id")), added_columns = character(0))
-test_network |> nascent(customer_data = "name", occupations = "department")
+test_network$customer_data$join(join_datasets(main_data = query(customer_data = c("id", "category")),
+                                              extra_data = query(occupations = "id")), added_columns = character(0))
 # Column depending on a two projects
 test_network$customer_data$add(new_column_from_both_projects(query(customer_data = "name", occupations = "department")))
-
-data_worlds_connected <- test_network |> nascent(query(occupations = "id", customer_data = c("name", "nickname")))
 
 
 
@@ -95,13 +92,7 @@ test_network$map$add(add_decoded_id(query(map = "secret_id")))
 
 test_network$customer_data$join(fun = join_intelligence(main_data = query(customer_data = "id"), extra_data = query(map = "id")))
 
-all_joined <- test_network |> nascent(query(occupations = "department", intelligence = "intelligence", customer_data = c("name", "nickname")))
-
 # new_add
-add_new_nickname_link <- query(intelligence = "intelligence", customer_data = "nickname")
-
-data <- test_network |> nascent(add_new_nickname_link)
-
 add_new_nickname <- function(data) {
   data$intelligence
   mean_nickname <- ifelse(data$intelligence >= 110, paste0("Smart", data$nickname), paste0("Dumb", data$nickname))
@@ -109,18 +100,14 @@ add_new_nickname <- function(data) {
   data
 }
 
-test_network$customer_data$add(add_new_nickname(data = add_new_nickname_link))
-test_network |> nascent(query(customer_data = "mean_nickname"))
+test_network$customer_data$add(add_new_nickname(data = query(intelligence = "intelligence", customer_data = "nickname")))
 # join between occupations and intelligence
-
-new_query <- query(occupations = "department", map = "id")
-
 add_column_to_intelligence <- function(data) {
   data$new_column <- paste0(data$department, data$id)
   data
 }
 
-test_network$intelligence$add(add_column_to_intelligence(data = new_query))
+test_network$intelligence$add(add_column_to_intelligence(data = query(occupations = "department", map = "id")))
 
 
 # Add objects!
