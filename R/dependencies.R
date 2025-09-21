@@ -1,15 +1,14 @@
 
 
 dependencies <- function(query_list, network, dag_sm = build_tree()) {
-  # The query is merged with already queried objects and is used for already visited nodes in the dag
+  # The query is merged with queries whose dependencies have already been resolved
   dag_sm$set_query(query_list)
-  # query_list <- extract_objects(query_list = query_list, dag_sm = dag_sm)
   links <- get_dependend_links(query_list, network)
-  split_queries <- lapply(links, split_args)
+  split_queries <- lapply(links, split_args) # each link has their queries split into queries and object queries
   codes <- mapply(build_dependency_codes, links, split_queries, MoreArgs = list(network = network, dag_sm = dag_sm), SIMPLIFY = FALSE)
   set_nodes(links = links, codes = codes, dag_sm = dag_sm)
   set_objects(split_queries = split_queries, dag_sm = dag_sm)
-  queries <- flatten_list(lapply(split_queries, \(query) query$xafty_query)) #flatten_list(remove_empty_lists(get_dependend_queries(links = links)))
+  queries <- flatten_list(lapply(split_queries, \(query) query$xafty_query))
   query <- do.call(merge_queries, queries)
   if (length(query) == 0) return(dag_sm)
   # removes already visited nodes leading to an eventual termination of the recursive function
@@ -30,13 +29,8 @@ prune_query <- function(query, compare) {
     } else {
       query[[project]]$select <- pruned_select
     }
-
   }
   query
-}
-
-get_dependend_queries <- function(links) {
-  lapply(links, get_queries)
 }
 
 get_dependend_links <- function(query, network) {
@@ -73,25 +67,4 @@ set_objects <- function(split_queries, dag_sm) {
   if(!length(split_queries) == 0) {
     lapply(split_queries, \(query) dag_sm$set_objects(query$xafty_object))
   }
-}
-
-# set_objects <- function(link, data_sm, network) {
-#   xafty_objects <- get_xafty_objects_vec(link)
-#   for(arg_name in names(link$args)) {
-#     xo <- xafty_objects[[arg_name]]
-#     if(xo == "xafty_object") {
-#       object_query <- link$args[[arg_name]]
-#       data <- nascent(network = network, object_query)
-#       object_key <- paste0(object_query[[1]]$from, ".", get_squared_variable(object_query[[1]]$select))
-#       data_sm$set_object(object_key = object_key, data = data)
-#     }
-#   }
-# }
-
-extract_objects <- function(query_list, tree_sm) {
-  for (i in seq_along(query_list)) {
-    select <- query_list[[i]]$select
-    query_list[[i]]$select <- select[!vapply(select, \(s) is_xafty_object_variable(s), FUN.VALUE = logical(1), USE.NAMES = FALSE)]
-  }
-  query_list
 }

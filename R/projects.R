@@ -41,28 +41,9 @@ create_add_project <- function(network_env) {
   force(network_env)
   add_project <- function(name, ...) {
     validate_project_name(name = name, network = network_env)
-    project_config <- list(...)
     new_ruleset <- ruleset()
     .network_env <- add_new_project(project = name, ruleset = new_ruleset, network_env = network_env,
                                     link_types = c("get", "add", "join", "add_object"))
-    if(length(project_config) > 0) {
-      xafty_query <- project_config[[1]]
-      if (!inherits(xafty_query, what = "xafty_query_list")) {
-        warning("value passed to dots argument, is not a xafty_query_list. Dots argument is being ignored!")
-      } else {
-        project_env <- .network_env[[name]]
-        entry <- function(val = "data") {
-          force(xafty_query)
-          if(val == "data") {
-            network_env |> nascent(xafty_query)
-          } else {
-            xafty_query
-          }
-        }
-        class(project_env) <- c("xafty_bundle", "environment")
-        assign("entry", entry, envir = project_env)
-      }
-    }
     invisible(.network_env)
   }
   add_project

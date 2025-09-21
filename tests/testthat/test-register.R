@@ -75,27 +75,7 @@ test_that("register add also works with xafty link instead of passing data into 
   expect_equal(data_test, data_expected)
 })
 
-test_that("New environment type xafty_bundle allows to bundle queries with as sub projects", {
-  test_state_1 <- init_network(name = "project_env")
-  test_state_1$add_project("customer_data")
-  test_state_1$add_project("occupation")
-  test_state_1$customer_data$get(get_sample_data())
-  test_state_1$customer_data$add(add_score_category(data = query(customer_data = "score")))
-  test_state_1$occupation$get(get_additional_info())
-  test_state_1$customer_data$join(join_datasets(main_data = query(customer_data = "id"), extra_data = query(occupation = "id")))
-  xafty_query <- query(customer_data = c("name", "category"), occupation = "department")
-  test_state_1$add_project("value_sheet", xafty_query)
-  data_test <- test_state_1$value_sheet$entry("data")
-  data_expected <- structure(row.names = c(NA, -5L), class = "data.frame",
-   list(
-     name = c("Alice", "Bob", "Charlie", "Diana", "Eve"),
-     category = c("Low", "High", "Low", "High", "Low"),
-     department = c("HR", "IT", "Finance", "Marketing", "Sales")
-   ))
-  expect_identical(data_test, data_expected)
-})
-
-test_that("xafty_bundle allows to seamlessly add a column to a container project", {
+test_that("A container column can be nascented from the network even if it is not joined", {
   test_state_1 <- init_network(name = "project_env")
   test_state_1$add_project("customer_data")
   test_state_1$add_project("occupation")
@@ -111,7 +91,7 @@ test_that("xafty_bundle allows to seamlessly add a column to a container project
   expect_identical(table_test, table_expected)
 })
 
-test_that("xafty_bundle allows to seamlessly add a column to a container project", {
+test_that("A container column can be nascented from the network alongsided traditional projects", {
   test_state_1 <- init_network(name = "project_env")
   test_state_1$add_project("customer_data")
   test_state_1$add_project("occupation")

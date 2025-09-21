@@ -56,25 +56,6 @@ sub_query <- function(...) {
   query_list
 }
 
-add_query <- function(network, ...) {
-  current_query <- network$query
-  new_query <- query(...)
-  network$query <- c(current_query, new_query)
-  if(!"bundled_xafty_network" %in% class(network)) {
-    class(network) <- c(class(network), "bundled_xafty_network")
-  }
-  invisible(network)
-}
-
-remove_query <- function(network) {
-  if("query" %in% names(network)) {
-    rm("query", envir = network)
-  }
-  current_classes <- class(network)
-  class(network) <- current_classes[current_classes != "bundled_xafty_network"]
-  invisible(network)
-}
-
 temper_query <- function(query_list, network) {
   class_input <- class(query_list)
   query_list <- sapply(query_list, \(link) {
@@ -92,9 +73,6 @@ get_sub_queries <- function(query, network) {
   projecs <- names(query)
   sub_query_list <- lapply(projecs, \(project) {
     project_env <- network[[project]]
-    if ("xafty_bundle" %in% class(project_env)) {
-      return(project_env$entry(val = "query"))
-    }
   })
   sub_query_list[!vapply(sub_query_list, \(query) is.null(query), FUN.VALUE = logical(1))]
 }
@@ -144,7 +122,6 @@ dots_to_query <- function(network, ...)  {
   }
   query_order <- temper_query(query_list = query, network = network)
   query_internal <- merge_queries(query_order)
-
   list(
     internal = query_internal,
     order = query_order

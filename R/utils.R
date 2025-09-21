@@ -10,7 +10,6 @@ print.xafty_network <- function(x, ...) {
   cat(paste0("Number of projects in ", network_name, ": ", length(projects), "\n"))
   cat("\n")
   for(project in projects) {
-    is_sub <- "xafty_bundle" %in% class(x[[project]])
     is_container <- "xafty_container" %in% class(x[[project]])
     columns <- names(x[[project]]$variables)
     objects <- paste0("[", names(x[[project]]$objects), "]")
@@ -18,9 +17,7 @@ print.xafty_network <- function(x, ...) {
     columns_print <- ifelse(length(columns) > 0, paste0(columns, collapse = ", "), "'none'")
     objects_print <- ifelse(length(columns) > 0, paste0(objects, collapse = ", "), "'none'")
     joins_print <- ifelse(length(joins) > 0, paste0(joins, collapse = ", "), "'none'")
-    if (is_sub) {
-      cat(paste0("Sub Project: ", project, "\n"))
-    } else if (is_container) {
+    if (is_container) {
       cat(paste0("Container: ", project, "\n"))
     } else {
       cat(paste0("Project: ", project, "\n"))
