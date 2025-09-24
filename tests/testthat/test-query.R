@@ -62,3 +62,10 @@ test_that("trying to query an object and any other column or object gives an inf
   expect_error(query(customer_data = c("[my_object]", "column")))
   expect_error(query(customer_data = "column", occupation = "[my_object]"))
 })
+
+test_that("adding a with list for states will return the query with the state list", {
+  xafty_query <- query(customer_data = c("id", "score")) |>
+    with(param1 = TRUE, param2 = FALSE)
+  expect_equal(xafty_query$states$param1, expected = TRUE)
+  expect_true(inherits(xafty_query$states, "xafty_states_list"))
+})

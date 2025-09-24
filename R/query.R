@@ -33,6 +33,13 @@ query <- function(...) {
   query_list
 }
 
+with <- function(query_list, ...) {
+  .li_states <- list(...)
+  class(.li_states) <- c("list", "xafty_states_list")
+  list(query = query_list,
+       states = .li_states)
+}
+
 sub_query <- function(...) {
   .list_dots <- list(...)
   query_list <- lapply(seq_along(.list_dots), \(i) {
