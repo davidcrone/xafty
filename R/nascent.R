@@ -6,6 +6,7 @@
 nascent <- function(network, ...) {
   stopifnot(inherits(network, "xafty_network"))
   query_list <- dots_to_query(network = network, ... = ...)
+
   if(inherits(query_list$internal, "xafty_object_query")) {
     data <- nascent_object(query_list = query_list, network = network)
   } else {
@@ -24,6 +25,7 @@ nascent_query <- function(query_list, network, return = c("df", "dag")) {
   dag <- build_dag(dag_sm = dag_sm)
   if(all(return == "dag")) return(dag)
   data_sm <- data_sm()
+  data_sm <- set_states(states = query_list$states, data_sm = data_sm)
   data_sm <- evaluate_objects(data_sm = data_sm, dag_sm = dag_sm, network = network)
   data_sm <- evaluate_dag(dag = dag, data_sm = data_sm)
   data_key <- get_data_key(data_sm = data_sm, dag_sm = dag_sm)
@@ -36,7 +38,6 @@ nascent_query <- function(query_list, network, return = c("df", "dag")) {
       )
     )
   }
-  # Nicht data sm muss ganz nach unten, sondern nur die objects
   data
 }
 
@@ -284,4 +285,10 @@ evaluate_objects <- function(data_sm, dag_sm, network) {
 
 get_data_key <- function(data_sm, dag_sm) {
   unique(vapply(get_projects(dag_sm$get_query()), \(project) data_sm$get_data_key(project), FUN.VALUE = character(1)))
+}
+
+set_states <- function(states, data_sm) {
+  if(is.null(states)) return(data_sm)
+  data_sm$set_states(states)
+  data_sm
 }

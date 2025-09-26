@@ -202,26 +202,30 @@ build_join_pairs <- function(li_pairs) {
 }
 
 build_executable_args <- function(link, data_sm, mask) {
-  func_args <- link$args
-  lead_projects <- get_lead_projects(link)
-  queries <- get_queries(link)
-  args <- names(queries)
-  xafyt_objects <- get_xafty_objects_vec(link)
-  for (i in seq_along(queries)) {
-    project <- lead_projects[i]
+  args <- link$args
+  executable_args <- list()
+  object_types <- get_xafty_objects_vec(link)
+  for (i in seq_along(args)) {
+    xo <- object_types[i]
     arg <- args[i]
-    xo <- xafyt_objects[[arg]]
+    arg_name <- names(arg)
     if(xo == "xafty_query") {
+      query_list <- arg[[arg_name]]
+      project <- get_lead_project(query_list = query_list)
       data <- data_sm$get_data(project = project)
-      data <- unscope(data = data, link = link, arg_name = arg, mask = mask)
+      data <- unscope(data = data, link = link, arg_name = arg_name, mask = mask)
     } else if (xo == "xafty_object") {
-      object_query <- link$args[[arg]]
+      object_query <- arg[[arg_name]]
       object_key <- paste0(object_query[[1]]$from, ".", get_squared_variable(object_query[[1]]$select))
       data <- data_sm$get_object(object_key)
+    } else if (xo == "xafty_state") {
+      data <- data_sm$get_state(arg_name)
+    } else if (xo == "none_xafty_object") {
+      data <- args[[arg_name]]
     }
-    func_args[[arg]] <- data
+    executable_args[[arg_name]] <- data
   }
-  func_args
+  executable_args
 }
 
 get_all_projects <- function(item) {
@@ -236,6 +240,10 @@ get_lead_projects <- function(link) {
   arg_w_query <- names(queries)
   # The lead project will always be the first project in a query
   vapply(arg_w_query, \(arg_name) queries[[arg_name]][[1]]$from, FUN.VALUE = character(1))
+}
+
+get_lead_project <- function(query_list) {
+  query_list[[1]]$from
 }
 
 build_cartesian_product <- function(query) {

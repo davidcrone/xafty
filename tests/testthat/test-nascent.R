@@ -123,6 +123,25 @@ test_that("Add function with a non-query argument works in nascent", {
   expect_identical(test_data, expected_data)
 })
 
+test_that("State argument correclty passes the argument into the state variable", {
+  test_network <- init_network(name = "test_network", projects = "customer_data")
+  test_network$customer_data$get(get_sample_data())
+  add_score_category <- function(data, na_as_negative = "{na_as_negative}") {
+    if (na_as_negative) {
+      data$category <- ifelse(data$score >= 90, "High", "Low")
+      data
+    }
+  }
+  test_network$customer_data$add(add_score_category(data = query(customer_data = "score"),
+                                                    na_as_negative = "{na_as_negative}"), added_columns = c("category"))
+  query <- query(customer_data = c("name", "category")) |> with(na_as_negative = TRUE)
+  test_data <- nascent(test_network, query)
+  expected_data <- structure(list(name = c("Alice", "Bob", "Charlie", "Diana", "Eve"),
+                                  category = c("Low", "High", "Low", "High", "Low")),
+                             row.names = c(NA, -5L), class = "data.frame")
+  expect_identical(test_data, expected_data)
+})
+
 test_that("nascent can query an object from the network", {
   test_data <- test_network |> nascent(intelligence = c("[active_customers]"))
   expected_data <- data.frame(intelligence = c(120, 130), row.names = c(1L, 4L))

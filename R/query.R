@@ -36,8 +36,12 @@ query <- function(...) {
 with <- function(query_list, ...) {
   .li_states <- list(...)
   class(.li_states) <- c("list", "xafty_states_list")
-  list(query = query_list,
-       states = .li_states)
+  state_query <- list(
+    query = query_list,
+    states = .li_states
+    )
+  class(state_query) <- c("list", "state_query")
+  state_query
 }
 
 sub_query <- function(...) {
@@ -122,16 +126,33 @@ get_joins_within_query <- function(query, network) {
 
 dots_to_query <- function(network, ...)  {
   query_raw <- list(...)
-  if(!inherits(query_raw[[1]], what = "xafty_query_list")) {
-    query_list <- query(query_raw)
-  } else {
-    query_list <- list(...)[[1]]
+  # When only the network is provided, the user gets the following error
+  # However only providing the network could also be used as a shorthand to query all projects with all columns within the network
+  if(length(query_raw) == 0) {
+    stop("No query provided. Please pass a valid query into the function.")
   }
+  if(inherits(query_raw[[1]], "state_query")) {
+    query_list <- query_raw[[1]]$query
+    query_states <- query_raw[[1]]$states
+  } else if (inherits(query_raw, "state_query")) {
+    query_list <- query_raw$query
+    query_states <- query_raw$states
+  } else if (inherits(query_raw[[1]], what = "xafty_query_list")) {
+    query_list <- query_raw[[1]]
+    query_states <- NULL
+  } else if(!inherits(query_raw[[1]], what = "xafty_query_list")) {
+    query_list <- query(query_raw)
+    query_states <- NULL
+  } else {
+    stop("Could not parse passed query")
+  }
+
   query_order <- temper_query(query_list = query_list, network = network)
   query_internal <- merge_queries(query_order)
   list(
     internal = query_internal,
-    order = query_order
+    order = query_order,
+    states = query_states
   )
 }
 

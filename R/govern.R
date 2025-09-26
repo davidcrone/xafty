@@ -45,6 +45,20 @@ data_sm <- function() {
     names(state_env$objects)
   }
 
+  set_states <- function(states) {
+    state_env$states <- states
+  }
+
+  get_states <- function() {
+    state_env$states
+  }
+
+  get_state <- function(name) {
+    # TODO; Default for a certain state
+    # TODO: Default from settings
+    state_env$states[[name]]
+  }
+
   list(
     set_data_key = set_data_key,
     get_data_key = get_data_key,
@@ -54,7 +68,10 @@ data_sm <- function() {
     get_data_by_key = get_data_by_key,
     set_object = set_object,
     get_object = get_object,
-    get_object_names = get_object_names
+    get_object_names = get_object_names,
+    set_states = set_states,
+    get_states = get_states,
+    get_state = get_state
   )
 }
 
