@@ -141,3 +141,10 @@ test_that("register can register a function with an object as dependency", {
   expect_equal(test_network$intelligence$objects$mean_intelligence, "build_kpi")
   expect_equal(test_network$intelligence$ruleset$modules$object$build_kpi$added_object, "[mean_intelligence]")
 })
+
+test_that("A xafty state can be registered", {
+  test_network <- init_network(name = "test_network")
+  test_network$add_state("test_state", allowed = c(TRUE, FALSE), example = TRUE, default = TRUE, documentation = "this is an example")
+  expect_equal(get_default_state("test_state", test_network), TRUE)
+  expect_equal(get_default_state("unregistered_state", test_network), NULL)
+})

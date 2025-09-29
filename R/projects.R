@@ -16,13 +16,16 @@
 init_network <- function(name, projects = NULL, containers = NULL) {
   network_env <- new.env() # This is the list where all projects will be merged together
   network_env$settings <- settings(network_name = name)
+  network_env$states <- list()
   add_project <- create_add_project(network_env = network_env)
   add_container <- create_add_container(network_env = network_env)
   save_project <- create_save_project(network_env = network_env)
+  add_state <- create_add_state(network_env = network_env)
   assign("add_project", add_project, envir = network_env)
   assign("add_container", add_container, envir = network_env)
   assign("save", save_project, envir = network_env)
-  class(network_env) <- c("xafty_network", "environment")
+  assign("add_state", add_state, envir = network_env)
+  class(network_env) <- c("environment", "xafty_network")
 
   if(!is.null(projects)) {
     for (project in projects) {
@@ -187,4 +190,21 @@ validate_project_name <- function(name, network) {
   names_network <- names(network)
   existing_projects <- names_network[vapply(names_network, \(project) is.environment(network[[project]]), FUN.VALUE = logical(1))]
   if(any(name %in% existing_projects)) stop(paste0("Project '", name, "' exists already in network"))
+}
+
+create_add_state <- function(network_env) {
+  add_state <- function(name, allowed = NULL, example = NULL, default = NULL, documentation = NULL) {
+    if(length(name) == 0 | length(name) > 1) stop("Please enter the state's name.")
+    name <- get_braced_variable(name)
+    if(!identical(name, make.names(name))) stop("Please enter a valid state name")
+    existing_states <- names(network_env$sates)
+    state_exists <- name %in% existing_states
+    # TODO Ask user if they want to overwrite the state
+    network_env$states[[name]] <- list(
+      allowed = allowed,
+      example = example,
+      default = default,
+      docu = documentation
+    )
+  }
 }

@@ -160,3 +160,31 @@ test_that("An interwoven object in a network query does execute the object by it
                              row.names = c(NA, -5L), class = "data.frame")
   expect_equal(test_data, expected_data)
 })
+
+test_that("Flow of functions can be controlled through states", {
+  test_network <- init_network(name = "test_network", projects = "customer_data")
+  test_network$customer_data$get(get_sample_data())
+  add_score_category <- function(data, na_as_negative = "{na_as_negative}") {
+    if(is.null(na_as_negative)) na_as_negative <- TRUE
+    if (na_as_negative) {
+      data$category <- ifelse(data$score >= 90, "High", "Low")
+    } else {
+      data$category <- ifelse(data$score >= 110, "High", "Low")
+
+    }
+    data
+  }
+  test_network$customer_data$add(add_score_category(data = query(customer_data = "score")))
+  query1 <- query(customer_data = c("name", "category")) |> with(na_as_negative = TRUE)
+  query2 <- query(customer_data = c("name", "category")) |> with(na_as_negative = FALSE)
+  test_data1 <- nascent(test_network, query1)
+  test_data2 <- nascent(test_network, query2)
+  expected_data1 <- structure(list(name = c("Alice", "Bob", "Charlie", "Diana", "Eve"),
+                          category = c("Low", "High", "Low", "High", "Low")),
+                          row.names = c(NA, -5L), class = "data.frame")
+  expected_data2 <- structure(list(name = c("Alice", "Bob", "Charlie", "Diana", "Eve"),
+                          category = c("Low", "Low", "Low", "Low", "Low")),
+                          row.names = c(NA, -5L), class = "data.frame")
+  expect_identical(test_data1, expected_data1)
+  expect_identical(test_data2, expected_data2)
+})

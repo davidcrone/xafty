@@ -37,8 +37,10 @@ eval_args <- function(link, network) {
 }
 
 evaluate_arg <- function(arg, xo, network) {
-  if(grepl("^xafty", xo)) {
+  if(xo %in% c("xafty_object", "xafty_query")) {
     nascent(network, arg)
+  } else if (xo == "xafty_state") {
+    get_default_state(name = arg, network_env = network)
   } else {
     arg
   }
@@ -340,4 +342,11 @@ bfs_traversal <- function(graph, start, end) {
     }
   }
   return(NULL)
+}
+
+get_default_state <- function(name, network_env) {
+  existing_states <- names(network_env$states)
+  state_registered <- name %in% existing_states
+  if(!state_registered) return(network_env$settings$state$global_default)
+  network_env$states[[name]]$default
 }
