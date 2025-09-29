@@ -33,6 +33,14 @@ query <- function(...) {
   query_list
 }
 
+#' Add a State to a xafty Query
+#' @description
+#' The state of a xafty query is passed to arguments that were declared as xafty states
+#' by passing a single character vector wrapped into {curley_braces} into the argument
+#' @param query_list A query list created by [xafty::query]
+#' @param ... Declaration of the states e.g. state_name = TRUE
+#' @returns A list state_query which is a query bundled with a state
+#' @export
 with <- function(query_list, ...) {
   .li_states <- list(...)
   class(.li_states) <- c("list", "xafty_states_list")
