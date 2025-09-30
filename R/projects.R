@@ -195,8 +195,12 @@ validate_project_name <- function(name, network) {
 create_add_state <- function(network_env) {
   add_state <- function(name, allowed = NULL, example = NULL, default = NULL, documentation = NULL) {
     if(length(name) == 0 | length(name) > 1) stop("Please enter the state's name.")
-    name <- get_braced_variable(name)
-    if(!identical(name, make.names(name))) stop("Please enter a valid state name")
+    if(!is_curly_character(name)) {
+      test_name <- paste0("{", name, "}")
+    } else {
+      test_name <- name
+    }
+    if(!is_state_variable(test_name)) stop("Please enter a valid state name")
     existing_states <- names(network_env$sates)
     state_exists <- name %in% existing_states
     # TODO Ask user if they want to overwrite the state

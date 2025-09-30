@@ -123,7 +123,7 @@ split_args <- function(link, xafty_objects) {
 
 
 find_xafty_objects <- function(arg) {
-  if(is_xafty_state_variable(arg)) return("xafty_state")
+  if(is_state_variable(arg)) return("xafty_state")
   if(inherits(arg, "xafty_object_query")) return("xafty_object")
   if("xafty_query_list" %in% class(arg)) return("xafty_query")
   "none_xafty_object"
@@ -143,7 +143,7 @@ get_queries <- function(link) {
   arg_w_query
 }
 
-is_curved_variable <- function(arg) {
+is_curly_character <- function(arg) {
   grepl("^\\{[^{}]+\\}$", arg)
 }
 
@@ -152,8 +152,9 @@ is_squared_variable <- function(arg) {
 }
 
 get_braced_variable <- function(arg) {
-  match <- gsub("^\\{|\\}$", "", arg)
-  match
+  out <- sub(".*\\{([^{}]+)\\}.*", "\\1", arg)
+  out[!grepl("\\{[^{}]+\\}", arg)] <- NA_character_
+  out
 }
 
 get_squared_variable <- function(arg) {
@@ -167,9 +168,13 @@ is_valid_variable_name <- function(match) {
   is_valid_variable_name
 }
 
-is_xafty_state_variable <- function(arg) {
+contains_state <- function(name) {
+  grepl("\\{[^}]+\\}", name)
+}
+
+is_state_variable <- function(arg) {
   if(!is.character(arg) || length(arg) != 1) return(FALSE)
-  if(!is_curved_variable(arg)) return(FALSE)
+  if(!contains_state(arg)) return(FALSE)
   match <- get_braced_variable(arg)
   is_valid_variable_name(match = match)
 }
