@@ -188,3 +188,23 @@ test_that("Flow of functions can be controlled through states", {
   expect_identical(test_data1, expected_data1)
   expect_identical(test_data2, expected_data2)
 })
+
+test_that("Interpolating a state into a variable name allows to retrieve different columns", {
+  test_network <- init_network(name = "test_network", projects = "customer_data")
+  get_data <- function() {
+    data.frame(
+      data.2025 = c("A", "B"),
+      data.2026 = c("C", "D")
+    )
+  }
+  test_network$customer_data$get(get_data())
+  qry1 <- query(customer_data = "data.{year}") |> with(year = 2025)
+  qry2 <- query(customer_data = "data.{year}") |> with(year = 2026)
+  tets_data1 <- nascent(test_network, qry1)
+  tets_data2 <- nascent(test_network, qry2)
+  expected_data1 <- get_data()[, 1, drop = FALSE]
+  expected_data2 <- get_data()[, 2, drop = FALSE]
+  expect_equal(tets_data1, expected_data1)
+  expect_equal(tets_data2, expected_data2)
+})
+

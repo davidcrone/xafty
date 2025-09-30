@@ -69,3 +69,34 @@ test_that("adding a with list for states will return the query with the state li
   expect_equal(xafty_query$states$param1, expected = TRUE)
   expect_true(inherits(xafty_query$states, "xafty_states_list"))
 })
+
+test_that("interpolate_state_in_query correctly fills the select variable with state value from a state query", {
+  network_env <- init_network("test_network")
+  network_env$add_state("year", default = "2019")
+  network_env$settings$state$global_default <- 2020
+
+  state_query <- query(project1 = c("population.{year}", "overall_population{fromStateQuery}"), project2 = "default.{state}") |>
+    with(fromStateQuery = 2023)
+  query_test <- interpolate_state_in_query(query_list = state_query$query, state_list = state_query$states, network_env = network_env)
+  query_expected <- query(project1 = c("population.2019", "overall_population2023"), project2 = "default.2020")
+  expect_identical(query_test, query_expected)
+})
+
+test_that("interpolate_state_in_query correctly fills the select variable with the state value", {
+  network_env <- init_network("test_network")
+  network_env$add_state("year", default = "2019")
+  network_env$settings$state$global_default <- 2020
+  query_list <- query(project1 = c("population.{year}", "overall_population"), project2 = "default.{state}")
+  query_test <- interpolate_state_in_query(query_list = query_list, state_list = NULL, network_env = network_env)
+  query_expected <- query(project1 = c("population.2019", "overall_population"), project2 = "default.2020")
+  expect_identical(query_test, query_expected)
+})
+
+test_that("interpolate_state_in_query correctly fills the select variable with the state value", {
+  network_env <- init_network("test_network")
+  network_env$add_state("year", default = "2019")
+  query_list <- query(project1 = "population.{year}_test", project2 = "default{null}", project3 = "overall_population")
+  query_test <- interpolate_state_in_query(query_list = query_list, state_list = NULL, network_env = network_env)
+  query_expected <- query(project1 = "population.2019_test", project2 = "default", project3 = "overall_population")
+  expect_identical(query_test, query_expected)
+})

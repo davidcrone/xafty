@@ -74,15 +74,10 @@ sub_query <- function(...) {
   query_list
 }
 
-temper_query <- function(query_list, network) {
+temper_query <- function(query_list, state_list = NULL, network) {
   class_input <- class(query_list)
-  query_list <- sapply(query_list, \(link) {
-    project <- link$from
-    if (any(link$select == "*")) {
-      link$select <- names(network[[project]]$variables)
-    }
-    link
-  }, simplify = FALSE, USE.NAMES = TRUE)
+  query_list <- resolve_star_select(query_list = query_list, network_env = network)
+  query_list <- interpolate_state_in_query(query_list = query_list, state_list = state_list, network_env = network)
   class(query_list) <- class_input
   query_list
 }
@@ -141,26 +136,25 @@ dots_to_query <- function(network, ...)  {
   }
   if(inherits(query_raw[[1]], "state_query")) {
     query_list <- query_raw[[1]]$query
-    query_states <- query_raw[[1]]$states
+    state_list <- query_raw[[1]]$states
   } else if (inherits(query_raw, "state_query")) {
     query_list <- query_raw$query
-    query_states <- query_raw$states
+    state_list <- query_raw$states
   } else if (inherits(query_raw[[1]], what = "xafty_query_list")) {
     query_list <- query_raw[[1]]
-    query_states <- NULL
+    state_list <- NULL
   } else if(!inherits(query_raw[[1]], what = "xafty_query_list")) {
     query_list <- query(query_raw)
-    query_states <- NULL
+    state_list <- NULL
   } else {
     stop("Could not parse passed query")
   }
-
-  query_order <- temper_query(query_list = query_list, network = network)
+  query_order <- temper_query(query_list = query_list, state_list = state_list, network = network)
   query_internal <- merge_queries(query_order)
   list(
     internal = query_internal,
     order = query_order,
-    states = query_states
+    states = state_list
   )
 }
 
@@ -191,4 +185,39 @@ has_misuse_of_object_in_query_list <- function(query_list) {
     if((n_projects > 1 & has_object) | (has_object & more_than_one)) misuse_detected <- TRUE
   }
   misuse_detected
+}
+
+resolve_star_select <- function(query_list, network_env) {
+  sapply(query_list, \(query) {
+    project <- query$from
+    if (any(query$select == "*")) {
+      query$select <- names(network_env[[project]]$variables)
+    }
+    query
+  }, simplify = FALSE, USE.NAMES = TRUE)
+}
+
+interpolate_state_in_query <- function(query_list, state_list, network_env) {
+  for (query in query_list) {
+    select <- query$select
+    project <- query$from
+    contains_state_logical <- vapply(select, contains_state, FUN.VALUE = logical(1), USE.NAMES = FALSE)
+    if(!any(contains_state_logical)) next
+    position_states <- which(contains_state_logical)
+    state_names <- get_braced_variable(select[contains_state_logical])
+    for (i in seq_along(state_names)) {
+      name <- state_names[i]
+      inter_value <- state_list[[name]]
+      if(is.null(inter_value)) {
+        inter_value <-  get_default_state(name = name, network_env = network_env)
+        if(is.null(inter_value)) inter_value <- ""
+      }
+      pos <- position_states[i]
+      variable_name <- select[pos]
+      state_pattern <- paste0("{", name, "}")
+      inter_variable <- gsub(state_pattern, inter_value, variable_name, fixed = TRUE)
+      query_list[[project]]$select[pos] <- inter_variable
+    }
+  }
+  query_list
 }
