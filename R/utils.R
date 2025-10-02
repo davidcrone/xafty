@@ -135,11 +135,17 @@ get_xafty_objects_vec <- function(link) {
   xafty_objects_vec
 }
 
-get_queries <- function(link) {
+get_queries <- function(link, temper = FALSE, network = NULL) {
   xafty_objects_vec <- get_xafty_objects_vec(link)
   arg_names_w_query <- names(xafty_objects_vec)[xafty_objects_vec == "xafty_query" | xafty_objects_vec == "xafty_object"]
   if(length(arg_names_w_query) <= 0) return(list())
   arg_w_query <- sapply(arg_names_w_query, \(arg_name) link$args[[arg_name]], simplify = FALSE, USE.NAMES = TRUE)
+  if (temper) {
+    if(is.null(network)) stop("To temper a query, a network is needed")
+    # TODO Must also work with state_query to pass the state list into the function
+    arg_w_query <- sapply(arg_w_query, interpolate_state_in_query, state_list = NULL, network_env = network,
+                          simplify = FALSE, USE.NAMES = TRUE)
+  }
   arg_w_query
 }
 
@@ -277,12 +283,12 @@ get_dependend_functions <- function(link, network, scope = FALSE) {
 
 get_added_columns <- function(link, network) {
   project <- link$project
-  dep_queries <- get_queries(link)
+  dep_queries <- get_queries(link, temper = TRUE, network = network)
   input_column_names <- do.call(c, lapply(dep_queries, get_column_order))
   func_output <- execute_function(link = link, network = network)
   output_column_names <- colnames(func_output)
-  added_columns <- output_column_names[!output_column_names %in% input_column_names]
-  added_columns
+  added_variables <- output_column_names[!output_column_names %in% input_column_names]
+  added_variables
 }
 
 flatten_list <- function(li) {

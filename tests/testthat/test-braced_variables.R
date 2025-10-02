@@ -18,7 +18,7 @@ test_that("xafty states are correctly identified", {
 test_that("xafty objects are correctly identified", {
   test_logical <- vapply(c("normal_character", "[xafty_object]", "[another.xafty_state]", "[inval{_name]", "[]"),
                          is_xafty_object_variable, logical(1), USE.NAMES = FALSE)
-  expect_logical <- c(FALSE, TRUE, TRUE, FALSE, FALSE)
+  expect_logical <- c(FALSE, TRUE, TRUE, FALSE, FALSE, TRUE)
   expect_identical(test_logical, expect_logical)
 })
 

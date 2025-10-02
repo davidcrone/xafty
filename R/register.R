@@ -48,6 +48,13 @@ get_function_package <- function(func_name) {
 
 create_link <- function(quosure, project, network, ...) {
   .dots <- list(...)
+  link <- create_base_link(quosure = quosure, project = project)
+  link <- link_add_object(link = link, object_name = .dots[["object_name"]])
+  link <- link_add_variables(link = link, variable_names = .dots[["added_columns"]], network = network)
+  link
+}
+
+create_base_link <- function(quosure, project) {
   fun_exp <- rlang::get_expr(quosure)
   fun_env <- rlang::get_env(quosure)
   list_args <- unpack_args(exp = fun_exp, env = fun_env)
@@ -56,10 +63,13 @@ create_link <- function(quosure, project, network, ...) {
     language = "R",
     project = project
   )
-  link<- append(list_args, list_info)
+  link <- append(list_args, list_info)
   class(link) <- c("xafty_link", "list")
-  if("object_name" %in% names(.dots)) {
-    object_name <- .dots[["object_name"]]
+  link
+}
+
+link_add_object <- function(link, object_name = NULL) {
+  if(!is.null(object_name)) {
     is_squared_already <- is_squared_variable(object_name)
     if(!is_squared_already) object_name <- paste0("[", object_name, "]")
     if(!is_xafty_object_variable(object_name)) stop("object_name is not a valid xafty object variable")
@@ -67,12 +77,15 @@ create_link <- function(quosure, project, network, ...) {
   } else {
     link$added_object <- NULL
   }
-  if("added_columns" %in% names(.dots)) {
-      link$added_columns <- .dots[["added_columns"]]
+  link
+}
+
+link_add_variables <- function(link, variable_names = NULL, network) {
+  if(!is.null(variable_names)) {
+    link$added_columns <- variable_names
   } else {
     link$added_columns <- get_added_columns(link = link, network = network)
   }
-
   link
 }
 
@@ -102,7 +115,9 @@ unpack_args <- function(exp, env) {
 }
 
 validate_network_integrity <- function(link, network) {
+  # TODO Needs also to work with a state_query (query bundled with state)
   queries <- get_queries(link)
+  queries <- sapply(queries, temper_query, network = network, simplify = FALSE, USE.NAMES = TRUE)
   if(length(queries) <= 0) return(invisible(TRUE))
   flat_queries <- flatten_list(queries)
   for (query in flat_queries) {

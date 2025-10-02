@@ -148,3 +148,22 @@ test_that("A xafty state can be registered", {
   expect_equal(get_default_state("test_state", test_network), TRUE)
   expect_equal(get_default_state("unregistered_state", test_network), NULL)
 })
+
+test_that("It is possible to register a variable with interpolated state, keeping the non interpolated query", {
+  test_network <- init_network(name = "test_network", projects = "test_data")
+  test_network$add_state("year", default = 2025)
+  get_data <- function() {
+    data.frame(
+      data.2025 = c("A", "B"),
+      data.2026 = c("C", "D")
+    )
+  }
+  test_network$test_data$get(get_data())
+  add_data <- function(data) {
+    data$data.2027 <- c("E", "F")
+    data
+  }
+  test_network$test_data$add(add_data(data = query(test_data = "data.{year}")))
+  expect_equal(test_network$test_data$ruleset$modules$link$add_data$added_columns, expected = "data.2027")
+  expect_equal(test_network$test_data$ruleset$modules$link$add_data$args$data, expected = query(test_data = "data.{year}"))
+})
