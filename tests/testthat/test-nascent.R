@@ -208,3 +208,26 @@ test_that("Interpolating a state into a variable name allows to retrieve differe
   expect_equal(tets_data2, expected_data2)
 })
 
+test_that("interpolated dependend query is correctly interpolated and executed", {
+  test_network <- init_network(name = "test_network", projects = "test_data")
+  test_network$add_state("year", default = 2025)
+  get_data <- function() {
+    data.frame(
+      data.2025 = c("A", "B"),
+      data.2026 = c("C", "D")
+    )
+  }
+  test_network$test_data$get(get_data())
+  add_data <- function(data) {
+    data$data.2027 <- c("E", "F")
+    data
+  }
+  test_network$test_data$add(add_data(data = query(test_data = "data.{year}")))
+  query <- query(test_data = c("data.{current_year}", "data.{year}")) |> with(current_year = 2027, year = 2025)
+  test_data <- nascent(test_network, query)
+  expected_data <- structure(list(data.2027 = c("E", "F"), data.2025 = c("A", "B"
+  )), row.names = c(NA, -2L), class = "data.frame")
+  expect_identical(test_data, expected_data)
+})
+
+

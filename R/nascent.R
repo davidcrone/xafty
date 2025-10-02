@@ -94,7 +94,7 @@ get_join_functions <- function(from, to, network, sm) {
 join_code_generator <- function(link, network, sm) {
   fused_projects <- get_lead_projects(link)
   join_code <- paste0("fuse.", paste0(fused_projects, collapse = "."))
-  split_queries <- split_args(link)
+  split_queries <- split_args(link = link, network = network)
   set_objects(split_queries = split_queries, dag_sm = sm)
   join_dependencies <- build_dependency_codes(link = link, split_queries = split_queries, network = network, dag_sm = sm)
   join_list_main <- setNames(join_dependencies, join_code)

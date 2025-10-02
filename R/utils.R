@@ -108,8 +108,8 @@ build_dependency_codes <- function(link, split_queries, network, dag_sm) {
   node
 }
 
-split_args <- function(link, xafty_objects) {
-  args <- get_queries(link)
+split_args <- function(link, network) {
+  args <- get_queries(link, temper = TRUE, network = network)
   if(length(args) == 0) return(args)
   xafty_objects <- get_xafty_objects_vec(link)
   query_types <- c("xafty_query", "xafty_object")

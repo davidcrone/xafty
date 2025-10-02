@@ -4,15 +4,7 @@ dependencies <- function(query_list, network, dag_sm = build_tree()) {
   # The query is merged with queries whose dependencies have already been resolved
   dag_sm$set_query(query_list)
   links <- get_dependend_links(query_list, network)
-  split_queries <- lapply(links, split_args) # each link has their queries split into queries and object queries
-  # split_queries <- lapply(split_queries, \(li) {
-  #   query_list <- li$xafty_query
-  #   query_list <- lapply(query_list, temper_query, state_list = NULL, network = network)
-  #   list(
-  #     xafty_query = query_list,
-  #     xafty_object = li$xafty_object
-  #   )
-  # })
+  split_queries <- lapply(links, split_args, network = network) # each link has their queries split into queries and object queries
   codes <- mapply(build_dependency_codes, links, split_queries, MoreArgs = list(network = network, dag_sm = dag_sm), SIMPLIFY = FALSE)
   set_nodes(links = links, codes = codes, dag_sm = dag_sm)
   set_objects(split_queries = split_queries, dag_sm = dag_sm)
