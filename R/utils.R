@@ -214,7 +214,7 @@ build_join_pairs <- function(li_pairs) {
   }))
 }
 
-build_executable_args <- function(link, data_sm, mask) {
+build_executable_args <- function(link, data_sm, mask, default_states) {
   args <- link$args
   executable_args <- list()
   object_types <- get_xafty_objects_vec(link)
@@ -232,7 +232,9 @@ build_executable_args <- function(link, data_sm, mask) {
       object_key <- paste0(object_query[[1]]$from, ".", get_squared_variable(object_query[[1]]$select))
       data <- data_sm$get_object(object_key)
     } else if (xo == "xafty_state") {
-      data <- data_sm$get_state(arg_name)
+      name <- args[[arg_name]]
+      data <- data_sm$get_state(name)
+      if(is.null(data)) data <- get_default_state(name = name, network_env = default_states)
     } else if (xo == "none_xafty_object") {
       data <- args[[arg_name]]
     }
@@ -356,6 +358,9 @@ bfs_traversal <- function(graph, start, end) {
 }
 
 get_default_state <- function(name, network_env) {
+  if(is_curly_character(name)) {
+    name <- get_braced_variable(name)
+  }
   existing_states <- names(network_env$states)
   state_registered <- name %in% existing_states
   if(!state_registered) return(network_env$settings$state$global_default)

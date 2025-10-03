@@ -230,4 +230,22 @@ test_that("interpolated dependend query is correctly interpolated and executed",
   expect_identical(test_data, expected_data)
 })
 
-
+test_that("nascent has access to default state and returns the default value during evalution", {
+  test_network <- init_network(name = "test_network", projects = "test_data")
+  test_network$add_state("year", default = 2025)
+  get_data <- function(var = "{year}") {
+    if(var == 2025) {
+      data.frame(
+        data.2025 = c("A", "B"),
+        data.2026 = c("C", "D")
+      )
+    } else {
+      FALSE
+    }
+  }
+  test_network$test_data$get(get_data())
+  qry <- query(test_data = "data.{year}")
+  test_data <- nascent(test_network, qry)
+  expected_data <- data.frame(data.2025 = c("A", "B"))
+  expect_identical(test_data, expected_data)
+})

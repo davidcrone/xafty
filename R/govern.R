@@ -49,13 +49,14 @@ data_sm <- function() {
     state_env$states <- states
   }
 
-  get_states <- function() {
+  get_states <- function(network) {
     state_env$states
   }
 
   get_state <- function(name) {
-    # TODO; Default for a certain state
-    # TODO: Default from settings
+    if(is_curly_character(name)) {
+      name <- get_braced_variable(name)
+    }
     state_env$states[[name]]
   }
 
@@ -75,10 +76,12 @@ data_sm <- function() {
   )
 }
 
-build_tree <- function() {
+build_tree <- function(network) {
   tree_env <- new.env()
   tree_env$query <- query()
   tree_env$objects <- query()
+  tree_env$network$settings <- network$settings
+  tree_env$network$states <- network$states
 
   # Nodes of the directed (hopefully) acyclic graph
   set_nodes <- function(link, code) {
@@ -150,6 +153,10 @@ build_tree <- function() {
     tree_env$join_pairs
   }
 
+  get_network_state <- function() {
+    tree_env$network
+  }
+
   list(
     set_nodes = set_nodes,
     get_codes = get_codes,
@@ -164,6 +171,7 @@ build_tree <- function() {
     set_join_pairs = set_join_pairs,
     get_join_pairs = get_join_pairs,
     set_mask = set_mask,
-    get_mask = get_mask
+    get_mask = get_mask,
+    get_network_state = get_network_state
   )
 }

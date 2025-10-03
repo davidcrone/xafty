@@ -21,7 +21,8 @@ sort_links <- function(codes, sm) {
 }
 
 nascent_query <- function(query_list, network, return = c("df", "dag")) {
-  dag_sm <- resolve_dependencies(query_list = query_list$internal, network = network)
+  dag_sm <- build_tree(network = network)
+  dag_sm <- resolve_dependencies(query_list = query_list$internal, network = network, dag_sm = dag_sm)
   dag <- build_dag(dag_sm = dag_sm)
   if(all(return == "dag")) return(dag)
   data_sm <- data_sm()
@@ -49,8 +50,7 @@ nascent_object <- function(query_list, network) {
   do.call(fun, args)
 }
 
-resolve_dependencies <- function(query_list, network) {
-  dag_sm <- build_tree()
+resolve_dependencies <- function(query_list, network, dag_sm = NULL) {
   dependencies(query_list = query_list, network = network, dag_sm = dag_sm)
   set_join_dependencies(network = network, dag_sm = dag_sm)
   build_join_bridges(dag_sm = dag_sm, network = network)
@@ -229,9 +229,9 @@ build_join_bridges <- function(dag_sm, network) {
   }
 }
 
-execute_stack <- function(link, mask, data_sm) {
+execute_stack <- function(link, mask, data_sm, default_states) {
   projects <- unique(c(link$project, get_lead_projects(link)))
-  executable_args <- build_executable_args(link, data_sm = data_sm, mask = mask)
+  executable_args <- build_executable_args(link = link, data_sm = data_sm, mask = mask, default_states = default_states)
   # Doing this to avoid too much memory use, is this necessary?
   for (project in projects) {
     if(!is.null(data_sm$get_data_key(project))) {
@@ -262,14 +262,16 @@ build_dag <- function(dag_sm) {
     dag = dag_sm$get_codes(),
     execution_order = topological_sorted_codes,
     sorted_links = list_links,
-    masked_columns = dag_sm$get_mask()
+    masked_columns = dag_sm$get_mask(),
+    network_states = dag_sm$get_network_state()
   )
 }
 
 evaluate_dag <- function(dag, data_sm) {
   links <- dag$sorted_links
   mask <- dag$masked_columns
-  lapply(links, execute_stack, mask = mask, data_sm = data_sm)
+  default_states <- dag$network_states
+  lapply(links, execute_stack, mask = mask, data_sm = data_sm, default_states = default_states)
   data_sm
 }
 
@@ -283,7 +285,7 @@ evaluate_objects <- function(data_sm, dag_sm, network) {
   data_sm
 }
 
-get_data_key <- function(data_sm, dag_sm) {
+get_data_key <- function(data_sm, dag_sm, network) {
   unique(vapply(get_projects(dag_sm$get_query()), \(project) data_sm$get_data_key(project), FUN.VALUE = character(1)))
 }
 
