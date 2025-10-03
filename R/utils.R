@@ -135,7 +135,7 @@ get_xafty_objects_vec <- function(link) {
   xafty_objects_vec
 }
 
-get_queries <- function(link, temper = FALSE, network = NULL) {
+get_queries <- function(link, temper = FALSE, state_list = NULL, network = NULL) {
   xafty_objects_vec <- get_xafty_objects_vec(link)
   arg_names_w_query <- names(xafty_objects_vec)[xafty_objects_vec == "xafty_query" | xafty_objects_vec == "xafty_object"]
   if(length(arg_names_w_query) <= 0) return(list())
@@ -143,7 +143,7 @@ get_queries <- function(link, temper = FALSE, network = NULL) {
   if (temper) {
     if(is.null(network)) stop("To temper a query, a network is needed")
     # TODO Must also work with state_query to pass the state list into the function
-    arg_w_query <- sapply(arg_w_query, interpolate_state_in_query, state_list = NULL, network_env = network,
+    arg_w_query <- sapply(arg_w_query, interpolate_state_in_query, state_list = state_list, network_env = network,
                           simplify = FALSE, USE.NAMES = TRUE)
   }
   arg_w_query

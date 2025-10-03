@@ -1,6 +1,6 @@
 
-scope <- function(data, link, mask, default_states) {
-  dependend_args <- get_queries(link, temper = TRUE, network = default_states)
+scope <- function(data, link, mask, state_list, default_states) {
+  dependend_args <- get_queries(link, temper = TRUE, state_list = state_list, network = default_states)
   colnames_dataset <- colnames(data)
 
   # This part rescopes columns again that were used as the input of the link-function, it also checks the mask object whether a column
