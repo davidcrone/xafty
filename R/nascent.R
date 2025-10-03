@@ -241,7 +241,7 @@ execute_stack <- function(link, mask, data_sm, default_states) {
   new_key <- paste0(projects, collapse = "_")
   data <- do.call(link$fun, executable_args)
   if(!length(link$added_object) == 1) {
-    data <- scope(data = data, link = link, mask = mask)
+    data <- scope(data = data, link = link, mask = mask, default_states = default_states)
   }
   projects_update_key <- do.call(c, lapply(projects, \(project) {
     key <- data_sm$get_data_key(project)

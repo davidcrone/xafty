@@ -1,6 +1,6 @@
 
-scope <- function(data, link, mask) {
-  dependend_args <- get_queries(link)
+scope <- function(data, link, mask, default_states) {
+  dependend_args <- get_queries(link, temper = TRUE, network = default_states)
   colnames_dataset <- colnames(data)
 
   # This part rescopes columns again that were used as the input of the link-function, it also checks the mask object whether a column
@@ -36,9 +36,10 @@ scope <- function(data, link, mask) {
   data
 }
 
-unscope <- function(data, link, arg_name, mask) {
+unscope <- function(data, link, arg_name, mask, state_list, network_env) {
   colnames_data <- colnames(data)
   query_list <- link$args[[arg_name]]
+  query_list <- interpolate_state_in_query(query_list = query_list, state_list = state_list, network_env = network_env)
   for (query in query_list) {
     selection <- query$select
     project <- query$from

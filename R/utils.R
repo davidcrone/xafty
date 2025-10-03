@@ -226,7 +226,7 @@ build_executable_args <- function(link, data_sm, mask, default_states) {
       query_list <- arg[[arg_name]]
       project <- get_lead_project(query_list = query_list)
       data <- data_sm$get_data(project = project)
-      data <- unscope(data = data, link = link, arg_name = arg_name, mask = mask)
+      data <- unscope(data = data, link = link, arg_name = arg_name, mask = mask, state_list = data_sm$get_states(), network_env = default_states)
     } else if (xo == "xafty_object") {
       object_query <- arg[[arg_name]]
       object_key <- paste0(object_query[[1]]$from, ".", get_squared_variable(object_query[[1]]$select))
