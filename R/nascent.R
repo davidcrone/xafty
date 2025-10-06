@@ -5,8 +5,8 @@
 #' @export
 nascent <- function(network, ...) {
   stopifnot(inherits(network, "xafty_network"))
-  query_list <- dots_to_query(network = network, ... = ...)
-  data <- nascent_query(query_list = query_list, network = network, return = "df")
+  globals <- dots_to_query(network = network, ... = ...)
+  data <- nascent_query(globals = globals, network = network)
   data
 }
 
@@ -15,18 +15,9 @@ sort_links <- function(codes, sm) {
   lapply(codes, \(code) links[[code]])
 }
 
-nascent_query <- function(query_list, network, return = c("df", "dag")) {
-  dag <- build_dag(globals = query_list, network = network)
-  if(all(return == "dag")) return(dag)
+nascent_query <- function(globals, network) {
+  dag <- build_dag(globals = globals, network = network)
   data <- evaluate_dag(dag = dag)
-  if(all(c("df", "dag") %in% return)) {
-    return(
-      list(
-        dag = dag,
-        data = data
-      )
-    )
-  }
   data
 }
 
@@ -257,7 +248,7 @@ execute_stack <- function(link, mask, data_sm, default_states) {
       stop(paste0("Error occurred: ", e$message))
     })
   if(!length(link$added_object) == 1) {
-    data <- scope(data = data, link = link, mask = mask, state_list = data_sm$get_states(), default_states = default_states)
+    data <- scope(data = data, link = link, mask = mask)
   }
   projects_update_key <- do.call(c, lapply(projects, \(project) {
     key <- data_sm$get_data_key(project)
