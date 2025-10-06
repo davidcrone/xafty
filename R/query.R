@@ -27,7 +27,7 @@ query <- function(...) {
   query_list <- purrr::list_flatten(query_list) # Worth the dependency?
   names(query_list) <- vapply(query_list, \(query) query$from, FUN.VALUE = character(1))
   if(has_misuse_of_object_in_query_list(query_list = query_list)){
-    stop("You are querying an object in an unexpected way. Please check {Vignette on objects} on how to query an object correctly.")
+    stop("You are querying an object in an unexpected way. Please check {Vignette on objects} on how to query an object.")
   }
   query_list <- set_query_list_class(query_list = query_list)
   query_list

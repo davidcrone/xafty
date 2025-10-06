@@ -18,11 +18,7 @@ sort_links <- function(codes, sm) {
 nascent_query <- function(query_list, network, return = c("df", "dag")) {
   dag <- build_dag(globals = query_list, network = network)
   if(all(return == "dag")) return(dag)
-  data_sm <- data_sm()
-  data_sm <- set_states(states = query_list$states, data_sm = data_sm)
-  data_sm <- evaluate_dag(dag = dag, data_sm = data_sm)
-  data_key <- get_data_key(data_sm = data_sm, dag = dag)
-  data <- return_unscoped_data(data = data_sm$get_data_by_key(data_key), query = query_list$order, dag = dag)
+  data <- evaluate_dag(dag = dag)
   if(all(c("df", "dag") %in% return)) {
     return(
       list(
@@ -295,7 +291,10 @@ build_dag <- function(globals, network, frame = "main") {
   dag
 }
 
-evaluate_dag <- function(dag, data_sm) {
+evaluate_dag <- function(dag) {
+  data_sm <- data_sm()
+  data_sm <- set_states(states = dag$query_states, data_sm = data_sm)
+
   links <- dag$sorted_links
   execution_order <- dag$execution_order
   mask <- dag$masked_columns
@@ -311,9 +310,10 @@ evaluate_dag <- function(dag, data_sm) {
       execute_stack(link = link, mask = mask, data_sm = data_sm, default_states = default_states)
     }
   }
-  data_sm
+  data_key <- get_data_key(data_sm = data_sm, dag = dag)
+  data <- return_unscoped_data(data = data_sm$get_data_by_key(data_key), query = dag$order_query, dag = dag)
+  data
 }
-
 
 evaluate_objects <- function(dag, link, global_data_sm) {
   fun <- link$fun
@@ -321,11 +321,7 @@ evaluate_objects <- function(dag, link, global_data_sm) {
   arg_names <- names(dag)
   for (arg in arg_names) {
     object_dag <- dag[[arg]]
-    data_sm <- data_sm()
-    data_sm <- evaluate_dag(dag = object_dag, data_sm = data_sm)
-    data_key <- get_data_key(data_sm = data_sm, dag = object_dag)
-    data <- return_unscoped_data(data = data_sm$get_data_by_key(data_key), query = object_dag$order_query, dag = object_dag)
-    args[[arg]] <- data
+    args[[arg]] <- evaluate_dag(dag = object_dag)
   }
   object_data <- do.call(fun, args)
   object_data_key <- paste0(link$project, ".", get_squared_variable(link$added_object))
