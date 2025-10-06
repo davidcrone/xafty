@@ -31,7 +31,7 @@ nascent_object <- function(query_list, network) {
 
 resolve_dependencies <- function(query_list, network, dag_sm = NULL) {
   dependencies(query_list = query_list$internal, state_list = query_list$states, network = network, dag_sm = dag_sm)
-  set_join_dependencies(network = network, dag_sm = dag_sm)
+  set_join_dependencies(network = network, dag_sm = dag_sm, state_query = query_list$states)
   build_join_bridges(dag_sm = dag_sm, network = network)
   dag_sm
 }
@@ -43,7 +43,7 @@ resolve_objects <- function(network, dag_sm = NULL) {
   object_codes <- codes[log_object]
   for (object_code in object_codes) {
     link <- dag_sm$get_links()[[object_code]]
-    queries <- get_queries(link)
+    queries <- get_queries(link, temper = FALSE)
     arg_names <- names(queries)
     object_dag_list <- list()
     for (arg_name in arg_names) {
@@ -67,10 +67,10 @@ remove_join_helpers <- function(stack_sorted) {
   stack_sorted[!grepl("^join.", stack_sorted)]
 }
 
-get_join_functions <- function(from, to, network, sm) {
+get_join_functions <- function(from, to, network, sm, state_query = NULL) {
   fun_name <- network[[from]]$joined_projects[[to]]
   link <- network[[from]]$ruleset$modules$link[[fun_name]]
-  list_join_codes <- join_code_generator(link = link, network = network, sm = sm)
+  list_join_codes <- join_code_generator(link = link, network = network, dag_sm = sm)
 
   # Three codes are set. One for the join function and two join.codes which will be used to connect the functions
   # that depend on the join
@@ -84,19 +84,18 @@ get_join_functions <- function(from, to, network, sm) {
   lst_masked_columns <- get_masked_column_names(link)
   sm$set_mask(lst_masked_columns)
 
+  # TODO: Objects and Interpolation needs to be tested with join function
+  # set_objects(links = list(link), network = network, dag_sm = dag_sm)
   # Here the potential new dependencies will be resolved calling dependencies and join functions again.
-  queries <- get_queries(link)
-  for (query in queries) {
-    dependencies(query_list = query, network = network, dag_sm = sm)
-  }
+  queries <- get_queries(link, which = "xafty_query", temper = FALSE, state_list = state_query)
+  query_list <- do.call(merge_queries, queries)
+  dependencies(query_list = query_list, network = network, dag_sm = sm)
 }
 
-join_code_generator <- function(link, network, sm) {
+join_code_generator <- function(link, network, dag_sm) {
   fused_projects <- get_lead_projects(link)
   join_code <- paste0("fuse.", paste0(fused_projects, collapse = "."))
-  link <- interpolate_link_queries(link = link, network = network, state_list = NULL)
-  set_objects(links = list(link), network = network, dag_sm = sm)
-  join_dependencies <- build_dependency_codes(link = link, network = network, dag_sm = sm)
+  join_dependencies <- build_dependency_codes(link = link, network = network, dag_sm = dag_sm)
   join_list_main <- setNames(join_dependencies, join_code)
   fun_codes <- vapply(get_ordered_join_pairs(link), \(pair) paste0("join.", pair[1], ".", pair[2]), FUN.VALUE = character(1))
   join_list_help <- sapply(fun_codes, \(code) join_code, simplify = FALSE, USE.NAMES = TRUE)
@@ -113,7 +112,7 @@ build_join_graph <- function(network) {
   project_pairs
 }
 
-set_join_dependencies <- function(network, dag_sm) {
+set_join_dependencies <- function(network, dag_sm, state_query = NULL) {
   new_projects <- projects_not_in_join_path(sm = dag_sm, network = network)
   overall_projects <- get_projects(dag_sm$get_query())
   overall_projects <- overall_projects[vapply(overall_projects, \(project) inherits(network[[project]], "xafty_project"), FUN.VALUE = logical(1))]
@@ -123,7 +122,7 @@ set_join_dependencies <- function(network, dag_sm) {
     lapply(join_path, \(path) {
       from <- path[-length(path)]
       to <- path[-1]
-      mapply(get_join_functions, from, to, MoreArgs = list(network = network, sm = dag_sm))
+      mapply(get_join_functions, from, to, MoreArgs = list(network = network, sm = dag_sm, state_query = state_query))
     })
   }
   invisible(dag_sm)

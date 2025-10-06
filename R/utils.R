@@ -138,8 +138,7 @@ get_queries <- function(link, which = c("xafty_query", "xafty_object"), temper =
   if(length(arg_names_w_query) <= 0) return(list())
   arg_w_query <- sapply(arg_names_w_query, \(arg_name) link$args[[arg_name]], simplify = FALSE, USE.NAMES = TRUE)
   if (temper) {
-    if(is.null(network)) stop("To temper a query, a network is needed")
-    # TODO Must also work with state_query to pass the state list into the function
+    if(is.null(network)) stop("To temper a query, a network needs to be provided")
     arg_w_query <- sapply(arg_w_query, interpolate_state_in_query, state_list = state_list, network_env = network,
                           simplify = FALSE, USE.NAMES = TRUE)
   }
