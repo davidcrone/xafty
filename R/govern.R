@@ -23,6 +23,10 @@ data_sm <- function() {
     state_env$data[[key]]
   }
 
+  get_projects <- function() {
+    names(state_env$projects)
+  }
+
   get_projects_by_key <- function(key) {
     projects <- names(state_env$projects)
     contains_key <- vapply(projects, \(project) {
@@ -72,14 +76,15 @@ data_sm <- function() {
     get_object_names = get_object_names,
     set_states = set_states,
     get_states = get_states,
-    get_state = get_state
+    get_state = get_state,
+    get_projects = get_projects
   )
 }
 
 build_tree <- function(network) {
   tree_env <- new.env()
   tree_env$query <- query()
-  tree_env$objects <- query()
+  tree_env$objects <- list()
   tree_env$network$settings <- network$settings
   tree_env$network$states <- network$states
 
@@ -98,19 +103,16 @@ build_tree <- function(network) {
     tree_env$links
   }
 
-  set_objects <- function(object_query) {
-    for (oq in object_query) {
-      object_key <- paste0(oq[[1]]$from, ".", get_squared_variable(oq[[1]]$select))
-      tree_env$objects[[object_key]] <- oq
-    }
+  set_object <- function(object_code, dag) {
+    tree_env$objects[[object_code]] <- dag
   }
 
-  get_object_names <- function() {
+  get_object_codes <- function() {
     names(tree_env$objects)
   }
 
-  get_object_query <- function(object_key) {
-    tree_env$objects[[object_key]]
+  get_objects <- function() {
+    tree_env$objects
   }
 
   set_query <- function(query) {
@@ -163,9 +165,9 @@ build_tree <- function(network) {
     get_links = get_links,
     get_query = get_query,
     set_query = set_query,
-    set_objects = set_objects,
-    get_object_names = get_object_names,
-    get_object_query = get_object_query,
+    set_object = set_object,
+    get_objects = get_objects,
+    get_object_codes = get_object_codes,
     set_join_path = set_join_path,
     get_join_path = get_join_path,
     set_join_pairs = set_join_pairs,

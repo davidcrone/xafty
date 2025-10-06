@@ -29,10 +29,11 @@ test_that("dependencies works with an empty list and returns a named empty query
   expect_identical(test_query$get_query(), expected_query)
 })
 
-test_that("dependencies from two projects can be retrieved and hidden dependencies revieled", {
+test_that("dependencies from two projects can be retrieved and hidden dependencies revealed", {
   query_list <- query(customer_data = "category", occupations = "department")
   dag_sm <- build_tree(test_network)
-  sm <- resolve_dependencies(query_list = query_list, network = test_network, dag_sm = dag_sm)
+  globals <- dots_to_query(test_network, query_list)
+  sm <- resolve_dependencies(query_list = globals, network = test_network, dag_sm = dag_sm)
   expected_query <- query(customer_data = c("category", "score", "name", "id"), occupations = c("department", "id"))
   expect_identical(sm$get_query(), expected_query)
 })

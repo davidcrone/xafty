@@ -75,11 +75,12 @@ get_scoped_function_order <- function(query, network) {
   projects <- get_project_order(query)
   if(inherits(query, "xafty_object_query")) {
     functions <- get_chatty_func_name_from_network(col = get_squared_variable(columns), project = projects, network = network, env_name = "objects")
+    return(paste0("object.", projects, ".", functions))
   } else {
     functions <- do.call(c, mapply(get_chatty_func_name_from_network, columns, projects, MoreArgs = list(network = network, env_name = "variables"),
                                    SIMPLIFY = FALSE, USE.NAMES = TRUE))
+    return(paste0(projects, ".", functions))
   }
-  paste0(projects, ".", functions)
 }
 
 get_project_order <- function(query) {
@@ -100,10 +101,10 @@ get_column_order <- function(query) {
   cols_vec
 }
 
-return_unscoped_data <- function(data, query, sm) {
+return_unscoped_data <- function(data, query, dag) {
   if(inherits(query, "xafty_object_query")) return(data)
   data_cols <- colnames(data)
-  data_select <- interpolate_masks(query = query, mask = sm$get_mask(), data_cols = data_cols)
+  data_select <- interpolate_masks(query = query, mask = dag$masked_columns, data_cols = data_cols)
   data_selected <- data[data_select]
   colnames(data_selected) <- get_column_order(query)
   data_selected

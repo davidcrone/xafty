@@ -1,40 +1,39 @@
 
 
-dependencies <- function(query_list, network, dag_sm = build_tree()) {
+dependencies <- function(query_list, state_list = NULL, network, dag_sm = build_tree()) {
   # The query is merged with queries whose dependencies have already been resolved
   dag_sm$set_query(query_list)
-  links <- get_dependend_links(query_list, network)
-  split_queries <- lapply(links, split_args, network = network) # each link has their queries split into queries and object queries
-  codes <- mapply(build_dependency_codes, links, split_queries, MoreArgs = list(network = network, dag_sm = dag_sm), SIMPLIFY = FALSE)
-  set_nodes(links = links, codes = codes, dag_sm = dag_sm)
-  set_objects(split_queries = split_queries, dag_sm = dag_sm)
-  queries <- flatten_list(lapply(split_queries, \(query) query$xafty_query))
-  query <- do.call(merge_queries, queries)
-  if (length(query) == 0) return(dag_sm)
+  links <- get_dependend_links(query_list = query_list, network = network)
+  links <- lapply(links, interpolate_link_queries, network = network, state_list = state_list)
+  set_nodes(links = links, network = network, dag_sm = dag_sm)
+  set_objects(links = links, network = network, dag_sm = dag_sm)
+  queries <- get_dependend_queries(links)
+  new_query_list <- do.call(merge_queries, queries)
+  if (length(new_query_list) == 0) return(dag_sm)
   # removes already visited nodes leading to an eventual termination of the recursive function
-  query_pruned <- prune_query(query = query, compare = dag_sm$get_query())
-  dependencies(query_list = query_pruned, network = network, dag_sm = dag_sm)
+  query_pruned <- prune_query(query = new_query_list, compare = dag_sm$get_query())
+  dependencies(query_list = query_pruned, state_list = state_list, network = network, dag_sm = dag_sm)
 }
 
-prune_query <- function(query, compare) {
+prune_query <- function(query_list, compare) {
   projects_in_compare <- vapply(compare, \(q) q$from, FUN.VALUE = character(1), USE.NAMES = FALSE)
-  for (q in query) {
-    project <- q$from
+  for (query in query_list) {
+    project <- query$from
     if(!project %in% projects_in_compare) next
     compare_selected <- compare[[project]]$select
-    new_select <- q$select
+    new_select <- query$select
     pruned_select <- new_select[!new_select %in% compare_selected]
     if(length(pruned_select) <= 0) {
-      query[[project]] <- NULL
+      query_list[[project]] <- NULL
     } else {
-      query[[project]]$select <- pruned_select
+      query_list[[project]]$select <- pruned_select
     }
   }
-  query
+  query_list
 }
 
-get_dependend_links <- function(query, network) {
-  li_links <- sapply(query, get_links, network = network, simplify = FALSE, USE.NAMES = FALSE)
+get_dependend_links <- function(query_list, network) {
+  li_links <- sapply(query_list, get_links, network = network, simplify = FALSE, USE.NAMES = FALSE)
   li_links_flattened <- flatten_list(li = li_links)
   li_links_flattened
 }
@@ -57,14 +56,27 @@ remove_empty_lists <- function(li) {
   li[vapply(li, \(l) length(l) > 0, FUN.VALUE = logical(1))]
 }
 
-set_nodes <- function(links, codes, dag_sm) {
+set_nodes <- function(links, network, dag_sm) {
+  codes <- lapply(links, build_dependency_codes, network = network, dag_sm = dag_sm)
   mapply(dag_sm$set_nodes, links, codes, SIMPLIFY = FALSE)
   invisible(TRUE)
 }
 
-set_objects <- function(split_queries, dag_sm) {
-  split_queries <- remove_empty_lists(split_queries)
-  if(!length(split_queries) == 0) {
-    lapply(split_queries, \(query) dag_sm$set_objects(query$xafty_object))
+set_objects <- function(links, network, dag_sm) {
+  for (link in links) {
+    xafty_objects <- get_xafty_objects_vec(link)
+    logical_vec <- xafty_objects == "xafty_object"
+    has_object_query <- any(logical_vec)
+    if(!has_object_query) next
+    object_queries <-link$args[logical_vec]
+    for(object_query in object_queries) {
+      object_link <- get_links(object_query[[1]], network)
+      object_code <- setNames(list(character(0)), paste0("object.", object_query[[1]]$from, ".", object_link[[1]]$fun_name))
+      dag_sm$set_nodes(link = object_link[[1]], code = object_code)
+    }
   }
+}
+
+get_dependend_queries <- function(links) {
+  flatten_list(remove_empty_lists(lapply(links, get_queries, which = "xafty_query")))
 }

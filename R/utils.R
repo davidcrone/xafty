@@ -80,8 +80,8 @@ validate_link_type <- function(link_type, unpacked) {
   invisible(TRUE)
 }
 
-build_dependency_codes <- function(link, split_queries, network, dag_sm) {
-  queries <- split_queries$xafty_query
+build_dependency_codes <- function(link, network, dag_sm) {
+  queries <- get_queries(link, temper = FALSE)
   fun_code <- build_fun_code(link)
   # Early termination of function execution for a root node
   if (length(queries) == 0) {
@@ -108,17 +108,14 @@ build_dependency_codes <- function(link, split_queries, network, dag_sm) {
   node
 }
 
-split_args <- function(link, network) {
-  args <- get_queries(link, temper = TRUE, network = network)
-  if(length(args) == 0) return(args)
-  xafty_objects <- get_xafty_objects_vec(link)
-  query_types <- c("xafty_query", "xafty_object")
-  split_queries <- sapply(query_types, \(qt) {
-    arg_names <- names(xafty_objects)[xafty_objects == qt]
-    selected_queries <- lapply(arg_names, \(name) args[[name]])
-    selected_queries
-  }, simplify = FALSE, USE.NAMES = TRUE)
-  split_queries
+interpolate_link_queries <- function(link, state_list = NULL, network) {
+  interpolated_args <- get_queries(link, temper = TRUE, network = network, state_list = state_list)
+  if(length(interpolated_args) == 0) return(link)
+  arg_names <- names(interpolated_args)
+  for (arg_name in arg_names) {
+    link$args[[arg_name]] <- interpolated_args[[arg_name]]
+  }
+  link
 }
 
 
@@ -135,9 +132,9 @@ get_xafty_objects_vec <- function(link) {
   xafty_objects_vec
 }
 
-get_queries <- function(link, temper = FALSE, state_list = NULL, network = NULL) {
+get_queries <- function(link, which = c("xafty_query", "xafty_object"), temper = FALSE, state_list = NULL, network = NULL) {
   xafty_objects_vec <- get_xafty_objects_vec(link)
-  arg_names_w_query <- names(xafty_objects_vec)[xafty_objects_vec == "xafty_query" | xafty_objects_vec == "xafty_object"]
+  arg_names_w_query <- names(xafty_objects_vec)[xafty_objects_vec %in% which]
   if(length(arg_names_w_query) <= 0) return(list())
   arg_w_query <- sapply(arg_names_w_query, \(arg_name) link$args[[arg_name]], simplify = FALSE, USE.NAMES = TRUE)
   if (temper) {
@@ -227,6 +224,9 @@ build_executable_args <- function(link, data_sm, mask, default_states) {
       project <- get_lead_project(query_list = query_list)
       data <- data_sm$get_data(project = project)
       data <- unscope(data = data, link = link, arg_name = arg_name, mask = mask, state_list = data_sm$get_states(), network_env = default_states)
+      # Edge Case Handling, only relevant when querying an object from start e.g. nascent(test_network, intelligence = c("[active_customers]"))
+      # This assures that the queried data is exactly as the user expects within the function
+      if(is_object_link(link)) data <- data[get_column_order(query_list)]
     } else if (xo == "xafty_object") {
       object_query <- arg[[arg_name]]
       object_key <- paste0(object_query[[1]]$from, ".", get_squared_variable(object_query[[1]]$select))
