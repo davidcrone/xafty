@@ -102,7 +102,6 @@ test_that("interpolate_state_in_query correctly fills the select variable with t
 })
 
 test_that("interpolate_state_in_query can also interpolate an object", {
-  skip("interpolating an object is not yet supported")
   network_env <- init_network("test_network")
   network_env$add_state("year", default = "2019")
   query_list <- query(object = "[object.{year}]")

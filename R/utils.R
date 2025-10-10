@@ -150,7 +150,7 @@ is_curly_character <- function(arg) {
 }
 
 is_squared_variable <- function(arg) {
-  grepl("^\\[[a-zA-Z0-9_.]+\\]$", arg)
+  grepl("^\\[(?:[A-Za-z0-9_.]|\\{[A-Za-z0-9_.]+\\})+\\]$", arg, perl = TRUE)
 }
 
 get_braced_variable <- function(arg) {
@@ -364,4 +364,15 @@ get_default_state <- function(name, network_env) {
   state_registered <- name %in% existing_states
   if(!state_registered) return(network_env$settings$state$global_default)
   network_env$states[[name]]$default
+}
+
+initialize_join_path <- function(join_path, network, dag_sm, state_query) {
+  if(is.null(join_path)) return(invisible(dag_sm))
+  dag_sm$set_join_path(join_path)
+  lapply(join_path, \(path) {
+    from <- path[-length(path)]
+    to <- path[-1]
+    mapply(get_join_functions, from, to, MoreArgs = list(network = network, sm = dag_sm, state_query = state_query))
+  })
+  invisible(dag_sm)
 }

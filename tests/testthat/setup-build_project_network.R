@@ -127,3 +127,10 @@ add_mean_intelligence <- function(data, mean_intelligence) {
 }
 test_network$intelligence$add(add_mean_intelligence(data = query(intelligence = "intelligence"),
                               mean_intelligence = query(intelligence = "[mean_intelligence]")))
+#
+join_through_mean_intelligence <- function(data1 = query(occupations = "{column_name}"), data2 = query(map = "id"), column_name = "{column_name}") {
+  merged <- merge(data2, data1, by = column_name, all.x = TRUE)
+  merged
+}
+test_network$add_state(name = "column_name", default = "id")
+test_network$occupations$add(join_through_mean_intelligence())

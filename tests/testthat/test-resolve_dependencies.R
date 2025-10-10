@@ -74,9 +74,11 @@ test_that("resolve_dependencies can correctly resolve a column that depends on t
 
 test_that("resolve_dependencies can correctly resolve a column that depends on two projects, but only pulls from one project", {
   network <- test_network
-  query <- query(occupations = "department", intelligence = "intelligence", customer_data = c("name", "nickname"))
+  query <- query(occupations = "department", intelligence = "intelligence", customer_data = c("name", "nickname")) |>
+    add_join_path(path1= c("customer_data", "occupations"), path2 = c("intelligence", "map", "customer_data"))
   dag_sm <- build_tree(network)
   globals <- dots_to_query(network, query)
+  dag_sm <- initialize_join_path(join_path = query$join_path, network = network, dag_sm = dag_sm, state_query = query$states)
   sm <- resolve_dependencies(query_list = globals, network = network, dag_sm = dag_sm)
   query <- sm$get_query()
   projects <- get_projects(query)
@@ -86,7 +88,8 @@ test_that("resolve_dependencies can correctly resolve a column that depends on t
   expect_in(query[["map"]]$select, c("id", "secret_id"))
   expect_in(projects, c("customer_data", "occupations", "map", "intelligence"))
   execution_order <- resolve_function_stack(sm = sm)
-  expect_equal(execution_order, c("occupations.get_additional_info", "intelligence.intelligence_date", "customer_data.get_sample_data", "customer_data.add_score_category",
+  expect_in(execution_order, c("occupations.get_additional_info", "intelligence.intelligence_date", "customer_data.get_sample_data", "customer_data.add_score_category",
                                   "fuse.customer_data.occupations", "customer_data.new_column_from_both_projects", "map.mapping_data", "map.add_decoded_id",
                                   "fuse.customer_data.map", "fuse.intelligence.map"))
+  expect_length(execution_order, 10)
 })

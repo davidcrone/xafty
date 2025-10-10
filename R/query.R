@@ -44,11 +44,37 @@ query <- function(...) {
 with <- function(query_list, ...) {
   .li_states <- list(...)
   class(.li_states) <- c("list", "xafty_states_list")
-  state_query <- list(
-    query = query_list,
-    states = .li_states
+  if(inherits(query_list, "state_query")) {
+    state_query <- add_to_state_query(name = "states", what = .li_states, state_query = query_list)
+  } else {
+    state_query <- list(
+      query = query_list,
+      states = .li_states
     )
+  }
   class(state_query) <- c("list", "state_query")
+  state_query
+}
+
+
+add_join_path <- function(query_list, ...) {
+  .li_states <- list(...)
+  class(.li_states) <- c("list", "xafty_join_path")
+
+  if(inherits(query_list, "state_query")) {
+    state_query <- add_to_state_query(name = "join_path", what = .li_states, state_query = query_list)
+  } else {
+    state_query <- list(
+      query = query_list,
+      join_path = .li_states
+    )
+  }
+  class(state_query) <- c("list", "state_query")
+  state_query
+}
+
+add_to_state_query <- function(name, what, state_query) {
+  state_query[[name]] <- what
   state_query
 }
 
@@ -137,15 +163,19 @@ dots_to_query <- function(network, ...)  {
   if(inherits(query_raw[[1]], "state_query")) {
     query_list <- query_raw[[1]]$query
     state_list <- query_raw[[1]]$states
+    join_path <- query_raw[[1]]$join_path
   } else if (inherits(query_raw, "state_query")) {
     query_list <- query_raw$query
     state_list <- query_raw$states
+    join_path <- query_raw$join_path
   } else if (inherits(query_raw[[1]], what = "xafty_query_list")) {
     query_list <- query_raw[[1]]
     state_list <- NULL
+    join_path <- NULL
   } else if(!inherits(query_raw[[1]], what = "xafty_query_list")) {
     query_list <- query(query_raw)
     state_list <- NULL
+    join_path <- NULL
   } else {
     stop("Could not parse passed query")
   }
@@ -154,13 +184,15 @@ dots_to_query <- function(network, ...)  {
   list(
     internal = query_internal,
     order = query_order,
-    states = state_list
+    states = state_list,
+    join_path = join_path
   )
 }
 
 is_object_query_list <- function(query_list) {
   if (length(query_list) != 1) return(FALSE)
-  if (!is_xafty_object_variable(query_list[[1]]$select)) return(FALSE)
+  if(length(query_list[[1]]$select) > 1) return(FALSE)
+  if (!is_squared_variable(query_list[[1]]$select)) return(FALSE)
   TRUE
 }
 
@@ -179,7 +211,7 @@ has_misuse_of_object_in_query_list <- function(query_list) {
   for (query in query_list) {
     project <- query$project
     select <- query$select
-    object_variable_vec <- vapply(select, is_xafty_object_variable, FUN.VALUE = logical(1))
+    object_variable_vec <- vapply(select, is_squared_variable, FUN.VALUE = logical(1))
     has_object <- any(object_variable_vec)
     more_than_one <- length(object_variable_vec) > 1
     if((n_projects > 1 & has_object) | (has_object & more_than_one)) misuse_detected <- TRUE

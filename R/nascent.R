@@ -70,6 +70,7 @@ remove_join_helpers <- function(stack_sorted) {
 get_join_functions <- function(from, to, network, sm, state_query = NULL) {
   fun_name <- network[[from]]$joined_projects[[to]]
   link <- network[[from]]$ruleset$modules$link[[fun_name]]
+  link <- interpolate_link_queries(link = link, state_list = state_query, network = network)
   list_join_codes <- join_code_generator(link = link, network = network, dag_sm = sm)
 
   # Three codes are set. One for the join function and two join.codes which will be used to connect the functions
@@ -87,7 +88,7 @@ get_join_functions <- function(from, to, network, sm, state_query = NULL) {
   # TODO: Objects and Interpolation needs to be tested with join function
   # set_objects(links = list(link), network = network, dag_sm = dag_sm)
   # Here the potential new dependencies will be resolved calling dependencies and join functions again.
-  queries <- get_queries(link, which = "xafty_query", temper = FALSE, state_list = state_query)
+  queries <- get_queries(link, which = "xafty_query", temper = FALSE)
   query_list <- do.call(merge_queries, queries)
   dependencies(query_list = query_list, network = network, dag_sm = sm)
 }
@@ -244,6 +245,7 @@ execute_stack <- function(link, mask, data_sm, default_states) {
       do.call(link$fun, executable_args)
     },
     error = function(e) {
+      message(link$fun_name)
       stop(paste0("Error occurred: ", e$message))
     })
   if(!length(link$added_object) == 1) {
@@ -262,21 +264,22 @@ execute_stack <- function(link, mask, data_sm, default_states) {
 
 build_dag <- function(globals, network, frame = "main") {
   dag_sm <- build_tree(network = network)
+  dag_sm <- initialize_join_path(join_path = globals$join_path, network = network, dag_sm = dag_sm, state_query = globals$states)
   dag_sm <- resolve_dependencies(query_list = globals, network = network, dag_sm = dag_sm)
   dag_sm <- resolve_objects(network = network, dag_sm = dag_sm)
   topological_sorted_codes <- resolve_function_stack(sm = dag_sm)
   list_links <- sort_links(topological_sorted_codes, sm = dag_sm)
-  objects <- dag_sm$get_objects()
   dag <- list(
     full_query = dag_sm$get_query(),
     order_query = globals$order,
     dag = dag_sm$get_codes(),
     execution_order = topological_sorted_codes,
     sorted_links = list_links,
+    join_path = dag_sm$get_join_path(),
     masked_columns = dag_sm$get_mask(),
     network_states = dag_sm$get_network_state(),
     query_states = globals$states,
-    objects = objects
+    objects = dag_sm$get_objects()
   )
   dag
 }
@@ -284,7 +287,6 @@ build_dag <- function(globals, network, frame = "main") {
 evaluate_dag <- function(dag) {
   data_sm <- data_sm()
   data_sm <- set_states(states = dag$query_states, data_sm = data_sm)
-
   links <- dag$sorted_links
   execution_order <- dag$execution_order
   mask <- dag$masked_columns

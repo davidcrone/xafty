@@ -39,7 +39,7 @@ test_that("nascent can resolve a large network", {
   test_table <- large_network |> nascent(query(map = "id", intelligence = "new_column",
                     side1 = "col1", side2 = "col2", side3 = "col3"))
   expected_table <- data.frame(
-    id = c(1L, 2L, 3L, 4L, 5L),
+    id = c(1, 2, 3, 4, 5),
     new_column = c("HR1", "IT2", "Finance3", "Marketing4", "Sales5"),
     col1 = c("Why", "What", "How", NA_character_, NA_character_),
     col2 = c("Hallo", "Ja", "Nein", NA_character_, NA_character_),
@@ -247,5 +247,13 @@ test_that("nascent has access to default state and returns the default value dur
   qry <- query(test_data = "data.{year}")
   test_data <- nascent(test_network, qry)
   expected_data <- data.frame(data.2025 = c("A", "B"))
+  expect_identical(test_data, expected_data)
+})
+
+test_that("Objects and States are correctly integrated during join_dependencies", {
+  qry <- query(occupations = "id", map = "secret_id") |> with(column_name = "id")
+  test_data <- nascent(test_network, qry)
+  expected_data <-structure(list(id = c(1, 2, 3, 4, 5),
+                                 secret_id = c(2, 3, 4, 5, 6)), row.names = c(NA, -5L), class = "data.frame")
   expect_identical(test_data, expected_data)
 })

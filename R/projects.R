@@ -155,10 +155,15 @@ bundle_link_functions <- function(project, env) {
 merge_networks <- function(name, ...) {
   new_network_env <- init_network(name = name)
   passed_networks <- list(...)
-  li_projects <- lapply(passed_networks, \(project_env) {
-    network_names <- names(project_env)
-    network_names[vapply(network_names, \(nn) is.environment(project_env[[nn]]), FUN.VALUE = logical(1))]
+  li_projects <- lapply(passed_networks, \(network_env) {
+    network_names <- names(network_env)
+    network_names[vapply(network_names, \(nn) is.environment(network_env[[nn]]), FUN.VALUE = logical(1))]
   })
+
+  # TODO: States with the same name need to be handled here
+  li_states <- lapply(passed_networks, \(network_env) network_env$states)
+  li_states <- do.call(append, li_states)
+  new_network_env$states <- li_states
 
   index <- seq_along(passed_networks)
   lapply(index, \(i) {
