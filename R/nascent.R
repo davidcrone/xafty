@@ -71,8 +71,9 @@ get_join_functions <- function(from, to, network, sm, state_query = NULL) {
   fun_name <- network[[from]]$joined_projects[[to]]
   link <- network[[from]]$ruleset$modules$link[[fun_name]]
   link <- interpolate_link_queries(link = link, state_list = state_query, network = network)
-  list_join_codes <- join_code_generator(link = link, network = network, dag_sm = sm)
+  set_objects(links = list(link), network = network, dag_sm = sm)
 
+  list_join_codes <- join_code_generator(link = link, network = network, dag_sm = sm)
   # Three codes are set. One for the join function and two join.codes which will be used to connect the functions
   # that depend on the join
   for(i in seq_along(list_join_codes)) {
@@ -85,8 +86,7 @@ get_join_functions <- function(from, to, network, sm, state_query = NULL) {
   lst_masked_columns <- get_masked_column_names(link)
   sm$set_mask(lst_masked_columns)
 
-  # TODO: Objects and Interpolation needs to be tested with join function
-  # set_objects(links = list(link), network = network, dag_sm = dag_sm)
+
   # Here the potential new dependencies will be resolved calling dependencies and join functions again.
   queries <- get_queries(link, which = "xafty_query", temper = FALSE)
   query_list <- do.call(merge_queries, queries)

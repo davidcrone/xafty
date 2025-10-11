@@ -190,8 +190,17 @@ is_xafty_object_variable <- function(arg) {
 
 get_ordered_join_pairs <- function(link) {
   projects <- get_lead_projects(link)
+  # This filters objects from the joined projects. Objects are currently only meant as "end-products" or "helpers"
+  # not as intermediary steps that should be used in a xafty query pipeline.
+  # Using objects as building steps in a xafty pipeline would break its underlying logic, since objects are a snapshot of
+  # a certain query while normal xafty queries are meant to add logic to a variable data.frame
+  xafty_objects <- get_xafty_objects_vec(link)
+  projects <- projects[vapply(names(projects),
+                              \(arg_name) xafty_objects[names(xafty_objects) == arg_name] == "xafty_query",
+                              FUN.VALUE = logical(1))]
   n <- length(projects)
   pairs <- list()
+  if(n <= 1) return(pairs)
   k <- 1
   for (i in seq_len(n)) {
     for (j in seq_len(n)) {

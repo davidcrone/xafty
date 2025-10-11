@@ -10,3 +10,8 @@ test_create_link <- function(quosure, project = "unpack_me", network = test_netw
   quosure <- rlang::enquo(quosure)
   create_link(quosure = quosure, project = project, network = network, ... = ...)
 }
+
+test_register <- function(fun, project, network, module = "link") {
+  quosure <- rlang::enquo(fun)
+  register(quosure = quosure, project = project, network = network, module = module)
+}
