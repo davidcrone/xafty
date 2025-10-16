@@ -81,6 +81,7 @@ add_new_project <- function(project, ruleset, network_env, link_types = c("get",
   project_env <- new.env() # This is the environment, where all code will be organized
   class(project_env) <- c("xafty_project", "environment")
   network_env[[project]] <- project_env
+  network_env[[project]][["ruleset"]] <- ruleset
   for (env_name in env_names) {
     assign(env_name, new.env(), envir = project_env)
   }
@@ -131,6 +132,19 @@ create_join <- function(project, env) {
     register(quosure = quosure, module = "link", network = env, project = project, ... = ...)
   }
   join
+}
+
+create_register_link_func <- function(project, network, module = "link", ...) {
+  force(project)
+  force(env)
+  module_settings <- list(...)
+  link <- function(fun, name = NULL, vars = NULL, update = FALSE, ...) {
+    .dots <- list(...)
+    quosure <- rlang::enquo(fun)
+    register(quosure = quosure, module = module, network = network, project = project,
+             added_columns = vars, object_name = name, update = update, ... = ...)
+  }
+  link
 }
 
 bundle_link_functions <- function(project, env) {

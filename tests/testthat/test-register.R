@@ -124,7 +124,7 @@ test_that("register can register an object", {
   }
   test_network$intelligence$add_object("active_customers", filter_active_customers(data = query(intelligence = "intelligence")))
   expect_equal(test_network$intelligence$objects$active_customers, "filter_active_customers")
-  expect_equal(test_network$intelligence$ruleset$modules$object$filter_active_customers$added_object, "[active_customers]")
+  expect_equal(test_network$intelligence$ruleset$object$filter_active_customers$added_object, "[active_customers]")
 })
 
 test_that("register can register a function with an object as dependency", {
@@ -139,7 +139,7 @@ test_that("register can register a function with an object as dependency", {
   }
   test_network$intelligence$add_object("mean_intelligence", build_kpi(active_customers = query(intelligence = c("[active_customers]"))))
   expect_equal(test_network$intelligence$objects$mean_intelligence, "build_kpi")
-  expect_equal(test_network$intelligence$ruleset$modules$object$build_kpi$added_object, "[mean_intelligence]")
+  expect_equal(test_network$intelligence$ruleset$object$build_kpi$added_object, "[mean_intelligence]")
 })
 
 test_that("A xafty state can be registered", {
@@ -164,6 +164,6 @@ test_that("It is possible to register a variable with interpolated state, keepin
     data
   }
   test_network$test_data$add(add_data(data = query(test_data = "data.{year}")))
-  expect_equal(test_network$test_data$ruleset$modules$link$add_data$added_columns, expected = "data.2027")
-  expect_equal(test_network$test_data$ruleset$modules$link$add_data$args$data, expected = query(test_data = "data.{year}"))
+  expect_equal(test_network$test_data$ruleset$link$add_data$added_columns, expected = "data.2027")
+  expect_equal(test_network$test_data$ruleset$link$add_data$args$data, expected = query(test_data = "data.{year}"))
 })

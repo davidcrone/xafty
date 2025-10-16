@@ -69,7 +69,7 @@ remove_join_helpers <- function(stack_sorted) {
 
 get_join_functions <- function(from, to, network, sm, state_query = NULL) {
   fun_name <- network[[from]]$joined_projects[[to]]
-  link <- network[[from]]$ruleset$modules$link[[fun_name]]
+  link <- network[[from]]$ruleset$link[[fun_name]]
   link <- interpolate_link_queries(link = link, state_list = state_query, network = network)
   set_objects(links = list(link), network = network, dag_sm = sm)
 
@@ -174,13 +174,13 @@ check_graph <- function(graph, check_projects) {
 get_chatty_link_from_network <- function(col, project, network) {
   validate_query(col = col, project = project, network = network, env_name = "variables")
   columns_subset <- network[[project]]$variables[[col]]
-  network[[project]]$ruleset[["modules"]][["link"]][[columns_subset]]
+  network[[project]]$ruleset[["link"]][[columns_subset]]
 }
 
 get_chatty_object_from_network <- function(name, project, network) {
   validate_query(col = name, project = project, network = network, env_name = "objects")
   columns_subset <- network[[project]]$objects[[name]]
-  network[[project]]$ruleset[["modules"]][["object"]][[columns_subset]]
+  network[[project]]$ruleset[["object"]][[columns_subset]]
 }
 
 get_chatty_func_name_from_network <- function(col, project, network, env_name = "variables") {
@@ -215,7 +215,7 @@ build_join_bridges <- function(dag_sm, network) {
     to <- path[-1]
     do.call(c, mapply(\(from, to) {
       fun_name <- network[[from]]$joined_projects[[to]]
-      link <- network[[from]]$ruleset$modules$link[[fun_name]]
+      link <- network[[from]]$ruleset$link[[fun_name]]
       fused_projects <- get_lead_projects(link)
       join_code <- paste0("fuse.", paste0(fused_projects, collapse = "."))
       join_code

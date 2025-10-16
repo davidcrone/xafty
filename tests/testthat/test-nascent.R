@@ -257,3 +257,11 @@ test_that("Objects and States are correctly integrated during join_dependencies"
                                  secret_id = c(2, 3, 4, 5, 6)), row.names = c(NA, -5L), class = "data.frame")
   expect_identical(test_data, expected_data)
 })
+
+test_that("Registering added columns to a network with the wrong name gives an informative error", {
+  skip("skip")
+  network <- init_network("test", projects = "test_proj")
+  network$test_proj$get(get_sample_data(), added_columns = c("i", "name", "score"))
+  network$test_proj$get(get_sample_data(), added_columns = c("d", "name", "score"))
+  nascent(network, query(test_proj = "id"))
+})
