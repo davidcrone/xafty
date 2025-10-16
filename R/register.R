@@ -6,14 +6,13 @@
 #' @param project The project name of the project within the network where the function should be registered.
 #' @param network A xafty network.
 #' @param link_type The link_type name of the rulset. Currently "link" and "object" are supported
-#' @param ... Configurations of the register. Following parameters are allowed
-#' * added_columns : The parameter takes in a character vector of column names that are added to the data set.
+#' @param ... Unused. Configurations of the link type.
 #' @returns A xafty network (invisibly)
 #' @export
 register <- function(quosure, project, network, link_type, ...) {
   link <- create_link(quosure = quosure,  project = project, network = network, ... = ...)
   validate_network_integrity(link = link, network = network)
-  add_to_ruleset(item = link, link_type = link_type, env = network, project = project, ... = ...)
+  add_to_ruleset(item = link, link_type = link_type, network = network, project = project, ... = ...)
   add_to_network(item = link, network = network, project = project, ... = ...)
   invisible(network)
 }
@@ -50,7 +49,7 @@ create_link <- function(quosure, project, network, ...) {
   .dots <- list(...)
   link <- create_base_link(quosure = quosure, project = project)
   link <- link_add_object(link = link, object_name = .dots[["object_name"]])
-  link <- link_add_variables(link = link, variable_names = .dots[["added_columns"]], network = network)
+  link <- link_add_variables(link = link, variable_names = .dots[["vars"]], network = network)
   link
 }
 
@@ -84,6 +83,7 @@ link_add_variables <- function(link, variable_names = NULL, network) {
   if(!is.null(variable_names)) {
     link$added_columns <- variable_names
   } else {
+    # Executes pipeline
     link$added_columns <- get_added_columns(link = link, network = network)
   }
   link

@@ -74,7 +74,7 @@ test_network$occupations$get(get_additional_info())
 
 # Join  projects
 test_network$customer_data$join(join_datasets(main_data = query(customer_data = c("id", "category")),
-                                              extra_data = query(occupations = "id")), added_columns = character(0))
+                                              extra_data = query(occupations = "id")), vars = character(0))
 # Column depending on a two projects
 test_network$customer_data$add(new_column_from_both_projects(query(customer_data = "name", occupations = "department")))
 

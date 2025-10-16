@@ -13,7 +13,7 @@ settings <- function(network_name) {
     )
 }
 
-add_to_ruleset <- function(item, link_type = "link", env, project, ...) {
+add_to_ruleset <- function(item, link_type = "link", network, project, ...) {
   function_name <- item$fun_name
   .dots <- list()
 
@@ -24,7 +24,7 @@ add_to_ruleset <- function(item, link_type = "link", env, project, ...) {
   new_rule <- list(item)
   new_rule <- setNames(new_rule, function_name)
   for (proj in projects) {
-    current_rules <- env[[proj]]$ruleset[[link_type]]
+    current_rules <- network[[proj]]$ruleset[[link_type]]
     if(function_name %in% names(current_rules)) {
       if(!exists("user_input")) {
         user_input <- readline(paste0("Function '", function_name, "' was already registered in project '",  paste0(projects, collapse = " and "),"'. Would you like to update? (y/n): "))
@@ -40,7 +40,7 @@ add_to_ruleset <- function(item, link_type = "link", env, project, ...) {
       }
     }
     add_rules <- c(current_rules, new_rule)
-    env[[proj]]$ruleset[[link_type]] <- add_rules
+    network[[proj]]$ruleset[[link_type]] <- add_rules
   }
-  env
+  network
 }

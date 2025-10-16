@@ -133,7 +133,7 @@ test_that("State argument correclty passes the argument into the state variable"
     }
   }
   test_network$customer_data$add(add_score_category(data = query(customer_data = "score"),
-                                                    na_as_negative = "{na_as_negative}"), added_columns = c("category"))
+                                                    na_as_negative = "{na_as_negative}"), vars = "category")
   query <- query(customer_data = c("name", "category")) |> with(na_as_negative = TRUE)
   test_data <- nascent(test_network, query)
   expected_data <- structure(list(name = c("Alice", "Bob", "Charlie", "Diana", "Eve"),
@@ -261,7 +261,7 @@ test_that("Objects and States are correctly integrated during join_dependencies"
 test_that("Registering added columns to a network with the wrong name gives an informative error", {
   skip("skip")
   network <- init_network("test", projects = "test_proj")
-  network$test_proj$get(get_sample_data(), added_columns = c("i", "name", "score"))
-  network$test_proj$get(get_sample_data(), added_columns = c("d", "name", "score"))
+  network$test_proj$get(get_sample_data(), vars = c("i", "name", "score"))
+  network$test_proj$get(get_sample_data(), vars = c("d", "name", "score"))
   nascent(network, query(test_proj = "id"))
 })

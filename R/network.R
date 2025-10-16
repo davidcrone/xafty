@@ -4,7 +4,7 @@ add_to_network <- function(item, network, project, ...) {
   project_env <- network[[project]]
   fun_name <- item$fun_name
 
-  if("object_name" %in% names(.dots)) {
+  if(!is.null(.dots[["object_name"]])) {
     added_object <- get_squared_variable(item$added_object)
     assign(added_object, fun_name, envir = project_env$objects)
   }

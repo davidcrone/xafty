@@ -104,58 +104,26 @@ create_add_object <- function(project, env) {
   add_object
 }
 
-create_get <- function(project, env) {
-  force(project)
-  force(env)
-  get <- function(fun, ...) {
-    quosure <- rlang::enquo(fun)
-    register(quosure = quosure, link_type = "link", network = env, project = project, ... = ...)
-  }
-  get
-}
-
-create_add <- function(project, env) {
-  force(project)
-  force(env)
-  add <- function(fun, ...) {
-    quosure <- rlang::enquo(fun)
-    register(quosure = quosure, link_type = "link", network = env, project = project, ... = ...)
-  }
-  add
-}
-
-create_join <- function(project, env) {
-  force(project)
-  force(env)
-  join <- function(fun, ...) {
-    quosure <- rlang::enquo(fun)
-    register(quosure = quosure, link_type = "link", network = env, project = project, ... = ...)
-  }
-  join
-}
-
 create_register_link_func <- function(project, network, link_type = "link", ...) {
   force(project)
-  force(env)
+  force(network)
   link_type_settings <- list(...)
   link <- function(fun, name = NULL, vars = NULL, update = FALSE, ...) {
     .dots <- list(...)
     quosure <- rlang::enquo(fun)
     register(quosure = quosure, link_type = link_type, network = network, project = project,
-             added_columns = vars, object_name = name, update = update, ... = ...)
+             vars = vars, object_name = name, update = update, ... = ...)
   }
   link
 }
 
 bundle_link_functions <- function(project, env) {
-  get_fun <- create_get(project = project, env = env)
-  add_fun <- create_add(project = project, env = env)
-  join_fun <- create_join(project = project, env = env)
-  add_object <- create_add_object(project = project, env = env)
-  list("get" = get_fun,
-       "add" = add_fun,
-       "join" = join_fun,
-       "add_object" = add_object)
+  link_fun <- create_register_link_func(project = project, network = env, link_type = "link")
+  object_fun <- create_add_object(project = project, env = env)
+  list("get" = link_fun,
+       "add" = link_fun,
+       "join" = link_fun,
+       "add_object" = object_fun)
 }
 
 
