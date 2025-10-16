@@ -4,7 +4,7 @@
 \alias{register}
 \title{Register a Function in a Network}
 \usage{
-register(quosure, project, network, module, ...)
+register(quosure, project, network, link_type, ...)
 }
 \arguments{
 \item{quosure}{A function call enquoted with rlang::enquo}
@@ -13,7 +13,7 @@ register(quosure, project, network, module, ...)
 
 \item{network}{A xafty network.}
 
-\item{module}{The module name of the rulset. Currently only "link" is supported}
+\item{link_type}{The link_type name of the rulset. Currently "link" and "object" are supported}
 
 \item{...}{Configurations of the register. Following parameters are allowed
 * added_columns : The parameter takes in a character vector of column names that are added to the data set.}

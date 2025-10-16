@@ -99,7 +99,7 @@ create_add_object <- function(project, env) {
   force(env)
   add_object <- function(name, fun, ...) {
     quosure <- rlang::enquo(fun)
-    register(quosure = quosure, module = "object", network = env, project = project, object_name = name, ...)
+    register(quosure = quosure, link_type = "object", network = env, project = project, object_name = name, ...)
   }
   add_object
 }
@@ -109,7 +109,7 @@ create_get <- function(project, env) {
   force(env)
   get <- function(fun, ...) {
     quosure <- rlang::enquo(fun)
-    register(quosure = quosure, module = "link", network = env, project = project, ... = ...)
+    register(quosure = quosure, link_type = "link", network = env, project = project, ... = ...)
   }
   get
 }
@@ -119,7 +119,7 @@ create_add <- function(project, env) {
   force(env)
   add <- function(fun, ...) {
     quosure <- rlang::enquo(fun)
-    register(quosure = quosure, module = "link", network = env, project = project, ... = ...)
+    register(quosure = quosure, link_type = "link", network = env, project = project, ... = ...)
   }
   add
 }
@@ -129,19 +129,19 @@ create_join <- function(project, env) {
   force(env)
   join <- function(fun, ...) {
     quosure <- rlang::enquo(fun)
-    register(quosure = quosure, module = "link", network = env, project = project, ... = ...)
+    register(quosure = quosure, link_type = "link", network = env, project = project, ... = ...)
   }
   join
 }
 
-create_register_link_func <- function(project, network, module = "link", ...) {
+create_register_link_func <- function(project, network, link_type = "link", ...) {
   force(project)
   force(env)
-  module_settings <- list(...)
+  link_type_settings <- list(...)
   link <- function(fun, name = NULL, vars = NULL, update = FALSE, ...) {
     .dots <- list(...)
     quosure <- rlang::enquo(fun)
-    register(quosure = quosure, module = module, network = network, project = project,
+    register(quosure = quosure, link_type = link_type, network = network, project = project,
              added_columns = vars, object_name = name, update = update, ... = ...)
   }
   link

@@ -5,15 +5,15 @@
 #' @param quosure A function call enquoted with rlang::enquo
 #' @param project The project name of the project within the network where the function should be registered.
 #' @param network A xafty network.
-#' @param module The module name of the rulset. Currently only "link" is supported
+#' @param link_type The link_type name of the rulset. Currently "link" and "object" are supported
 #' @param ... Configurations of the register. Following parameters are allowed
 #' * added_columns : The parameter takes in a character vector of column names that are added to the data set.
 #' @returns A xafty network (invisibly)
 #' @export
-register <- function(quosure, project, network, module, ...) {
+register <- function(quosure, project, network, link_type, ...) {
   link <- create_link(quosure = quosure,  project = project, network = network, ... = ...)
   validate_network_integrity(link = link, network = network)
-  add_to_ruleset(item = link, module = module, env = network, project = project, ... = ...)
+  add_to_ruleset(item = link, link_type = link_type, env = network, project = project, ... = ...)
   add_to_network(item = link, network = network, project = project, ... = ...)
   invisible(network)
 }
