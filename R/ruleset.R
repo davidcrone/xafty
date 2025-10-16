@@ -15,28 +15,41 @@ settings <- function(network_name) {
 
 add_to_ruleset <- function(item, link_type = "link", network, project, ...) {
   function_name <- item$fun_name
-  .dots <- list()
-
+  .dots <- list(...)
   # When registering an object, the object should only be registered in the project
-  if(!"object_name" %in% names(.dots)) {
+  if(is.null(.dots[["object_name"]])) {
     projects <- unique(c(project, get_lead_projects(item)))
+  } else {
+    projects <- project
   }
   new_rule <- list(item)
   new_rule <- setNames(new_rule, function_name)
   for (proj in projects) {
     current_rules <- network[[proj]]$ruleset[[link_type]]
     if(function_name %in% names(current_rules)) {
-      if(!exists("user_input")) {
-        user_input <- readline(paste0("Function '", function_name, "' was already registered in project '",  paste0(projects, collapse = " and "),"'. Would you like to update? (y/n): "))
+      update <- isTRUE(.dots[["update"]])
+      if(!update) {
+        user_update <- readline(paste0("Function '", function_name, "' was already registered in project '",  paste0(projects, collapse = " and "),"'. Would you like to update? (y/n): "))
+        if(user_update == "y") {
+          update <- TRUE
+        } else {
+          update <- FALSE
+        }
       }
       # Check the user input
-      if (user_input == "y") {
+      if (update) {
         # Proceed with the update
+        # remove the previously registered varuables
+        clean_variables <- current_rules[[function_name]]$added_columns
+        rm(list = clean_variables, envir = network[[project]]$variables)
         current_rules[[function_name]] <- NULL
+        if(exists("user_update")) {
+          message(paste0("Updated function '", function_name, "'!"))
+        }
         # Add your update code here
       } else {
         # Abort the function
-        stop(paste0("Function '", item$fun_name, "' exists already in ruleset of project '", paste0(projects, collapse = " and "),"'"))
+        message(paste0("Function '", item$fun_name, "' exists already in ruleset of project '", paste0(projects, collapse = " and "),"'"))
       }
     }
     add_rules <- c(current_rules, new_rule)

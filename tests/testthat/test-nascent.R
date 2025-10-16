@@ -259,9 +259,8 @@ test_that("Objects and States are correctly integrated during join_dependencies"
 })
 
 test_that("Registering added columns to a network with the wrong name gives an informative error", {
-  skip("skip")
   network <- init_network("test", projects = "test_proj")
   network$test_proj$get(get_sample_data(), vars = c("i", "name", "score"))
-  network$test_proj$get(get_sample_data(), vars = c("d", "name", "score"))
-  nascent(network, query(test_proj = "id"))
+  network$test_proj$get(get_sample_data(), vars = c("id", "name", "score"), update = TRUE)
+  expect_in(names(network$test_proj$variables), c("id", "name", "score"))
 })
