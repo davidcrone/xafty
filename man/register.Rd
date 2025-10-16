@@ -15,8 +15,7 @@ register(quosure, project, network, link_type, ...)
 
 \item{link_type}{The link_type name of the rulset. Currently "link" and "object" are supported}
 
-\item{...}{Configurations of the register. Following parameters are allowed
-* added_columns : The parameter takes in a character vector of column names that are added to the data set.}
+\item{...}{Unused. Configurations of the link type.}
 }
 \value{
 A xafty network (invisibly)

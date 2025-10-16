@@ -11,7 +11,7 @@ dependencies <- function(query_list, state_list = NULL, network, dag_sm = build_
   new_query_list <- do.call(merge_queries, queries)
   if (length(new_query_list) == 0) return(dag_sm)
   # removes already visited nodes leading to an eventual termination of the recursive function
-  query_pruned <- prune_query(query = new_query_list, compare = dag_sm$get_query())
+  query_pruned <- prune_query(query_list = new_query_list, compare = dag_sm$get_query())
   dependencies(query_list = query_pruned, state_list = state_list, network = network, dag_sm = dag_sm)
 }
 

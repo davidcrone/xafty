@@ -39,7 +39,7 @@ add_to_ruleset <- function(item, link_type = "link", network, project, ...) {
       # Check the user input
       if (update) {
         # Proceed with the update
-        # remove the previously registered varuables
+        # remove the previously registered variables
         clean_variables <- current_rules[[function_name]]$added_columns
         rm(list = clean_variables, envir = network[[project]]$variables)
         current_rules[[function_name]] <- NULL

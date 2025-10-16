@@ -262,6 +262,14 @@ execute_stack <- function(link, mask, data_sm, default_states) {
   data_sm$set_data(data = data, key = new_key)
 }
 
+#' Build an 'Evaluable' Data Pipeline Object
+#' @description
+#' When querying an object, the xafty algorithm recursively iterates through the network and obtains all functions
+#' necessary. Before evaluating all functions, the xafty algorithm creates a dag-object which contains the full
+#' information about dependencies. The object can then be evaluated with function: evaluate_dag
+#' @param globals description
+#' @returns A list
+#' @export
 build_dag <- function(globals, network, frame = "main") {
   dag_sm <- build_tree(network = network)
   dag_sm <- initialize_join_path(join_path = globals$join_path, network = network, dag_sm = dag_sm, state_query = globals$states)
