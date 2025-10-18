@@ -167,3 +167,10 @@ test_that("It is possible to register a variable with interpolated state, keepin
   expect_equal(test_network$test_data$ruleset$link$add_data$added_columns, expected = "data.2027")
   expect_equal(test_network$test_data$ruleset$link$add_data$args$data, expected = query(test_data = "data.{year}"))
 })
+
+test_that("Registering added columns to a network with the wrong name gives an informative error", {
+  network <- init_network("test", projects = "test_proj")
+  network$test_proj$get(get_sample_data(), vars = c("i", "name", "score"))
+  network$test_proj$get(get_sample_data(), vars = c("id", "name", "score"), update = TRUE)
+  expect_in(names(network$test_proj$variables), c("id", "name", "score"))
+})

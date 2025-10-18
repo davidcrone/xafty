@@ -258,9 +258,9 @@ test_that("Objects and States are correctly integrated during join_dependencies"
   expect_identical(test_data, expected_data)
 })
 
-test_that("Registering added columns to a network with the wrong name gives an informative error", {
+test_that("Registering the wrong column name through vars yields an informative error", {
   network <- init_network("test", projects = "test_proj")
-  network$test_proj$get(get_sample_data(), vars = c("i", "name", "score"))
-  network$test_proj$get(get_sample_data(), vars = c("id", "name", "score"), update = TRUE)
-  expect_in(names(network$test_proj$variables), c("id", "name", "score"))
+  network$test_proj$get(get_sample_data(), vars = c("id", "nam", "score"))
+  qry <- query(test_proj = "nam")
+  expect_error(nascent(network, qry), regexp = "Variable 'nam' in project 'test_proj' is not present in the data")
 })

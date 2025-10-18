@@ -26,9 +26,10 @@ scope <- function(data, link, mask) {
   # This part scopes the newly added columns
   added_columns <- link$added_columns
   project <- link$project
-
   for (col in added_columns) {
     pos_col <- which(colnames_dataset %in% col)
+    if(length(pos_col) <= 0) stop(paste0("Variable '", col, "' in project '", project, "' is not present in the data.",
+                                         " Perhaps the variable was registered with the wrong name?"))
     scoped_name <- paste0(project, ".", col)
     colnames_dataset[pos_col] <- scoped_name
   }
