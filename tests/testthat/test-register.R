@@ -46,12 +46,12 @@ test_that("Register builds a join node in the network environment correctly", {
   }
   project_env <- init_network(name = "project_env")
   project_env$add_project("test")
-  project_env$test$get(test_get_function(arg1 = list(1, 2), arg2 = TRUE, comment = "clear", 1:3), added_columns = c("a", "b"))
+  project_env$test$get(test_get_function(arg1 = list(1, 2), arg2 = TRUE, comment = "clear", 1:3), vars = c("a", "b"))
   project_env$test$add(test_add_function(arg1 = test_get_function()))
 
   project_env$add_project("test2")
   project_env$test2$get(test2_get_function())
-  project_env$test$join(test_join_function(data_left = query(test = "a"), data_right = query(test2 = "a")), added_columns = character(0))
+  project_env$test$join(test_join_function(data_left = query(test = "a"), data_right = query(test2 = "a")), vars = character(0))
 
   expect_equal(names(project_env$test$joined_projects), "test2")
   expect_equal(names(project_env$test2$joined_projects), "test")
@@ -109,11 +109,11 @@ test_that("A container column can be nascented from the network alongsided tradi
   expect_identical(table_test, table_expected)
 })
 
-test_that("register throws an error when a column within a query is not present within a project while the added_columns parameter is set", {
+test_that("register throws an error when a column within a query is not present within a project while the variable parameter is set", {
   test_func <- function(data) {
     data
   }
-  expect_error(test_network$customer_data$add(test_func(data = query(customer_data = "col_not_present")), added_columns = c("add_col")))
+  expect_error(test_network$customer_data$add(test_func(data = query(customer_data = "col_not_present")), vars = c("add_col")))
 })
 
 test_that("register can register an object", {
@@ -164,11 +164,11 @@ test_that("It is possible to register a variable with interpolated state, keepin
     data
   }
   test_network$test_data$add(add_data(data = query(test_data = "data.{year}")))
-  expect_equal(test_network$test_data$ruleset$link$add_data$added_columns, expected = "data.2027")
+  expect_equal(test_network$test_data$ruleset$link$add_data$variables, expected = "data.2027")
   expect_equal(test_network$test_data$ruleset$link$add_data$args$data, expected = query(test_data = "data.{year}"))
 })
 
-test_that("Registering added columns to a network with the wrong name gives an informative error", {
+test_that("Updating a function with revised variable names removes all legacy variable names of that function", {
   network <- init_network("test", projects = "test_proj")
   network$test_proj$get(get_sample_data(), vars = c("i", "name", "score"))
   network$test_proj$get(get_sample_data(), vars = c("id", "name", "score"), update = TRUE)

@@ -81,10 +81,10 @@ link_add_object <- function(link, object_name = NULL) {
 
 link_add_variables <- function(link, variable_names = NULL, network) {
   if(!is.null(variable_names)) {
-    link$added_columns <- variable_names
+    link$variables <- variable_names
   } else {
     # Executes pipeline
-    link$added_columns <- get_added_columns(link = link, network = network)
+    link$variables <- get_added_variables(link = link, network = network)
   }
   link
 }

@@ -8,8 +8,8 @@ add_to_network <- function(item, network, project, ...) {
     added_object <- get_squared_variable(item$added_object)
     assign(added_object, fun_name, envir = project_env$objects)
   }
-  added_columns <- item$added_columns
-  for (new_col in added_columns) {
+  variables <- item$variables
+  for (new_col in variables) {
     assign(new_col, fun_name, envir = project_env$variables)
   }
   added_joins <- get_ordered_join_pairs(link = item)

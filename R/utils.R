@@ -291,7 +291,7 @@ get_dependend_functions <- function(link, network, scope = FALSE) {
   }, simplify = FALSE, USE.NAMES = TRUE)
 }
 
-get_added_columns <- function(link, network) {
+get_added_variables <- function(link, network) {
   project <- link$project
   dep_queries <- get_queries(link, temper = TRUE, network = network)
   input_column_names <- do.call(c, lapply(dep_queries, get_column_order))
