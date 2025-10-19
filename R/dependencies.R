@@ -1,4 +1,8 @@
-
+resolve_dependencies <- function(query_list, network, dag_sm = NULL) {
+  dependencies(query_list = query_list$internal, state_list = query_list$states, network = network, dag_sm = dag_sm)
+  set_join_dependencies(network = network, dag_sm = dag_sm, state_query = query_list$states)
+  dag_sm
+}
 
 dependencies <- function(query_list, state_list = NULL, network, dag_sm = build_tree()) {
   # The query is merged with queries whose dependencies have already been resolved
@@ -13,6 +17,51 @@ dependencies <- function(query_list, state_list = NULL, network, dag_sm = build_
   # removes already visited nodes leading to an eventual termination of the recursive function
   query_pruned <- prune_query(query_list = new_query_list, compare = dag_sm$get_query())
   dependencies(query_list = query_pruned, state_list = state_list, network = network, dag_sm = dag_sm)
+}
+
+set_join_dependencies <- function(network, dag_sm, state_query = NULL) {
+  new_projects <- projects_not_in_join_path(dag_sm = dag_sm, network = network)
+  if(length(new_projects) <= 1) return(dag_sm)
+  join_path <- get_shortest_join_path_for(new_projects, network, sm = dag_sm)
+  dag_sm$set_join_path(join_path)
+  li_joins <- lapply(join_path, \(path) {
+    from <- path[-length(path)]
+    to <- path[-1]
+    mapply(get_join_functions, from, to, MoreArgs = list(network = network, sm = dag_sm, state_query = state_query), SIMPLIFY = FALSE)
+  })
+  li_joins <- flatten_list(li_joins)
+  li_lookup <- build_flat_lookup(li_joins = li_joins)
+  # Here the potential new dependencies will be resolved calling dependencies and join functions again.
+  links <- lapply(li_joins, \(li_join) li_join$link)
+  queries <- get_dependend_queries(links)
+  query_list <- do.call(merge_queries, queries)
+  dependencies(query_list = query_list, network = network, dag_sm = dag_sm)
+  build_join_bridges(li_lookup = li_lookup, network = network, dag_sm = dag_sm)
+  invisible(dag_sm)
+}
+
+build_flat_lookup <- function(li_joins) {
+  li_lookup <- list()
+  for (li_join in li_joins) {
+    join_id <- names(li_join$lookup)
+    li_lookup[[join_id]] <- li_join$lookup[[join_id]]
+  }
+  li_lookup
+}
+
+build_join_bridges <- function(li_lookup, network, dag_sm) {
+  list_join_codes <- dag_sm$get_joins()
+  list_direct_joins <- li_lookup[names(li_lookup) %in% names(list_join_codes)]
+  for (i in seq_along(list_direct_joins)) {
+    join_codes <- list_direct_joins[i]
+    dag_sm$set_nodes(link = NULL, code = join_codes)
+  }
+  list_inderect_joins <- list_join_codes[!names(list_join_codes) %in% names(li_lookup)]
+  if(length(list_inderect_joins) <= 0) return(dag_sm)
+  browser() # TODO Resolve Bridges
+  list_join_path <- dag_sm$get_join_path()
+  sub_graph <- build_sub_graph(join_path = list_join_path, network = network)
+  dag_sm
 }
 
 prune_query <- function(query_list, compare) {
@@ -30,6 +79,15 @@ prune_query <- function(query_list, compare) {
     }
   }
   query_list
+}
+
+build_sub_graph <- function(join_path, network) {
+  graph_nodes <- unique(do.call(c, join_path))
+  sub_graph <- join_graph <- sapply(graph_nodes, \(node) {
+    joined_projects <- names(network[[node]]$joined_projects)
+    joined_projects[joined_projects %in% graph_nodes]
+  }, simplify = FALSE, USE.NAMES = TRUE)
+  sub_graph
 }
 
 get_dependend_links <- function(query_list, network) {

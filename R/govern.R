@@ -85,6 +85,7 @@ build_tree <- function(network) {
   tree_env <- new.env()
   tree_env$query <- query()
   tree_env$objects <- list()
+  tree_env$joins <- list()
   tree_env$network$settings <- network$settings
   tree_env$network$states <- network$states
 
@@ -123,6 +124,25 @@ build_tree <- function(network) {
     tree_env$query
   }
 
+  set_join <- function(id, projects) {
+    tree_env$joins[[id]] <- projects
+  }
+
+  get_joins <- function() {
+    tree_env$joins
+  }
+
+  set_join_projects <- function(projects) {
+    current_projects <- tree_env$join_projects
+    new_project <- projects[!projects %in% current_projects]
+    projects <- c(current_projects, new_project)
+    tree_env$join_projects <- projects
+  }
+
+  get_join_projects <- function() {
+    tree_env$join_projects
+  }
+
   set_join_path <- function(path) {
     tree_env$join_path <- path
   }
@@ -146,15 +166,6 @@ build_tree <- function(network) {
     tree_env$masks
   }
 
-  set_join_pairs <- function(li_pairs) {
-    join_code <- names(li_pairs)
-    tree_env$join_pairs[[join_code]] <- li_pairs[[join_code]]
-  }
-
-  get_join_pairs <- function() {
-    tree_env$join_pairs
-  }
-
   get_network_state <- function() {
     tree_env$network
   }
@@ -167,11 +178,13 @@ build_tree <- function(network) {
     set_query = set_query,
     set_object = set_object,
     get_objects = get_objects,
+    set_join = set_join,
+    get_joins = get_joins,
+    set_join_projects = set_join_projects,
+    get_join_projects = get_join_projects,
     get_object_codes = get_object_codes,
     set_join_path = set_join_path,
     get_join_path = get_join_path,
-    set_join_pairs = set_join_pairs,
-    get_join_pairs = get_join_pairs,
     set_mask = set_mask,
     get_mask = get_mask,
     get_network_state = get_network_state

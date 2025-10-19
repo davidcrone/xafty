@@ -52,7 +52,7 @@ test_that("resolve_dependencies can correctly resolve a column that depends on t
   expect_in(projects, c("customer_data", "occupations"))
   execution_order <- resolve_function_stack(sm = sm)
   expect_equal(execution_order, c("customer_data.get_sample_data", "occupations.get_additional_info", "customer_data.add_score_category",
-                                  "fuse.customer_data.occupations", "customer_data.new_column_from_both_projects"))
+                                  "customer_data.join_datasets", "customer_data.new_column_from_both_projects"))
 })
 
 test_that("resolve_dependencies can correctly resolve a column that depends on two projects, but only pulls from one project", {
@@ -68,7 +68,7 @@ test_that("resolve_dependencies can correctly resolve a column that depends on t
   expect_in(projects, c("customer_data", "occupations"))
   execution_order <- resolve_function_stack(sm = sm)
   expect_equal(execution_order, c("customer_data.get_sample_data", "occupations.get_additional_info", "customer_data.add_score_category",
-                                  "fuse.customer_data.occupations", "customer_data.new_column_from_both_projects"))
+                                  "customer_data.join_datasets", "customer_data.new_column_from_both_projects"))
 })
 
 

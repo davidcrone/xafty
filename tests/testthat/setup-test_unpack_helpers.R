@@ -8,6 +8,7 @@ test_unpack_args <- function(quosure, type = "none", link_type = "link", project
 
 test_create_link <- function(quosure, project = "unpack_me", network = test_network, ...) {
   quosure <- rlang::enquo(quosure)
+  force(project)
   create_link(quosure = quosure, project = project, network = network, ... = ...)
 }
 

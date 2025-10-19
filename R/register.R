@@ -50,6 +50,7 @@ create_link <- function(quosure, project, network, ...) {
   link <- create_base_link(quosure = quosure, project = project)
   link <- link_add_object(link = link, object_name = .dots[["object_name"]])
   link <- link_add_variables(link = link, variable_names = .dots[["vars"]], network = network)
+  link <- link_add_joins(link = link, network = network)
   link
 }
 
@@ -86,6 +87,11 @@ link_add_variables <- function(link, variable_names = NULL, network) {
     # Executes pipeline
     link$variables <- get_added_variables(link = link, network = network)
   }
+  link
+}
+
+link_add_joins <- function(link, network) {
+  link$joins <- get_join_dependencies(link = link, network = network)
   link
 }
 

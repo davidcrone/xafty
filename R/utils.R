@@ -81,30 +81,26 @@ validate_link_type <- function(link_type, unpacked) {
 }
 
 build_dependency_codes <- function(link, network, dag_sm) {
-  queries <- get_queries(link, temper = FALSE)
+  queries <- get_queries(link, which = c("xafty_query", "xafty_object"), temper = FALSE)
   fun_code <- build_fun_code(link)
   # Early termination of function execution for a root node
   if (length(queries) == 0) {
     root_node <- setNames(list(character(0)), fun_code)
     return(root_node)
   }
-  # This splits queries from object queries which need to be treated differently
-  scoped_functions <- unique(do.call(c, lapply(queries, get_scoped_function_order, network = network)))
-  li_within_joins <- lapply(queries, get_joins_within_query, network = network)
-  for (i in seq_along(li_within_joins)) {
-    joins <- li_within_joins[[i]]
-    if(length(joins) <= 0) next
-    unordered_pairs <- combn(joins, 2, simplify = FALSE)
-    join_codes <- build_join_pairs(unordered_pairs)
-    li_within_joins[[i]] <- join_codes
-    li_pairs <- setNames(unordered_pairs, join_codes)
-    for (i in seq_along(li_pairs)) {
-      dag_sm$set_join_pairs(li_pairs[i])
-    }
+  # This splits queries from object queries which need a different prefix
+  function_codes <- unique(do.call(c, lapply(queries, get_scoped_function_order, network = network)))
+  join_codes <- character(length(link$joins$projects))
+  for (i in seq_along(link$joins$projects)) {
+    projects <- link$joins$projects[[i]]
+    join_id <- paste0("join.", paste0(projects, collapse = "."))
+    # This is later used to resolve the join
+    dag_sm$set_join(id = join_id, projects = projects)
+    dag_sm$set_join_projects(projects = projects)
+    join_codes[i] <- join_id
   }
-  join_depends <- do.call(c, li_within_joins)
-
-  node <- setNames(list(c(scoped_functions, join_depends)), fun_code)
+  link_dependencies <- c(function_codes, join_codes)
+  node <- setNames(list(link_dependencies), fun_code)
   node
 }
 
@@ -375,13 +371,38 @@ get_default_state <- function(name, network_env) {
   network_env$states[[name]]$default
 }
 
-initialize_join_path <- function(join_path, network, dag_sm, state_query) {
-  if(is.null(join_path)) return(invisible(dag_sm))
-  dag_sm$set_join_path(join_path)
-  lapply(join_path, \(path) {
-    from <- path[-length(path)]
-    to <- path[-1]
-    mapply(get_join_functions, from, to, MoreArgs = list(network = network, sm = dag_sm, state_query = state_query))
-  })
-  invisible(dag_sm)
+#' Get Dependent Joins for Each Argument
+get_join_dependencies <- function(link, network) {
+  queries <- get_queries(link = link, which = "xafty_query", temper = TRUE, network = network)
+  list_projects <- sapply(queries, get_projects, simplify = FALSE, USE.NAMES = TRUE)
+  if(length(queries) <= 0){
+    self <- TRUE
+  } else {
+    list_self <- sapply(queries,
+                        \(query_list) project_needs_join(project = link$project, query_list = query_list, network = network),
+                        simplify = FALSE)
+    self <- any(vapply(list_self, \(log) log, FUN.VALUE = logical(1)))
+  }
+  is_one_project <- vapply(list_projects, \(projects) length(projects) <= 1, FUN.VALUE = logical(1))
+  list_projects <- list_projects[!is_one_project]
+  # TODO: Remove self project, where list self is TRUE
+  list(
+    projects = list_projects,
+    self = self
+  )
+}
+
+project_needs_join <- function(project, query_list, network) {
+  links <- lapply(query_list, get_links, network = network)
+  deps_projects <- names(links)
+  # If no project is dependent on the link's project, the link is only dependent on other projects
+  # which means the link's project must not be joined
+  if(!project %in% deps_projects) return(FALSE)
+  links_ <- links[[project]]
+  query_list <- flatten_list(remove_empty_lists(lapply(links, get_queries,
+                                                       which = "xafty_query", temper = TRUE, network = network)))
+  query_list <- do.call(merge_queries, query_list)
+  # query is depended on a root node for that project and therefore needs to be joined
+  if(length(query_list) == 0) return(TRUE)
+  project_needs_join(project = project, query_list = query_list, network = network)
 }

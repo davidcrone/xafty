@@ -67,7 +67,6 @@ test_network <- init_network("test_network")
 test_network$add_project("customer_data")
 test_network$customer_data$get(get_sample_data())
 test_network$customer_data$add(add_score_category(data = query(customer_data = c("score", "name"))))
-
 ## Project 2 ##
 test_network$add_project("occupations")
 test_network$occupations$get(get_additional_info())
@@ -76,9 +75,8 @@ test_network$occupations$get(get_additional_info())
 test_network$customer_data$join(join_datasets(main_data = query(customer_data = c("id", "category")),
                                               extra_data = query(occupations = "id")), vars = character(0))
 # Column depending on a two projects
+nascent(test_network, query(customer_data = "name", occupations = "department"))
 test_network$customer_data$add(new_column_from_both_projects(query(customer_data = "name", occupations = "department")))
-
-
 
 ## Advanced Projects
 test_network$add_project("intelligence")
@@ -140,4 +138,5 @@ join_through_mean_intelligence <- function(data1 = query(occupations = "{column_
   merged
 }
 test_network$add_state(name = "column_name", default = "id")
+
 test_network$occupations$add(join_through_mean_intelligence())

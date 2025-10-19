@@ -104,15 +104,14 @@ create_add_object <- function(project, env) {
   add_object
 }
 
-create_register_link_func <- function(project, network, link_type = "link", ...) {
+create_register_link_func <- function(project, network, link_type = "link", operation = NULL) {
   force(project)
   force(network)
-  link_type_settings <- list(...)
   link <- function(fun, name = NULL, vars = NULL, update = FALSE, ...) {
     .dots <- list(...)
     quosure <- rlang::enquo(fun)
     register(quosure = quosure, link_type = link_type, network = network, project = project,
-             vars = vars, object_name = name, update = update, ... = ...)
+             vars = vars, object_name = name, update = update, ... = .dots)
   }
   link
 }
