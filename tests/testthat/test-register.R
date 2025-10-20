@@ -75,7 +75,7 @@ test_that("register add also works with xafty link instead of passing data into 
   expect_equal(data_test, data_expected)
 })
 
-test_that("A container column can be nascented from the network even if it is not joined", {
+test_that("A unjoined project's variable can be nascented from the network even if it is not joined", {
   test_state_1 <- init_network(name = "project_env")
   test_state_1$add_project("customer_data")
   test_state_1$add_project("occupation")
