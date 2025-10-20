@@ -145,14 +145,6 @@ get_projects <- function(query) {
   vapply(query, \(q) q$from, FUN.VALUE = character(1), USE.NAMES = FALSE)
 }
 
-get_joins_within_query <- function(query, network) {
-  projects <- get_projects(query)
-  # remove containers
-  projects <- projects[vapply(projects, \(project) "xafty_project" %in% class(network[[project]]), FUN.VALUE = logical(1))]
-  if(length(projects) <= 1) return(character(0))
-  projects
-}
-
 dots_to_query <- function(network, ...)  {
   query_raw <- list(...)
   # When only the network is provided, the user gets the following error

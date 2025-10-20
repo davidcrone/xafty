@@ -3,7 +3,6 @@
 #' Use this function to initialize a new xafty network.
 #' @param name Character vector of length 1. A valid name for the network
 #' @param projects Character vector of project names that should be added to the network
-#' @param containers Character vector of container names that should be added to the network
 #' @returns A 'xafty_network' environment
 #' @examples
 #' # Initialize the network
@@ -13,16 +12,14 @@
 #' new_network$add_project("project1")
 #'
 #' @export
-init_network <- function(name, projects = NULL, containers = NULL) {
+init_network <- function(name, projects = NULL) {
   network_env <- new.env() # This is the list where all projects will be merged together
   network_env$settings <- settings(network_name = name)
   network_env$states <- list()
   add_project <- create_add_project(network_env = network_env)
-  add_container <- create_add_container(network_env = network_env)
   save_project <- create_save_project(network_env = network_env)
   add_state <- create_add_state(network_env = network_env)
   assign("add_project", add_project, envir = network_env)
-  assign("add_container", add_container, envir = network_env)
   assign("save", save_project, envir = network_env)
   assign("add_state", add_state, envir = network_env)
   class(network_env) <- c("environment", "xafty_network")
@@ -30,11 +27,6 @@ init_network <- function(name, projects = NULL, containers = NULL) {
   if(!is.null(projects)) {
     for (project in projects) {
       network_env$add_project(project)
-    }
-  }
-  if(!is.null(containers)) {
-    for (container in containers) {
-      network_env$add_container(container)
     }
   }
   network_env
@@ -50,21 +42,6 @@ create_add_project <- function(network_env) {
     invisible(.network_env)
   }
   add_project
-}
-
-create_add_container <- function(network_env) {
-  force(network_env)
-  add_container <- function(name, ...)  {
-    validate_project_name(name = name, network = network_env)
-    project_config <- list(...)
-    new_ruleset <- ruleset()
-    .network_env <- add_new_project(project = name, ruleset = new_ruleset, network_env = network_env,
-                                    link_types = c("add", "add_object"))
-    project_env <- .network_env[[name]]
-    class(project_env) <- c("xafty_container", "environment")
-    invisible(.network_env)
-  }
-  add_container
 }
 
 create_save_project <- function(network_env) {

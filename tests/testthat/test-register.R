@@ -91,7 +91,7 @@ test_that("A unjoined project's variable can be nascented from the network even 
   expect_identical(table_test, table_expected)
 })
 
-test_that("A container column can be nascented from the network alongsided traditional projects", {
+test_that("A unjoined variable can be nascented from the network alongside traditional projects", {
   test_state_1 <- init_network(name = "project_env")
   test_state_1$add_project("customer_data")
   test_state_1$add_project("occupation")

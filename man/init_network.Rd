@@ -4,14 +4,12 @@
 \alias{init_network}
 \title{Initialize a New xafty Network}
 \usage{
-init_network(name, projects = NULL, containers = NULL)
+init_network(name, projects = NULL)
 }
 \arguments{
 \item{name}{Character vector of length 1. A valid name for the network}
 
 \item{projects}{Character vector of project names that should be added to the network}
-
-\item{containers}{Character vector of container names that should be added to the network}
 }
 \value{
 A 'xafty_network' environment

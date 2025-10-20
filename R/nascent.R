@@ -115,10 +115,7 @@ join_code_generator <- function(link, network, dag_sm) {
 
 build_join_graph <- function(network) {
   names_network <- names(network)
-  # remvoves xafty_containers from the join_graph
-  projects <- names_network[vapply(names_network, \(project) is.environment(network[[project]]) &
-                                                             inherits(network[[project]], "xafty_project"),
-                                   FUN.VALUE = logical(1))]
+  projects <- names_network[vapply(names_network, \(project) is.environment(network[[project]]), FUN.VALUE = logical(1))]
   project_pairs <- sapply(projects, \(project) names(network[[project]]$joined_projects), simplify = FALSE, USE.NAMES = TRUE)
   project_pairs
 }

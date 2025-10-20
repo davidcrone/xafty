@@ -89,6 +89,6 @@ test_that("get_join_dependencies returns an empty list when no depndend queries 
 
 test_that("get_join_dependencies returns the dependend joins of the link", {
   link <- test_create_link(add_score_category(data = query(customer_data = c("score", "name"), occupations = "department")),
-                           project = "container_project", vars = character(0))
+                           project = "unjoined_project", vars = character(0))
   expect_in(link$joins$projects$data, c("customer_data", "occupations"))
 })
