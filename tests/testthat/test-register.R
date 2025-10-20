@@ -95,7 +95,7 @@ test_that("A container column can be nascented from the network alongsided tradi
   test_state_1 <- init_network(name = "project_env")
   test_state_1$add_project("customer_data")
   test_state_1$add_project("occupation")
-  test_state_1$add_container("value_sheet")
+  test_state_1$add_project("value_sheet")
   test_state_1$customer_data$get(get_sample_data())
   test_state_1$customer_data$add(add_score_category(data = query(customer_data = "score")))
   test_state_1$occupation$get(get_additional_info())

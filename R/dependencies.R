@@ -13,6 +13,7 @@ dependencies <- function(query_list, state_list = NULL, network, dag_sm = build_
   set_objects(links = links, network = network, dag_sm = dag_sm)
   queries <- get_dependend_queries(links)
   new_query_list <- do.call(merge_queries, queries)
+  # TODO bring recursive termination to beginning of the function and add set_join_dependencies to the end of the function
   if (length(new_query_list) == 0) return(dag_sm)
   # removes already visited nodes leading to an eventual termination of the recursive function
   query_pruned <- prune_query(query_list = new_query_list, compare = dag_sm$get_query())
@@ -53,15 +54,48 @@ build_join_bridges <- function(li_lookup, network, dag_sm) {
   list_join_codes <- dag_sm$get_joins()
   list_direct_joins <- li_lookup[names(li_lookup) %in% names(list_join_codes)]
   for (i in seq_along(list_direct_joins)) {
-    join_codes <- list_direct_joins[i]
-    dag_sm$set_nodes(link = NULL, code = join_codes)
+    join_node <- list_direct_joins[i]
+    dag_sm$set_nodes(link = NULL, code = join_node)
   }
   list_inderect_joins <- list_join_codes[!names(list_join_codes) %in% names(li_lookup)]
   if(length(list_inderect_joins) <= 0) return(dag_sm)
-  browser() # TODO Resolve Bridges
   list_join_path <- dag_sm$get_join_path()
-  sub_graph <- build_sub_graph(join_path = list_join_path, network = network)
+  sub_graph <- build_sub_graph(join_path = list_join_path)
+  join_pairs <- join_pairs(list_inderect_joins)
+  # Each pair is traveresd through the sub graph resulting in the join codes that are present in li_lookup
+  list_join_bfs <- lapply(join_pairs, \(pairs) {
+    join_ids <- list()
+    for (i in seq_along(pairs)) {
+      pair <- pairs[[i]]
+      projects <- bfs_traversal(graph = sub_graph, start = pair[1], end = pair[2])
+      join_ids[[paste0("id_",i)]] <- vapply(seq_len(length(projects) - 1), \(i) build_join_id(c(projects[i], projects[i + 1])),
+                                            FUN.VALUE = character(1), USE.NAMES = FALSE)
+    }
+    join_ids
+  })
+
+  join_codes <- do.call(c, list(flatten_list(list_join_bfs), use.names = TRUE))
+  unresolved_codes <- names(list_inderect_joins)
+  for (i in seq_along(join_codes)) {
+    join <- join_codes[[i]]
+    join_func <- vapply(join, \(j) li_lookup[[j]], FUN.VALUE = character(1), USE.NAMES = FALSE)
+    join_node <- setNames(list(join_func), unresolved_codes[i])
+    dag_sm$set_nodes(link = NULL, code = join_node)
+  }
+
   dag_sm
+}
+
+build_join_id <- function(projects) {
+  paste0("join.", paste0(sort(c(projects)), collapse = "."))
+}
+
+join_pairs <- function(inderect_joins) {
+  lapply(inderect_joins, \(join_projects) {
+    pairs <- lapply(seq_len(length(join_projects) - 1), \(i) {
+      c(join_projects[i], join_projects[i + 1])
+    })
+  })
 }
 
 prune_query <- function(query_list, compare) {
@@ -81,13 +115,34 @@ prune_query <- function(query_list, compare) {
   query_list
 }
 
-build_sub_graph <- function(join_path, network) {
-  graph_nodes <- unique(do.call(c, join_path))
-  sub_graph <- join_graph <- sapply(graph_nodes, \(node) {
-    joined_projects <- names(network[[node]]$joined_projects)
-    joined_projects[joined_projects %in% graph_nodes]
-  }, simplify = FALSE, USE.NAMES = TRUE)
-  sub_graph
+build_sub_graph <- function(join_path) {
+  # Initialize an empty list to store edges
+  edges <- list()
+
+  # Loop through each join path
+  for (path in join_path) {
+    # Create edges between consecutive elements in each path
+    if (length(path) > 1) {
+      for (i in seq_len(length(path) - 1)) {
+        a <- path[i]
+        b <- path[i + 1]
+
+        # Add bidirectional connections
+        edges[[a]] <- unique(c(edges[[a]], b))
+        edges[[b]] <- unique(c(edges[[b]], a))
+      }
+    }
+  }
+
+  # Ensure all nodes appear in the graph, even if isolated
+  all_nodes <- unique(unlist(join_path))
+  for (node in all_nodes) {
+    if (is.null(edges[[node]])) {
+      edges[[node]] <- character(0)
+    }
+  }
+
+  edges
 }
 
 get_dependend_links <- function(query_list, network) {

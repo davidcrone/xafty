@@ -90,10 +90,11 @@ build_dependency_codes <- function(link, network, dag_sm) {
   }
   # This splits queries from object queries which need a different prefix
   function_codes <- unique(do.call(c, lapply(queries, get_scoped_function_order, network = network)))
+  # TODO: link link$joins$projects may need re computation with project_needs_join when a variable name has been interpolated
   join_codes <- character(length(link$joins$projects))
   for (i in seq_along(link$joins$projects)) {
     projects <- link$joins$projects[[i]]
-    join_id <- paste0("join.", paste0(projects, collapse = "."))
+    join_id <- paste0("join.", paste0(sort(projects), collapse = "."))
     # This is later used to resolve the join
     dag_sm$set_join(id = join_id, projects = projects)
     dag_sm$set_join_projects(projects = projects)
@@ -254,8 +255,8 @@ get_all_projects <- function(item) {
   unique(c(main_project, lead_projects))
 }
 
-get_lead_projects <- function(link) {
-  queries <- get_queries(link)
+get_lead_projects <- function(link, which = c("xafty_query", "xafty_object")) {
+  queries <- get_queries(link, which = which)
   arg_w_query <- names(queries)
   # The lead project will always be the first project in a query
   vapply(arg_w_query, \(arg_name) queries[[arg_name]][[1]]$from, FUN.VALUE = character(1))
@@ -392,6 +393,7 @@ get_join_dependencies <- function(link, network) {
   )
 }
 
+# Expects merged queries
 project_needs_join <- function(project, query_list, network) {
   links <- lapply(query_list, get_links, network = network)
   deps_projects <- names(links)
@@ -399,7 +401,7 @@ project_needs_join <- function(project, query_list, network) {
   # which means the link's project must not be joined
   if(!project %in% deps_projects) return(FALSE)
   links_ <- links[[project]]
-  query_list <- flatten_list(remove_empty_lists(lapply(links, get_queries,
+  query_list <- flatten_list(remove_empty_lists(lapply(links_, get_queries,
                                                        which = "xafty_query", temper = TRUE, network = network)))
   query_list <- do.call(merge_queries, query_list)
   # query is depended on a root node for that project and therefore needs to be joined

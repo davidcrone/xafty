@@ -95,8 +95,8 @@ test_that("nascent two projects that have not yet been joined will raise an erro
   expect_error(nascent(test_network, query(occupations = "id", customer_data = c("name"))), regexp = "building a join path is not possible")
 })
 
-test_that("An unjoined project and a container work seamlessly together in nascent", {
-  test_network <- init_network(name = "test_network", projects = "customer_data", containers = "occupations")
+test_that("An unjoined project and a project work seamlessly together in nascent", {
+  test_network <- init_network(name = "test_network", projects = c("customer_data", "occupations"))
   test_network$customer_data$get(get_sample_data())
   test_network$occupations$add(add_score_category(data = query(customer_data = "score")))
   test_data <- nascent(test_network, customer_data = "name", occupations= "category")

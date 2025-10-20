@@ -141,7 +141,7 @@ merge_networks <- function(name, ...) {
     network_names[vapply(network_names, \(nn) is.environment(network_env[[nn]]), FUN.VALUE = logical(1))]
   })
 
-  # TODO: States with the same name need to be handled here
+  # TODO: States with the same name from different networks need to be handled here
   li_states <- lapply(passed_networks, \(network_env) network_env$states)
   li_states <- do.call(append, li_states)
   new_network_env$states <- li_states

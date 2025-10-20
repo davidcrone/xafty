@@ -12,7 +12,7 @@ scope <- function(data, link, mask) {
       for (col in selection) {
         pos_col <- which(colnames_dataset %in% col)
         if(project %in% mask[[col]]) {
-          # TODO: This can be perhaps replaced instead of the first project with a more clean prepared name
+          # TODO: This can be perhaps replaced instead of the first project with a more cleanly prepared name
           projects_masked <- mask[[col]]
           scoped_name <- paste0(projects_masked[1], ".", col)
         } else {

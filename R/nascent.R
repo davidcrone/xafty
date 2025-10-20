@@ -63,7 +63,7 @@ get_join_functions <- function(from, to, network, sm, state_query = NULL) {
   # This enables later unscope of variables that might be scoped from a different project not expected by the link queries
   lst_masked_columns <- get_masked_column_names(link)
   sm$set_mask(lst_masked_columns)
-  join_id = paste0("join.", paste0(sort(c(from, to)), collapse = "."))
+  join_id <- paste0("join.", paste0(sort(c(from, to)), collapse = "."))
   look_up_joins <- setNames(list(names(code)), nm = join_id)
   list(
     link = link,
@@ -151,7 +151,7 @@ get_chatty_func_name_from_network <- function(col, project, network, env_name = 
 }
 
 execute_stack <- function(link, mask, data_sm, default_states) {
-  projects <- unique(c(link$project, get_lead_projects(link)))
+  projects <- unique(c(link$project, get_lead_projects(link, which = "xafty_query")))
   executable_args <- build_executable_args(link = link, data_sm = data_sm, mask = mask, default_states = default_states)
   # Doing this to avoid too much memory use, is this necessary?
   for (project in projects) {
@@ -160,7 +160,7 @@ execute_stack <- function(link, mask, data_sm, default_states) {
     }
   }
   new_key <- paste0(projects, collapse = "_")
-
+  # message(link$fun_name)
   data <- tryCatch(
     {
       do.call(link$fun, executable_args)

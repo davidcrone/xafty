@@ -29,6 +29,7 @@ test_that("resolve_dependencies can correctly resolve a join link", {
   dag_sm <- build_tree(network)
   query <- query(customer_data = "category", occupations = "department")
   globals <- dots_to_query(network, query)
+  dag_sm <- initialize_join_projects(query_list = globals$internal, network = network, dag_sm = dag_sm)
   sm <- resolve_dependencies(query_list = globals, network = network, dag_sm = dag_sm)
   query <- sm$get_query()
   projects <- get_projects(query)
@@ -36,7 +37,7 @@ test_that("resolve_dependencies can correctly resolve a join link", {
   expect_in(query[["occupations"]]$select, c("department", "id"))
   expect_in(projects, c("customer_data", "occupations"))
   execution_order <- resolve_function_stack(sm = sm)
-  expect_equal(execution_order, c("occupations.get_additional_info", "customer_data.get_sample_data", "customer_data.add_score_category", "fuse.customer_data.occupations"))
+  expect_equal(execution_order, c("occupations.get_additional_info", "customer_data.get_sample_data", "customer_data.add_score_category", "customer_data.join_datasets"))
 })
 
 test_that("resolve_dependencies can correctly resolve a column that depends on two projects", {
@@ -79,6 +80,7 @@ test_that("resolve_dependencies can correctly resolve a column that depends on t
   dag_sm <- build_tree(network)
   globals <- dots_to_query(network, query)
   dag_sm <- initialize_join_path(join_path = query$join_path, network = network, dag_sm = dag_sm, state_query = query$states)
+  dag_sm <- initialize_join_projects(query_list = globals$internal, network = network, dag_sm = dag_sm)
   sm <- resolve_dependencies(query_list = globals, network = network, dag_sm = dag_sm)
   query <- sm$get_query()
   projects <- get_projects(query)
