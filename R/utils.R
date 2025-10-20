@@ -375,21 +375,19 @@ get_default_state <- function(name, network_env) {
 #' Get Dependent Joins for Each Argument
 get_join_dependencies <- function(link, network) {
   queries <- get_queries(link = link, which = "xafty_query", temper = TRUE, network = network)
+  args <- names(queries)
   list_projects <- sapply(queries, get_projects, simplify = FALSE, USE.NAMES = TRUE)
-  if(length(queries) <= 0){
-    self <- TRUE
-  } else {
-    list_self <- sapply(queries,
-                        \(query_list) project_needs_join(project = link$project, query_list = query_list, network = network),
-                        simplify = FALSE)
-    self <- any(vapply(list_self, \(log) log, FUN.VALUE = logical(1)))
-  }
-  is_one_project <- vapply(list_projects, \(projects) length(projects) <= 1, FUN.VALUE = logical(1))
-  list_projects <- list_projects[!is_one_project]
-  # TODO: Remove self project, where list self is TRUE
+  list_join_projects <- sapply(args, \(arg) {
+    query_list <- queries[[arg]]
+    projects <- list_projects[[arg]]
+    logical_vec <- vapply(projects, \(project) project_needs_join(project = project, query_list = query_list, network = network),
+           FUN.VALUE = logical(1), USE.NAMES = TRUE)
+    projects[logical_vec]
+  }, simplify = FALSE, USE.NAMES = TRUE)
+  is_one_project <- vapply(list_join_projects, \(projects) length(projects) <= 1, FUN.VALUE = logical(1))
+  list_projects <- list_join_projects[!is_one_project]
   list(
-    projects = list_projects,
-    self = self
+    projects = list_projects
   )
 }
 

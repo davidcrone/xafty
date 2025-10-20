@@ -22,9 +22,20 @@ dependencies <- function(query_list, state_list = NULL, network, dag_sm = build_
 
 set_join_dependencies <- function(network, dag_sm, state_query = NULL) {
   new_projects <- projects_not_in_join_path(dag_sm = dag_sm, network = network)
-  if(length(new_projects) <= 1) return(dag_sm)
-  join_path <- get_shortest_join_path_for(new_projects, network, sm = dag_sm)
-  dag_sm$set_join_path(join_path)
+  if(length(new_projects) > 1) {
+    join_path <- get_shortest_join_path_for(new_projects, network, sm = dag_sm)
+    dag_sm$set_join_path(join_path)
+  } else {
+    join_path <- dag_sm$get_join_path()
+  }
+  links <- join_dependencies(join_path = join_path, network = network, dag_sm = dag_sm, state_query = state_query)
+  queries <- get_dependend_queries(links)
+  query_list <- do.call(merge_queries, queries)
+  dependencies(query_list = query_list, network = network, dag_sm = dag_sm)
+  invisible(dag_sm)
+}
+
+join_dependencies <- function(join_path, network, dag_sm, state_query) {
   li_joins <- lapply(join_path, \(path) {
     from <- path[-length(path)]
     to <- path[-1]
@@ -32,13 +43,10 @@ set_join_dependencies <- function(network, dag_sm, state_query = NULL) {
   })
   li_joins <- flatten_list(li_joins)
   li_lookup <- build_flat_lookup(li_joins = li_joins)
+  build_join_bridges(li_lookup = li_lookup, network = network, dag_sm = dag_sm)
   # Here the potential new dependencies will be resolved calling dependencies and join functions again.
   links <- lapply(li_joins, \(li_join) li_join$link)
-  queries <- get_dependend_queries(links)
-  query_list <- do.call(merge_queries, queries)
-  dependencies(query_list = query_list, network = network, dag_sm = dag_sm)
-  build_join_bridges(li_lookup = li_lookup, network = network, dag_sm = dag_sm)
-  invisible(dag_sm)
+  links
 }
 
 build_flat_lookup <- function(li_joins) {

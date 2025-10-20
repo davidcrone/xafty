@@ -10,6 +10,37 @@ nascent <- function(network, ...) {
   data
 }
 
+#' Build an 'Evaluable' Data Pipeline Object
+#' @description
+#' When querying an object, the xafty algorithm recursively iterates through the network and obtains all functions
+#' necessary. Before evaluating all functions, the xafty algorithm creates a dag-object which contains the full
+#' information about dependencies. The object can then be evaluated with function: evaluate_dag
+#' @param globals description
+#' @returns A list
+#' @export
+build_dag <- function(globals, network, frame = "main") {
+  dag_sm <- build_tree(network = network)
+  dag_sm <- initialize_join_path(join_path = globals$join_path, dag_sm = dag_sm)
+  dag_sm <- initialize_join_projects(query_list = globals$internal, network = network, dag_sm = dag_sm)
+  dag_sm <- resolve_dependencies(query_list = globals, network = network, dag_sm = dag_sm)
+  dag_sm <- resolve_objects(network = network, dag_sm = dag_sm)
+  topological_sorted_codes <- resolve_function_stack(sm = dag_sm)
+  list_links <- sort_links(topological_sorted_codes, sm = dag_sm)
+  dag <- list(
+    full_query = dag_sm$get_query(),
+    order_query = globals$order,
+    dag = dag_sm$get_codes(),
+    execution_order = topological_sorted_codes,
+    sorted_links = list_links,
+    join_path = dag_sm$get_join_path(),
+    masked_columns = dag_sm$get_mask(),
+    network_states = dag_sm$get_network_state(),
+    query_states = globals$states,
+    objects = dag_sm$get_objects()
+  )
+  dag
+}
+
 sort_links <- function(codes, sm) {
   links <- sm$get_links()
   lapply(codes, \(code) links[[code]])
@@ -93,7 +124,7 @@ build_join_graph <- function(network) {
 }
 
 projects_not_in_join_path <- function(dag_sm, network) {
-  projects <- projects <- dag_sm$get_join_projects()
+  projects <- dag_sm$get_join_projects()
   join_path <- dag_sm$get_join_path()
   projects_joined <- unique(do.call(c, join_path))
   projects[!projects %in% projects_joined]
@@ -183,37 +214,6 @@ execute_stack <- function(link, mask, data_sm, default_states) {
   data_sm$set_data(data = data, key = new_key)
 }
 
-#' Build an 'Evaluable' Data Pipeline Object
-#' @description
-#' When querying an object, the xafty algorithm recursively iterates through the network and obtains all functions
-#' necessary. Before evaluating all functions, the xafty algorithm creates a dag-object which contains the full
-#' information about dependencies. The object can then be evaluated with function: evaluate_dag
-#' @param globals description
-#' @returns A list
-#' @export
-build_dag <- function(globals, network, frame = "main") {
-  dag_sm <- build_tree(network = network)
-  dag_sm <- initialize_join_path(join_path = globals$join_path, network = network, dag_sm = dag_sm, state_query = globals$states)
-  dag_sm <- initialize_join_projects(query_list = globals$internal, network = network, dag_sm = dag_sm)
-  dag_sm <- resolve_dependencies(query_list = globals, network = network, dag_sm = dag_sm)
-  dag_sm <- resolve_objects(network = network, dag_sm = dag_sm)
-  topological_sorted_codes <- resolve_function_stack(sm = dag_sm)
-  list_links <- sort_links(topological_sorted_codes, sm = dag_sm)
-  dag <- list(
-    full_query = dag_sm$get_query(),
-    order_query = globals$order,
-    dag = dag_sm$get_codes(),
-    execution_order = topological_sorted_codes,
-    sorted_links = list_links,
-    join_path = dag_sm$get_join_path(),
-    masked_columns = dag_sm$get_mask(),
-    network_states = dag_sm$get_network_state(),
-    query_states = globals$states,
-    objects = dag_sm$get_objects()
-  )
-  dag
-}
-
 evaluate_dag <- function(dag) {
   data_sm <- data_sm()
   data_sm <- set_states(states = dag$query_states, data_sm = data_sm)
@@ -261,15 +261,11 @@ set_states <- function(states, data_sm) {
   data_sm
 }
 
-initialize_join_path <- function(join_path, network, dag_sm, state_query) {
+initialize_join_path <- function(join_path, dag_sm) {
   if(is.null(join_path)) return(invisible(dag_sm))
-  browser() # Needs to be changed since get_join_functions has changed
   dag_sm$set_join_path(join_path)
-  lapply(join_path, \(path) {
-    from <- path[-length(path)]
-    to <- path[-1]
-    mapply(get_join_functions, from, to, MoreArgs = list(network = network, sm = dag_sm, state_query = state_query))
-  })
+  join_projects <- unique(unlist(join_path, recursive = TRUE, use.names = FALSE))
+  dag_sm$set_join_projects(projects = join_projects)
   invisible(dag_sm)
 }
 
