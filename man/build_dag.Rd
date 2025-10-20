@@ -7,7 +7,11 @@
 build_dag(globals, network, frame = "main")
 }
 \arguments{
-\item{globals}{description}
+\item{globals}{A list returned by dots_to_query()}
+
+\item{network}{A xafty network}
+
+\item{frame}{Used for debugging}
 }
 \value{
 A list

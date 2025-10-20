@@ -110,7 +110,6 @@ interpolate_link_queries <- function(link, state_list = NULL, network) {
   link
 }
 
-
 find_xafty_objects <- function(arg) {
   if(is_state_variable(arg)) return("xafty_state")
   if(inherits(arg, "xafty_object_query")) return("xafty_object")
@@ -173,7 +172,7 @@ is_state_variable <- function(arg) {
   is_valid_variable_name(match = match)
 }
 
-is_xafty_object_variable <- function(arg) {
+is_object_variable <- function(arg) {
   if(!is.character(arg) || length(arg) != 1) return(FALSE)
   if(!is_squared_variable(arg)) return(FALSE)
   match <- get_squared_variable(arg)
@@ -203,12 +202,6 @@ get_ordered_join_pairs <- function(link) {
     }
   }
   pairs
-}
-
-build_join_pairs <- function(li_pairs) {
-  do.call(c, lapply(li_pairs, \(pair) {
-    paste0("join.", pair[1], ".", pair[2])
-  }))
 }
 
 build_executable_args <- function(link, data_sm, mask, default_states) {
@@ -243,13 +236,6 @@ build_executable_args <- function(link, data_sm, mask, default_states) {
   executable_args
 }
 
-get_all_projects <- function(item) {
-  main_project <- item$info$project
-  args_with_lead <- item$network$arg_defs$names["xafty_query" == item$network$arg_defs$link]
-  lead_projects <- vapply(args_with_lead, \(arg) item$network$dependencies[[arg]]$lead, FUN.VALUE = character(1))
-  unique(c(main_project, lead_projects))
-}
-
 get_lead_projects <- function(link, which = c("xafty_query", "xafty_object")) {
   queries <- get_queries(link, which = which)
   arg_w_query <- names(queries)
@@ -259,28 +245,6 @@ get_lead_projects <- function(link, which = c("xafty_query", "xafty_object")) {
 
 get_lead_project <- function(query_list) {
   query_list[[1]]$from
-}
-
-build_cartesian_product <- function(query) {
-  df_cartesian <- do.call(rbind, lapply(query, \(sq) data.frame(project = rep(sq$from, length(sq$select)), column = sq$select)))
-  row.names(df_cartesian) <- NULL
-  df_cartesian
-}
-
-get_flattened_cartesian <- function(link) {
-  queries <- get_queries(link)
-  sapply(queries, build_cartesian_product, simplify = FALSE, USE.NAMES = TRUE)
-}
-
-get_dependend_functions <- function(link, network, scope = FALSE) {
-  li_cartesian <- get_flattened_cartesian(link)
-  sapply(li_cartesian, \(df) {
-    n_row <- nrow(df)
-    func_names <- vapply(seq(n_row), \(n) get_chatty_func_name_from_network(col = df$column[n], project = df$project[n], network = network),
-                         FUN.VALUE = character(1))
-    if(scope) return(paste0(df$project, ".", func_names))
-    func_names
-  }, simplify = FALSE, USE.NAMES = TRUE)
 }
 
 get_added_variables <- function(link, network) {
@@ -365,25 +329,6 @@ get_default_state <- function(name, network_env) {
   state_registered <- name %in% existing_states
   if(!state_registered) return(network_env$settings$state$global_default)
   network_env$states[[name]]$default
-}
-
-#' Get Dependent Joins for Each Argument
-get_join_dependencies <- function(link, network) {
-  queries <- get_queries(link = link, which = "xafty_query", temper = TRUE, network = network)
-  args <- names(queries)
-  list_projects <- sapply(queries, get_projects, simplify = FALSE, USE.NAMES = TRUE)
-  list_join_projects <- sapply(args, \(arg) {
-    query_list <- queries[[arg]]
-    projects <- list_projects[[arg]]
-    logical_vec <- vapply(projects, \(project) project_needs_join(project = project, query_list = query_list, network = network),
-           FUN.VALUE = logical(1), USE.NAMES = TRUE)
-    projects[logical_vec]
-  }, simplify = FALSE, USE.NAMES = TRUE)
-  is_one_project <- vapply(list_join_projects, \(projects) length(projects) <= 1, FUN.VALUE = logical(1))
-  list_projects <- list_join_projects[!is_one_project]
-  list(
-    projects = list_projects
-  )
 }
 
 # Expects merged queries

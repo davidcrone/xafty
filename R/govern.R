@@ -23,10 +23,6 @@ data_sm <- function() {
     state_env$data[[key]]
   }
 
-  get_projects <- function() {
-    names(state_env$projects)
-  }
-
   get_projects_by_key <- function(key) {
     projects <- names(state_env$projects)
     contains_key <- vapply(projects, \(project) {
@@ -45,16 +41,8 @@ data_sm <- function() {
     state_env$objects[[object_key]]
   }
 
-  get_object_names <- function() {
-    names(state_env$objects)
-  }
-
   set_states <- function(states) {
     state_env$states <- states
-  }
-
-  get_states <- function(network) {
-    state_env$states
   }
 
   get_state <- function(name) {
@@ -73,9 +61,7 @@ data_sm <- function() {
     get_data_by_key = get_data_by_key,
     set_object = set_object,
     get_object = get_object,
-    get_object_names = get_object_names,
     set_states = set_states,
-    get_states = get_states,
     get_state = get_state,
     get_projects = get_projects
   )

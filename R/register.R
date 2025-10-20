@@ -17,6 +17,73 @@ register <- function(quosure, project, network, link_type, ...) {
   invisible(network)
 }
 
+add_to_network <- function(item, network, project, ...) {
+  .dots <- list(...)
+  project_env <- network[[project]]
+  fun_name <- item$fun_name
+
+  if(!is.null(.dots[["object_name"]])) {
+    added_object <- get_squared_variable(item$added_object)
+    assign(added_object, fun_name, envir = project_env$objects)
+  }
+  variables <- item$variables
+  for (new_col in variables) {
+    assign(new_col, fun_name, envir = project_env$variables)
+  }
+  added_joins <- get_ordered_join_pairs(link = item)
+  for (new_join in added_joins) {
+    from <-  new_join[1]
+    to <- new_join[2]
+    assign(to, fun_name, envir = network[[from]]$joined_projects)
+  }
+  invisible(network)
+}
+
+add_to_ruleset <- function(item, link_type = "link", network, project, ...) {
+  function_name <- item$fun_name
+  .dots <- list(...)
+  # When registering an object, the object should only be registered in the project
+  if(is.null(.dots[["object_name"]])) {
+    projects <- unique(c(project, get_lead_projects(item)))
+  } else {
+    projects <- project
+  }
+  new_rule <- list(item)
+  new_rule <- setNames(new_rule, function_name)
+  for (proj in projects) {
+    current_rules <- network[[proj]]$ruleset[[link_type]]
+    if(function_name %in% names(current_rules)) {
+      update <- isTRUE(.dots[["update"]])
+      if(!update) {
+        user_update <- readline(paste0("Function '", function_name, "' was already registered in project '",  paste0(projects, collapse = " and "),"'. Would you like to update? (y/n): "))
+        if(user_update == "y") {
+          update <- TRUE
+        } else {
+          update <- FALSE
+        }
+      }
+      # Check the user input
+      if (update) {
+        # Proceed with the update
+        # remove the previously registered variables
+        clean_variables <- current_rules[[function_name]]$variables
+        rm(list = clean_variables, envir = network[[project]]$variables)
+        current_rules[[function_name]] <- NULL
+        if(exists("user_update")) {
+          message(paste0("Updated function '", function_name, "'!"))
+        }
+        # Add your update code here
+      } else {
+        # Abort the function
+        message(paste0("Function '", item$fun_name, "' exists already in ruleset of project '", paste0(projects, collapse = " and "),"'"))
+      }
+    }
+    add_rules <- c(current_rules, new_rule)
+    network[[proj]]$ruleset[[link_type]] <- add_rules
+  }
+  network
+}
+
 #' Get the Package Name of a Function
 #'
 #' This function determines the package where a given function is defined.
@@ -72,7 +139,7 @@ link_add_object <- function(link, object_name = NULL) {
   if(!is.null(object_name)) {
     is_squared_already <- is_squared_variable(object_name)
     if(!is_squared_already) object_name <- paste0("[", object_name, "]")
-    if(!is_xafty_object_variable(object_name)) stop("object_name is not a valid xafty object variable")
+    if(!is_object_variable(object_name)) stop("object_name is not a valid xafty object variable")
     link$added_object <- object_name
   } else {
     link$added_object <- NULL
@@ -93,6 +160,25 @@ link_add_variables <- function(link, variable_names = NULL, network) {
 link_add_joins <- function(link, network) {
   link$joins <- get_join_dependencies(link = link, network = network)
   link
+}
+
+#Get Dependent Joins for Each Argument
+get_join_dependencies <- function(link, network) {
+  queries <- get_queries(link = link, which = "xafty_query", temper = TRUE, network = network)
+  args <- names(queries)
+  list_projects <- sapply(queries, get_projects, simplify = FALSE, USE.NAMES = TRUE)
+  list_join_projects <- sapply(args, \(arg) {
+    query_list <- queries[[arg]]
+    projects <- list_projects[[arg]]
+    logical_vec <- vapply(projects, \(project) project_needs_join(project = project, query_list = query_list, network = network),
+                          FUN.VALUE = logical(1), USE.NAMES = TRUE)
+    projects[logical_vec]
+  }, simplify = FALSE, USE.NAMES = TRUE)
+  is_one_project <- vapply(list_join_projects, \(projects) length(projects) <= 1, FUN.VALUE = logical(1))
+  list_projects <- list_join_projects[!is_one_project]
+  list(
+    projects = list_projects
+  )
 }
 
 unpack_args <- function(exp, env) {
@@ -128,7 +214,7 @@ validate_network_integrity <- function(link, network) {
   for (query in flat_queries) {
     project <- query$from
     selection <- query$select
-    if (is_xafty_object_variable(selection)) {
+    if (is_object_variable(selection)) {
       validate_query(col = get_squared_variable(selection), project = project, network = network, env_name = "objects")
     } else {
       for (col in selection) {

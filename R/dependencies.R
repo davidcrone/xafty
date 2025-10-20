@@ -163,7 +163,7 @@ get_links <- function(xafty_query, network) {
   project <- xafty_query$from
   selects <- xafty_query$select
   links <- lapply(selects, \(select) {
-              if(is_xafty_object_variable(select)) {
+              if(is_object_variable(select)) {
                 object_name <- get_squared_variable(select)
                 get_chatty_object_from_network(name = object_name, project = project, network = network)
               } else {

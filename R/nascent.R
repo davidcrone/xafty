@@ -15,7 +15,9 @@ nascent <- function(network, ...) {
 #' When querying an object, the xafty algorithm recursively iterates through the network and obtains all functions
 #' necessary. Before evaluating all functions, the xafty algorithm creates a dag-object which contains the full
 #' information about dependencies. The object can then be evaluated with function: evaluate_dag
-#' @param globals description
+#' @param globals A list returned by dots_to_query()
+#' @param network A xafty network
+#' @param frame Used for debugging
 #' @returns A list
 #' @export
 build_dag <- function(globals, network, frame = "main") {
@@ -87,7 +89,7 @@ get_join_functions <- function(from, to, network, sm, state_query = NULL) {
   fun_name <- network[[from]]$joined_projects[[to]]
   link <- network[[from]]$ruleset$link[[fun_name]]
   link <- interpolate_link_queries(link = link, state_list = state_query, network = network)
-  code <- build_dependency_codes(link = link, network = network, dag_sm = dag_sm)
+  code <- build_dependency_codes(link = link, network = network, dag_sm = sm)
   sm$set_nodes(link = link, code = code)
   set_objects(links = list(link), network = network, dag_sm = sm)
   # Here columns that have the same variable names be joined into one variable will be noted in the mask state variable.
@@ -101,16 +103,6 @@ get_join_functions <- function(from, to, network, sm, state_query = NULL) {
     projects = c(from, to),
     lookup = look_up_joins
   )
-}
-
-join_code_generator <- function(link, network, dag_sm) {
-  fused_projects <- get_lead_projects(link)
-  join_code <- paste0("fuse.", paste0(fused_projects, collapse = "."))
-  join_dependencies <- build_dependency_codes(link = link, network = network, dag_sm = dag_sm)
-  join_list_main <- setNames(join_dependencies, join_code)
-  fun_codes <- vapply(get_ordered_join_pairs(link), \(pair) paste0("join.", pair[1], ".", pair[2]), FUN.VALUE = character(1))
-  join_list_help <- sapply(fun_codes, \(code) join_code, simplify = FALSE, USE.NAMES = TRUE)
-  c(join_list_main, join_list_help)
 }
 
 build_join_graph <- function(network) {

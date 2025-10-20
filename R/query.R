@@ -56,7 +56,18 @@ with <- function(query_list, ...) {
   state_query
 }
 
-
+#' Add a Predefined Join Path to a Query
+#' @description
+#' The function gives control over the desired joins in order to bring all projects together into one data.frame. The joins are
+#' read left-to-right. An example can be found under examples on how to structure the list.
+#' @param query_list A xafty query list returned by query()
+#' @param ... List of the join path
+#' @examples
+#' query(projectA = "col1", projectB = "col2", projectC = "col3") |>
+#' add_join_path(path1 = c("projectA", "projectB"), path2 = c("projectA", "projectC"))
+#' # this creates the following joins projectA joins with projectB and projectA joins with projectC
+#' @returns A list
+#' @export
 add_join_path <- function(query_list, ...) {
   .li_states <- list(...)
   class(.li_states) <- c("list", "xafty_join_path")
