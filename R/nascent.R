@@ -119,7 +119,7 @@ projects_not_in_join_path <- function(dag_sm, network) {
   projects[!projects %in% projects_joined]
 }
 
-get_shortest_join_path_for <- function(projects, network, sm) {
+greedy_best_first_search <- function(projects, network, sm) {
   graph <- build_join_graph(network)
   check_graph(graph = graph, check_projects = projects)
   join_paths <- sm$get_join_path()

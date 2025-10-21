@@ -1,10 +1,11 @@
 resolve_dependencies <- function(query_list, network, dag_sm = NULL) {
   dependencies(query_list = query_list$internal, state_list = query_list$states, network = network, dag_sm = dag_sm)
-  set_join_dependencies(network = network, dag_sm = dag_sm, state_query = query_list$states)
+  resolve_join_dependencies(network = network, dag_sm = dag_sm, state_query = query_list$states)
   dag_sm
 }
 
 dependencies <- function(query_list, state_list = NULL, network, dag_sm = build_tree()) {
+  if (length(query_list) == 0) return(dag_sm)
   # The query is merged with queries whose dependencies have already been resolved
   dag_sm$set_query(query_list)
   links <- get_dependend_links(query_list = query_list, network = network)
@@ -13,17 +14,19 @@ dependencies <- function(query_list, state_list = NULL, network, dag_sm = build_
   set_objects(links = links, network = network, dag_sm = dag_sm)
   queries <- get_dependend_queries(links)
   new_query_list <- do.call(merge_queries, queries)
-  # TODO bring recursive termination to beginning of the function and add set_join_dependencies to the end of the function
-  if (length(new_query_list) == 0) return(dag_sm)
   # removes already visited nodes leading to an eventual termination of the recursive function
   query_pruned <- prune_query(query_list = new_query_list, compare = dag_sm$get_query())
   dependencies(query_list = query_pruned, state_list = state_list, network = network, dag_sm = dag_sm)
 }
 
-set_join_dependencies <- function(network, dag_sm, state_query = NULL) {
+# Currently re-calling resolve_join_dependencies is inefficient, because if the join_path has not changed,
+# running join_dependencies again is unnecessary which would also run dependencies again. running join dependencies again
+# would only be necessary when the dependencies of the join-dependencies would need a totally different join not yet in the join_path
+# resolve_join_dependencies would need to be rewritten to only
+resolve_join_dependencies <- function(network, dag_sm, state_query = NULL) {
   new_projects <- projects_not_in_join_path(dag_sm = dag_sm, network = network)
   if(length(new_projects) > 1) {
-    join_path <- get_shortest_join_path_for(new_projects, network, sm = dag_sm)
+    join_path <- greedy_best_first_search(new_projects, network, sm = dag_sm)
     dag_sm$set_join_path(join_path)
   } else {
     join_path <- dag_sm$get_join_path()

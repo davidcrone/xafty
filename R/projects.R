@@ -164,14 +164,21 @@ create_add_state <- function(network_env) {
       test_name <- name
     }
     if(!is_state_variable(test_name)) stop("Please enter a valid state name")
-    existing_states <- names(network_env$sates)
+    existing_states <- names(network_env$states)
     state_exists <- name %in% existing_states
-    # TODO Ask user if they want to overwrite the state
-    network_env$states[[name]] <- list(
-      allowed = allowed,
-      example = example,
-      default = default,
-      docu = documentation
-    )
+    user_choice <- "y"
+    if(state_exists){
+      user_choice <- readline(paste0("State '", name, "' was already added to the network '",  network_env$settings$network_name,"'. Would you like to update? (y/n): "))
+    }
+    if(user_choice == "y" | user_choice == "Y") {
+      network_env$states[[name]] <- list(
+        allowed = allowed,
+        example = example,
+        default = default,
+        docu = documentation
+      )
+    } else {
+      warning(paste0("State ", name, " was not added to the network!"))
+    }
   }
 }

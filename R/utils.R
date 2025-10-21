@@ -86,6 +86,7 @@ build_dependency_codes <- function(link, network, dag_sm) {
   # This splits queries from object queries which need a different prefix
   function_codes <- unique(do.call(c, lapply(queries, get_scoped_function_order, network = network)))
   # TODO: link link$joins$projects may need re computation with project_needs_join when a variable name has been interpolated
+  #  -> This would also make a differentiation necessary between a link that has been "tampered" with and one who was not
   join_codes <- character(length(link$joins$projects))
   for (i in seq_along(link$joins$projects)) {
     projects <- link$joins$projects[[i]]
