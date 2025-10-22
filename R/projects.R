@@ -39,6 +39,7 @@ create_add_project <- function(network_env) {
     new_ruleset <- ruleset()
     .network_env <- add_new_project(project = name, ruleset = new_ruleset, network_env = network_env,
                                     link_types = c("get", "add", "join", "add_object"))
+    .network_env <- set_project_print_order(projects = name, network = .network_env)
     invisible(.network_env)
   }
   add_project
@@ -62,9 +63,7 @@ add_new_project <- function(project, ruleset, network_env, link_types = c("get",
   for (env_name in env_names) {
     assign(env_name, new.env(), envir = project_env)
   }
-
   link_funs <- bundle_link_functions(project = project, env = network_env)
-
   for (lp in link_types) {
     assign(lp, link_funs[[lp]], envir = project_env)
   }

@@ -1,11 +1,13 @@
 Package: xafty
 Type: Package
 Title: Build a Scalable Data Pipeline
-Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
+Version: 0.2.0
+Author: person(given = "David", family = "Crone", email = "davidjvcrone@gmail.com")
+Maintainer: David Crone <davidjvcrone@gmail.com>
+Description: xafty lets you build data pipelines as a directed acyclic graph (DAG), 
+  turning each step into a reusable node in a knowledge network. 
+  This makes pipelines more scalable, easier to collaborate on, 
+  and less complex over time through layered abstraction.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true

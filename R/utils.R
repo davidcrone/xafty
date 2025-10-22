@@ -7,22 +7,26 @@
 print.xafty_network <- function(x, ...) {
   network_name <- x$settings$network_name
   values_in_x <- names(x)
-  logcal_env <- vapply(values_in_x, \(project) is.environment(x[[project]]), FUN.VALUE = logical(1))
-  projects <- names(logcal_env)[logcal_env]
-  cat(paste0("Number of projects in ", network_name, ": ", length(projects), "\n"))
-  cat("\n")
-  for(project in projects) {
-    columns <- names(x[[project]]$variables)
+  projects <- x$settings$projects$print_order$project
+  cat(paste0("Number of projects in network '", network_name, "': ", length(projects), "\n"))
+  if(length(projects) > 0) {
+    cat("\n")
+  } else {
+    cat("\U1F4A1 ", "\033[3mHint: Add a project to your network like this: network$add_project(\"my_project_name\")\033[0m\n", sep = "")
+  }
+  for(i in seq_along(projects)) {
+    project <- projects[i]
+    variables <- names(x[[project]]$variables)
     objects <- paste0("[", names(x[[project]]$objects), "]")
     joins <- names(x[[project]]$joined_projects)
-    columns_print <- ifelse(length(columns) > 0, paste0(columns, collapse = ", "), "'none'")
-    objects_print <- ifelse(length(columns) > 0, paste0(objects, collapse = ", "), "'none'")
+    variables_print <- ifelse(length(variables) > 0, paste0(variables, collapse = ", "), "'none'")
+    objects_print <- ifelse(length(objects) > 0, paste0(objects, collapse = ", "), "'none'")
     joins_print <- ifelse(length(joins) > 0, paste0(joins, collapse = ", "), "'none'")
     cat(paste0("Project: ", project, "\n"))
-    cat(paste0("Columns: ", columns_print, "\n"))
+    cat(paste0("Variables: ", variables_print, "\n"))
     cat(paste0("Objects: ", objects_print, "\n"))
     cat(paste0("Joins: ", joins_print, "\n"))
-    cat("\n")
+    if(i < length(projects)) cat("\n")
   }
 }
 
