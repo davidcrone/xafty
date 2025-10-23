@@ -2,29 +2,43 @@
 % Please edit documentation in R/ruleset.R
 \name{set_project_print_order}
 \alias{set_project_print_order}
-\title{Change Print Order of Projects}
+\title{Set or Change the Print Order of Projects}
 \usage{
 set_project_print_order(projects, order = NULL, network)
 }
 \arguments{
-\item{projects}{Character of project names of which the order should be changed}
+\item{projects}{A character vector containing the names of the projects whose print order should be set or updated.}
 
-\item{order}{Numeric vector with equal length of parameter projects to set the corresponding print order}
+\item{order}{A numeric vector of the same length as `projects`, specifying the desired print order for each project.
+If `NULL` (the default), each project will be appended to the end of the current order.}
 
-\item{network}{A xafty network containing the projects}
+\item{network}{A `xafty` network object containing the projects.}
 }
 \value{
-A xafty network invisibly
+The updated `xafty` network (returned invisibly).
 }
 \description{
-The function allows to manually set the order for each project in the network. It is also possible to set the order
-for several projects at once by providing an equally length order vector.
+This function allows you to manually define or update the display order of projects within a `xafty` network.
+You can specify the print order for individual projects or for multiple projects simultaneously by providing a numeric
+vector of corresponding order values. If no order vector is provided, each listed project will be added sequentially
+to the end of the existing order.
+}
+\details{
+If a specified project already exists in the print order, its order value will be updated.
+If a project is not yet part of the print order but exists in the network, it will be added with the specified or automatically assigned order.
+An error is raised if any project listed in `projects` does not exist in the given network.
 }
 \examples{
-xafty_network <- init_network("change_order", projects = c("Project2", "Project1"))
-print(xafty_network) # Prints Project2 first and Project1 second
-set_project_print_order(projects = c("Project2", "Project1"),
-                        order = c(2, 1),
-                        network = xafty_network)
+xafty_network <- init_network("change_order",
+                   projects = c("Project2", "Project1"))
+print(xafty_network) # Prints Project2 first, then Project1
+
+# Change the print order
+set_project_print_order(
+  projects = c("Project2", "Project1"),
+  order = c(2, 1),
+  network = xafty_network
+)
 print(xafty_network)
+
 }

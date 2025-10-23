@@ -174,3 +174,17 @@ test_that("Updating a function with revised variable names removes all legacy va
   network$test_proj$get(get_sample_data(), vars = c("id", "name", "score"), update = TRUE)
   expect_in(names(network$test_proj$variables), c("id", "name", "score"))
 })
+
+test_that("Registering context creates the correct entry in ruleset and network", {
+  test_network <- init_network(name = "test_network", projects = "intelligence")
+  test_network$intelligence$get(intelligence_date())
+  filter_active_customers <- function(data) {
+    data[data$intelligence > 100, , drop = FALSE]
+  }
+  test_network$intelligence$add_context("active_customers", filter_active_customers(data = query(intelligence = "intelligence")))
+  link <- test_network$intelligence$ruleset$context$filter_active_customers
+  expect_equal(link$fun_name, "filter_active_customers")
+  expect_equal(link$args$data, query(intelligence = "intelligence"))
+  expect_equal(link$name, "active_customers")
+  expect_equal(test_network$intelligence$context$active_customers, "filter_active_customers")
+})

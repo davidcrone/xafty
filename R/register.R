@@ -26,6 +26,12 @@ add_to_network <- function(item, network, project, ...) {
     added_object <- get_squared_variable(item$added_object)
     assign(added_object, fun_name, envir = project_env$objects)
   }
+
+  if(!is.null(.dots[["context_name"]])) {
+    context_name <- link$name
+    assign(context_name, fun_name, envir = project_env$context)
+  }
+
   variables <- item$variables
   for (new_col in variables) {
     assign(new_col, fun_name, envir = project_env$variables)
@@ -42,8 +48,11 @@ add_to_network <- function(item, network, project, ...) {
 add_to_ruleset <- function(item, link_type = "link", network, project, ...) {
   function_name <- item$fun_name
   .dots <- list(...)
-  # When registering an object, the object should only be registered in the project
-  if(is.null(.dots[["object_name"]])) {
+  # When registering an object or context, the object should only be registered in the project
+  # The only register that should happen in two or more projects is when these projects are joined
+  # TODO: This can be done more elegantly, by checking whether the user had the intention to join projects
+  # and only if the join is symmetrical
+  if(is.null(.dots[["object_name"]]) | is.null(.dots[["context_name"]])) {
     projects <- unique(c(project, get_lead_projects(item)))
   } else {
     projects <- project
@@ -115,8 +124,9 @@ get_function_package <- function(func_name) {
 create_link <- function(quosure, project, network, ...) {
   .dots <- list(...)
   link <- create_base_link(quosure = quosure, project = project)
-  link <- link_add_object(link = link, object_name = .dots[["object_name"]])
   link <- link_add_variables(link = link, variable_names = .dots[["vars"]], network = network)
+  link <- link_add_context(link = link, context_name = .dots[["context_name"]])
+  link <- link_add_object(link = link, object_name = .dots[["object_name"]])
   link <- link_add_joins(link = link, network = network)
   link
 }
@@ -132,6 +142,16 @@ create_base_link <- function(quosure, project) {
   )
   link <- append(list_args, list_info)
   class(link) <- c("xafty_link", "list")
+  link
+}
+
+link_add_context <- function(link, context_name) {
+  if(!is.null(context_name)) {
+    if(!is_valid_variable_name(match = context_name)) stop("Name of context is not a valid variable name")
+    link$name <- context_name
+  } else {
+    link$name <- NULL
+  }
   link
 }
 

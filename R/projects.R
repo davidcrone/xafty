@@ -38,7 +38,7 @@ create_add_project <- function(network_env) {
     validate_project_name(name = name, network = network_env)
     new_ruleset <- ruleset()
     .network_env <- add_new_project(project = name, ruleset = new_ruleset, network_env = network_env,
-                                    link_types = c("get", "add", "join", "add_object"))
+                                    func_types = c("get", "add", "join", "add_context", "add_object"))
     .network_env <- set_project_print_order(projects = name, network = .network_env)
     invisible(.network_env)
   }
@@ -53,8 +53,8 @@ create_save_project <- function(network_env) {
   save_project
 }
 
-add_new_project <- function(project, ruleset, network_env, link_types = c("get", "add", "join", "add_object")) {
-  env_names <- c("variables", "joined_projects", "objects") # These will be environments for frequent look-ups during the nascent process
+add_new_project <- function(project, ruleset, network_env, func_types = c("get", "add", "join", "add_context", "add_object")) {
+  env_names <- c("variables", "joined_projects", "objects", "context") # These will be environments for frequent look-ups during the nascent process
 
   project_env <- new.env() # This is the environment, where all code will be organized
   class(project_env) <- c("xafty_project", "environment")
@@ -63,21 +63,31 @@ add_new_project <- function(project, ruleset, network_env, link_types = c("get",
   for (env_name in env_names) {
     assign(env_name, new.env(), envir = project_env)
   }
-  link_funs <- bundle_link_functions(project = project, env = network_env)
-  for (lp in link_types) {
+  link_funs <- bundle_link_functions(project = project, network = network_env)
+  for (lp in func_types) {
     assign(lp, link_funs[[lp]], envir = project_env)
   }
   invisible(network_env)
 }
 
-create_add_object <- function(project, env) {
+create_add_object <- function(project, network) {
   force(project)
-  force(env)
+  force(network)
   add_object <- function(name, fun, ...) {
     quosure <- rlang::enquo(fun)
-    register(quosure = quosure, link_type = "object", network = env, project = project, object_name = name, ...)
+    register(quosure = quosure, link_type = "object", network = network, project = project, object_name = name, ...)
   }
   add_object
+}
+
+create_add_context <- function(project, network) {
+  force(project)
+  force(network)
+  add_context <- function(name, fun, ...) {
+    quosure <- rlang::enquo(fun)
+    register(quosure = quosure, link_type = "context", network = network, project = project, context_name = name, ...)
+  }
+  add_context
 }
 
 create_register_link_func <- function(project, network, link_type = "link", operation = NULL) {
@@ -92,13 +102,17 @@ create_register_link_func <- function(project, network, link_type = "link", oper
   link
 }
 
-bundle_link_functions <- function(project, env) {
-  link_fun <- create_register_link_func(project = project, network = env, link_type = "link")
-  object_fun <- create_add_object(project = project, env = env)
-  list("get" = link_fun,
-       "add" = link_fun,
-       "join" = link_fun,
-       "add_object" = object_fun)
+bundle_link_functions <- function(project, network) {
+  link_fun <- create_register_link_func(project = project, network = network, link_type = "link")
+  object_fun <- create_add_object(project = project, network = network)
+  context_fun <- create_add_context(project = project, network = network)
+  list(
+    "get" = link_fun,
+    "add" = link_fun,
+    "join" = link_fun,
+    "add_context" = context_fun,
+    "add_object" = object_fun
+  )
 }
 
 
@@ -128,7 +142,7 @@ merge_networks <- function(name, ...) {
     if(length(vec_projects) <= 0) return(NULL)
     network_env <- passed_networks[[i]]
     for (project in vec_projects) {
-      link_funs <- bundle_link_functions(project = project, env = new_network_env)
+      link_funs <- bundle_link_functions(project = project, network = new_network_env)
       link_names <- c("get", "add", "join", "add_object")
       project_env <- network_env[[project]]
       rm(list = link_names, envir = project_env)

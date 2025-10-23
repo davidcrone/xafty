@@ -162,7 +162,6 @@ get_squared_variable <- function(arg) {
 
 is_valid_variable_name <- function(match) {
   is_valid_variable_name <- identical(match, make.names(match))
-  if(!is_valid_variable_name) warning(paste0("xafty variable detected, but '", match, "' is not a valid variable name"))
   is_valid_variable_name
 }
 
