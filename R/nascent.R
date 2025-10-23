@@ -6,7 +6,8 @@
 nascent <- function(network, ...) {
   stopifnot(inherits(network, "xafty_network"))
   globals <- dots_to_query(network = network, ... = ...)
-  data <- nascent_query(globals = globals, network = network)
+  dag <- build_dag(globals = globals, network = network)
+  data <- evaluate_dag(dag = dag)
   data
 }
 
@@ -24,7 +25,8 @@ build_dag <- function(globals, network, frame = "main") {
   dag_sm <- build_tree(network = network)
   dag_sm <- initialize_join_path(join_path = globals$join_path, dag_sm = dag_sm)
   dag_sm <- initialize_join_projects(query_list = globals$internal, network = network, dag_sm = dag_sm)
-  dag_sm <- resolve_dependencies(query_list = globals, network = network, dag_sm = dag_sm)
+  dag_sm <- resolve_dependencies(query_list = globals$internal, context_list = globals$context, state_list = globals$states,
+                                 network = network, dag_sm = dag_sm)
   dag_sm <- resolve_objects(network = network, dag_sm = dag_sm)
   topological_sorted_codes <- resolve_function_stack(sm = dag_sm)
   list_links <- sort_links(topological_sorted_codes, sm = dag_sm)
@@ -46,12 +48,6 @@ build_dag <- function(globals, network, frame = "main") {
 sort_links <- function(codes, sm) {
   links <- sm$get_links()
   lapply(codes, \(code) links[[code]])
-}
-
-nascent_query <- function(globals, network) {
-  dag <- build_dag(globals = globals, network = network)
-  data <- evaluate_dag(dag = dag)
-  data
 }
 
 resolve_objects <- function(network, dag_sm = NULL) {
@@ -162,6 +158,12 @@ get_chatty_object_from_network <- function(name, project, network) {
   validate_query(col = name, project = project, network = network, env_name = "objects")
   columns_subset <- network[[project]]$objects[[name]]
   network[[project]]$ruleset[["object"]][[columns_subset]]
+}
+
+get_chatty_context_from_network <- function(name, project, network) {
+  validate_query(col = name, project = project, network = network, env_name = "context")
+  columns_subset <- network[[project]]$context[[name]]
+  network[[project]]$ruleset[["context"]][[columns_subset]]
 }
 
 get_chatty_func_name_from_network <- function(col, project, network, env_name = "variables") {

@@ -258,9 +258,23 @@ test_that("Objects and States are correctly integrated during join_dependencies"
   expect_identical(test_data, expected_data)
 })
 
-test_that("Registering the wrong column name through vars yields an informative error", {
+test_that("Registering the wrong variable name through vars yields an informative error", {
   network <- init_network("test", projects = "test_proj")
   network$test_proj$get(get_sample_data(), vars = c("id", "nam", "score"))
   qry <- query(test_proj = "nam")
   expect_error(nascent(network, qry), regexp = "Variable 'nam' in project 'test_proj' is not present in the data")
+})
+
+test_that("Nascent a simple context works seamlessly in nascent", {
+  test_network <- init_network(name = "test_network", projects = "intelligence")
+  test_network$intelligence$get(intelligence_date())
+  filter_active_customers <- function(data) {
+    data[data$intelligence > 100, , drop = FALSE]
+  }
+  test_network$intelligence$add_context("active_customers", filter_active_customers(data = query(intelligence = "intelligence")))
+  qry <- query(intelligence = "intelligence") |>
+    where(intelligence = "active_customers")
+ test_data <- nascent(test_network, qry)
+ expected_data <- structure(list(intelligence = c(120, 130)), row.names = c(1L, 4L), class = "data.frame")
+ expect_identical(test_data, expected_data)
 })

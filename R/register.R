@@ -12,18 +12,18 @@
 register <- function(quosure, project, network, link_type, ...) {
   link <- create_link(quosure = quosure,  project = project, network = network, ... = ...)
   validate_network_integrity(link = link, network = network)
-  add_to_ruleset(item = link, link_type = link_type, network = network, project = project, ... = ...)
-  add_to_network(item = link, network = network, project = project, ... = ...)
+  add_to_ruleset(link = link, link_type = link_type, network = network, project = project, ... = ...)
+  add_to_network(link = link, network = network, project = project, ... = ...)
   invisible(network)
 }
 
-add_to_network <- function(item, network, project, ...) {
+add_to_network <- function(link, network, project, ...) {
   .dots <- list(...)
   project_env <- network[[project]]
-  fun_name <- item$fun_name
+  fun_name <- link$fun_name
 
   if(!is.null(.dots[["object_name"]])) {
-    added_object <- get_squared_variable(item$added_object)
+    added_object <- get_squared_variable(link$added_object)
     assign(added_object, fun_name, envir = project_env$objects)
   }
 
@@ -32,11 +32,11 @@ add_to_network <- function(item, network, project, ...) {
     assign(context_name, fun_name, envir = project_env$context)
   }
 
-  variables <- item$variables
+  variables <- link$variables
   for (new_col in variables) {
     assign(new_col, fun_name, envir = project_env$variables)
   }
-  added_joins <- get_ordered_join_pairs(link = item)
+  added_joins <- get_ordered_join_pairs(link = link)
   for (new_join in added_joins) {
     from <-  new_join[1]
     to <- new_join[2]
@@ -45,19 +45,19 @@ add_to_network <- function(item, network, project, ...) {
   invisible(network)
 }
 
-add_to_ruleset <- function(item, link_type = "link", network, project, ...) {
-  function_name <- item$fun_name
+add_to_ruleset <- function(link, link_type = "link", network, project, ...) {
+  function_name <- link$fun_name
   .dots <- list(...)
   # When registering an object or context, the object should only be registered in the project
   # The only register that should happen in two or more projects is when these projects are joined
   # TODO: This can be done more elegantly, by checking whether the user had the intention to join projects
   # and only if the join is symmetrical
   if(is.null(.dots[["object_name"]]) | is.null(.dots[["context_name"]])) {
-    projects <- unique(c(project, get_lead_projects(item)))
+    projects <- unique(c(project, get_lead_projects(link)))
   } else {
     projects <- project
   }
-  new_rule <- list(item)
+  new_rule <- list(link)
   new_rule <- setNames(new_rule, function_name)
   for (proj in projects) {
     current_rules <- network[[proj]]$ruleset[[link_type]]
@@ -84,7 +84,8 @@ add_to_ruleset <- function(item, link_type = "link", network, project, ...) {
         # Add your update code here
       } else {
         # Abort the function
-        message(paste0("Function '", item$fun_name, "' exists already in ruleset of project '", paste0(projects, collapse = " and "),"'"))
+        message(paste0("Function '", link$fun_name, "' exists already in ruleset of project '",
+                       paste0(projects, collapse = " and "),"'"))
       }
     }
     add_rules <- c(current_rules, new_rule)

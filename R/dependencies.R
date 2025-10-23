@@ -1,12 +1,13 @@
-resolve_dependencies <- function(query_list, network, dag_sm = NULL) {
-  dependencies(query_list = query_list$internal, state_list = query_list$states, network = network, dag_sm = dag_sm)
-  resolve_join_dependencies(network = network, dag_sm = dag_sm, state_query = query_list$states)
+resolve_dependencies <- function(query_list, context_list, state_list, network, dag_sm = NULL) {
+  query_list <- append(query_list, context_list)
+  dependencies(query_list = query_list, state_list = state_list, network = network, dag_sm = dag_sm)
+  resolve_join_dependencies(network = network, dag_sm = dag_sm, state_list = state_list)
   dag_sm
 }
 
 dependencies <- function(query_list, state_list = NULL, network, dag_sm = build_tree()) {
   if (length(query_list) == 0) return(dag_sm)
-  # The query is merged with queries whose dependencies have already been resolved
+  # The query is merged with queries dag_sm$set_query whose dependencies have already been resolved
   dag_sm$set_query(query_list)
   links <- get_dependend_links(query_list = query_list, network = network)
   links <- lapply(links, interpolate_link_queries, network = network, state_list = state_list)
@@ -23,7 +24,7 @@ dependencies <- function(query_list, state_list = NULL, network, dag_sm = build_
 # running join_dependencies again is unnecessary which would also run dependencies again. running join dependencies again
 # would only be necessary when the dependencies of the join-dependencies would need a totally different join not yet in the join_path
 # resolve_join_dependencies would need to be rewritten to only
-resolve_join_dependencies <- function(network, dag_sm, state_query = NULL) {
+resolve_join_dependencies <- function(network, dag_sm, state_list = NULL) {
   new_projects <- projects_not_in_join_path(dag_sm = dag_sm, network = network)
   if(length(new_projects) > 1) {
     join_path <- greedy_best_first_search(new_projects, network, sm = dag_sm)
@@ -31,7 +32,7 @@ resolve_join_dependencies <- function(network, dag_sm, state_query = NULL) {
   } else {
     join_path <- dag_sm$get_join_path()
   }
-  links <- join_dependencies(join_path = join_path, network = network, dag_sm = dag_sm, state_query = state_query)
+  links <- join_dependencies(join_path = join_path, network = network, dag_sm = dag_sm, state_query = state_list)
   queries <- get_dependend_queries(links)
   query_list <- do.call(merge_queries, queries)
   dependencies(query_list = query_list, network = network, dag_sm = dag_sm)
@@ -166,13 +167,17 @@ get_links <- function(xafty_query, network) {
   project <- xafty_query$from
   selects <- xafty_query$select
   links <- lapply(selects, \(select) {
-              if(is_object_variable(select)) {
-                object_name <- get_squared_variable(select)
-                get_chatty_object_from_network(name = object_name, project = project, network = network)
-              } else {
-                get_chatty_link_from_network(col = select, project = project, network = network)
-              }
-           })
+    if(is_object_variable(select)) {
+      object_name <- get_squared_variable(select)
+      get_chatty_object_from_network(name = object_name, project = project, network = network)
+    } else {
+      if(inherits(xafty_query, "xafty_query")) {
+        get_chatty_link_from_network(col = select, project = project, network = network)
+      } else if (inherits(xafty_query, "context_query")) {
+        get_chatty_context_from_network(name = select, project = project, network = network)
+      }
+    }
+ })
   links
 }
 

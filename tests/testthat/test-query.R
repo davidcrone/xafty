@@ -109,3 +109,12 @@ test_that("interpolate_state_in_query can also interpolate an object", {
   query_expected <- query(object = "[object.2019]")
   expect_identical(query_test, query_expected)
 })
+
+test_that("a context component is added to the where part in the query", {
+  test_query <- query(intelligence = "intelligence") |>
+    where(intelligence = "active_customers")
+  expect_equal(names(test_query), c("query", "context"))
+  expect_equal(test_query$context$intelligence$select, "active_customers")
+  expect_equal(test_query$context$intelligence$from, "intelligence")
+  expect_s3_class(test_query$context$intelligence, class = c("context_query"))
+})

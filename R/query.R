@@ -10,10 +10,7 @@ query <- function(...) {
   query_list <- lapply(seq_along(.list_dots), \(i) {
     select <- .list_dots[i]
     project <- names(select)
-    if (is.character(select) & length(select) == 1 & is.null(project)) {
-      select <-  "*"
-      project <- select
-    } else if (is.null(project)) {
+    if (is.null(project)) {
       select <- unlist(select, recursive = FALSE)
       return(do.call(sub_query, args = select))
     } else {
@@ -24,6 +21,31 @@ query <- function(...) {
     class(xafty_link) <- c("list", "xafty_query")
     xafty_link
     })
+  query_list <- purrr::list_flatten(query_list) # Worth the dependency?
+  names(query_list) <- vapply(query_list, \(query) query$from, FUN.VALUE = character(1))
+  if(has_misuse_of_object_in_query_list(query_list = query_list)){
+    stop("You are querying an object in an unexpected way. Please check {Vignette on objects} on how to query an object.")
+  }
+  query_list <- set_query_list_class(query_list = query_list)
+  query_list
+}
+
+context_query <- function(...) {
+  .list_dots <- list(...)
+  query_list <- lapply(seq_along(.list_dots), \(i) {
+    select <- .list_dots[i]
+    project <- names(select)
+    if (is.null(project)) {
+      select <- unlist(select, recursive = FALSE)
+      return(do.call(context_sub_query, args = select))
+    } else {
+      select <- select[[project]]
+    }
+    xafty_link <- list(select = select,
+                       from = project)
+    class(xafty_link) <- c("list", "context_query")
+    xafty_link
+  })
   query_list <- purrr::list_flatten(query_list) # Worth the dependency?
   names(query_list) <- vapply(query_list, \(query) query$from, FUN.VALUE = character(1))
   if(has_misuse_of_object_in_query_list(query_list = query_list)){
@@ -84,6 +106,21 @@ add_join_path <- function(query_list, ...) {
   state_query
 }
 
+where <- function(query_list, ...) {
+  .li_states <- list(...)
+  class(.li_states) <- c("list", "xafty_context_list")
+  if(inherits(query_list, "state_query")) {
+    state_query <- add_to_state_query(name = "context", what = context_query(.li_states), state_query = query_list)
+  } else {
+    state_query <- list(
+      query = query_list,
+      context = context_query(.li_states)
+    )
+  }
+  class(state_query) <- c("list", "state_query")
+  state_query
+}
+
 add_to_state_query <- function(name, what, state_query) {
   state_query[[name]] <- what
   state_query
@@ -106,6 +143,28 @@ sub_query <- function(...) {
     xafty_link <- list(select = select,
                        from = project)
     class(xafty_link) <- c("list", "xafty_query")
+    xafty_link
+  })
+  query_list
+}
+
+context_sub_query <- function(...) {
+  .list_dots <- list(...)
+  query_list <- lapply(seq_along(.list_dots), \(i) {
+    select <- .list_dots[i]
+    project <- names(select)
+    if (is.character(select) & length(select) == 1 & is.null(project)) {
+      select <-  "*"
+      project <- select
+    } else if (is.null(project)) {
+      select <- unlist(select, recursive = FALSE)
+      return(do.call(query, args = select))
+    } else {
+      select <- select[[project]]
+    }
+    xafty_link <- list(select = select,
+                       from = project)
+    class(xafty_link) <- c("list", "context_query")
     xafty_link
   })
   query_list
@@ -165,18 +224,22 @@ dots_to_query <- function(network, ...)  {
   }
   if(inherits(query_raw[[1]], "state_query")) {
     query_list <- query_raw[[1]]$query
+    context_list <- query_raw[[1]]$context
     state_list <- query_raw[[1]]$states
     join_path <- query_raw[[1]]$join_path
   } else if (inherits(query_raw, "state_query")) {
     query_list <- query_raw$query
+    context_list <- query_raw$context
     state_list <- query_raw$states
     join_path <- query_raw$join_path
   } else if (inherits(query_raw[[1]], what = "xafty_query_list")) {
     query_list <- query_raw[[1]]
+    context_list <- list()
     state_list <- NULL
     join_path <- NULL
   } else if(!inherits(query_raw[[1]], what = "xafty_query_list")) {
     query_list <- query(query_raw)
+    context_list <- list()
     state_list <- NULL
     join_path <- NULL
   } else {
@@ -187,6 +250,7 @@ dots_to_query <- function(network, ...)  {
   list(
     internal = query_internal,
     order = query_order,
+    context = context_list,
     states = state_list,
     join_path = join_path
   )
