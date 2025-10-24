@@ -7,6 +7,7 @@
 print.xafty_network <- function(x, ...) {
   network_name <- x$settings$network_name
   values_in_x <- names(x)
+  browser()
   projects <- x$settings$projects$print_order$project
   cat(paste0("Number of projects in network '", network_name, "': ", length(projects), "\n"))
   if(length(projects) > 0) {
@@ -94,7 +95,7 @@ validate_link_type <- function(link_type, unpacked) {
 }
 
 build_dependency_codes <- function(link, network, dag_sm) {
-  queries <- get_queries(link, which = c("xafty_query", "xafty_object"), temper = FALSE)
+  queries <- get_queries(link, which = c("xafty_query"), temper = FALSE)
   fun_code <- build_fun_code(link)
   # Early termination of function execution for a root node
   if (length(queries) == 0) {

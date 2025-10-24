@@ -129,7 +129,7 @@ merge_networks <- function(name, ...) {
     network_names <- names(network_env)
     network_names[vapply(network_names, \(nn) is.environment(network_env[[nn]]), FUN.VALUE = logical(1))]
   })
-
+  # TODO: merge network must also merge print order of all merged projects
   # TODO: States with the same name from different networks need to be handled here
   li_states <- lapply(passed_networks, \(network_env) network_env$states)
   li_states <- do.call(append, li_states)

@@ -5,8 +5,7 @@
 #' @export
 nascent <- function(network, ...) {
   stopifnot(inherits(network, "xafty_network"))
-  globals <- dots_to_query(network = network, ... = ...)
-  dag <- build_dag(globals = globals, network = network)
+  dag <- build_dag(network = network, ... = ...)
   data <- evaluate_dag(dag = dag)
   data
 }
@@ -21,18 +20,28 @@ nascent <- function(network, ...) {
 #' @param frame Used for debugging
 #' @returns A list
 #' @export
-build_dag <- function(globals, network, frame = "main") {
+build_dag <- function(..., network, frame = "main") {
+  globals <- dots_to_query(network = network, ... = ...)
+  if (inherits(globals$internal, "xafty_object_query")) {
+    dag <- build_object_dag(globals = globals, network = network)
+  } else {
+    dag <- build_query_dag(globals = globals, network = network)
+  }
+  dag
+}
+
+build_query_dag <- function(globals, network) {
   dag_sm <- build_tree(network = network)
   dag_sm <- initialize_join_path(join_path = globals$join_path, dag_sm = dag_sm)
   dag_sm <- initialize_join_projects(query_list = globals$internal, network = network, dag_sm = dag_sm)
   dag_sm <- resolve_dependencies(query_list = globals$internal, context_list = globals$context, state_list = globals$states,
                                  network = network, dag_sm = dag_sm)
-  dag_sm <- resolve_objects(network = network, dag_sm = dag_sm)
   topological_sorted_codes <- resolve_function_stack(sm = dag_sm)
   list_links <- sort_links(topological_sorted_codes, sm = dag_sm)
   dag <- list(
-    full_query = dag_sm$get_query(),
+    start_query = globals$internal,
     order_query = globals$order,
+    full_query = dag_sm$get_query(),
     dag = dag_sm$get_codes(),
     execution_order = topological_sorted_codes,
     sorted_links = list_links,
@@ -42,7 +51,26 @@ build_dag <- function(globals, network, frame = "main") {
     query_states = globals$states,
     objects = dag_sm$get_objects()
   )
+  class(dag) <- c("list", "query_dag")
   dag
+}
+
+build_object_dag <- function(globals, network) {
+  object_query <- globals$internal
+  project <- object_query[[1]]$from
+  object_name <- get_squared_variable(object_query[[1]]$select)
+  object_link <- get_chatty_link_from_network(name = object_name, project = project, network = network)
+  object_query <- get_queries(link = object_link, temper = TRUE, state_list = globals$states, network = network)
+  object_args <- names(object_query)
+  dag_args <- sapply(object_query, build_dag, network = network, simplify = FALSE, USE.NAMES = TRUE)
+  object_dag <- list(
+    name = object_name,
+    project = project,
+    object_link = object_link,
+    args = dag_args
+  )
+  class(object_dag) <- c("list", "object_dag")
+  object_dag
 }
 
 sort_links <- function(codes, sm) {
@@ -62,8 +90,7 @@ resolve_objects <- function(network, dag_sm = NULL) {
     object_dag_list <- list()
     for (arg_name in arg_names) {
       query <- queries[[arg_name]]
-      globals <- dots_to_query(network = network, query)
-      object_dag <- build_dag(globals = globals, network = network, frame = object_code)
+      object_dag <- build_dag(query, network = network, frame = object_code)
       object_dag_list[[arg_name]] <- object_dag
     }
     dag_sm$set_object(object_code = object_code, dag = object_dag_list)
@@ -188,7 +215,6 @@ execute_stack <- function(link, mask, data_sm, default_states) {
       do.call(link$fun, executable_args)
     },
     error = function(e) {
-      message(link$fun_name)
       stop(paste0("Error occurred: ", e$message))
     })
   if(!is_object_link(link)) {
@@ -207,7 +233,14 @@ execute_stack <- function(link, mask, data_sm, default_states) {
 
 evaluate_dag <- function(dag) {
   data_sm <- data_sm()
+  if(inherits(dag, "object_dag")) {
+    object_fun <- dag$object_link$fun
+    evaluated_args <- sapply(dag$args, evaluate_dag, simplify = FALSE, USE.NAMES = TRUE)
+    data <- do.call(object_fun, evaluated_args)
+    return(data)
+  }
   data_sm <- set_states(states = dag$query_states, data_sm = data_sm)
+  data_sm <- evaluate_objects(dag = dag$objects, global_data_sm = data_sm)
   links <- dag$sorted_links
   execution_order <- dag$execution_order
   mask <- dag$masked_columns
@@ -215,30 +248,19 @@ evaluate_dag <- function(dag) {
   for (i in seq_along(execution_order)) {
     code <- execution_order[i]
     link <- links[[i]]
-    if(grepl("^object.", code)) {
-      object_key <- paste0("object.", link$project, ".", link$fun_name)
-      object_dag <- dag$objects[[object_key]]
-      evaluate_objects(dag = object_dag, link = link, global_data_sm = data_sm)
-    } else {
-      execute_stack(link = link, mask = mask, data_sm = data_sm, default_states = default_states)
-    }
+    execute_stack(link = link, mask = mask, data_sm = data_sm, default_states = default_states)
   }
   data_key <- get_data_key(data_sm = data_sm, dag = dag)
   data <- return_unscoped_data(data = data_sm$get_data_by_key(data_key), query = dag$order_query, dag = dag)
   data
 }
 
-evaluate_objects <- function(dag, link, global_data_sm) {
-  fun <- link$fun
-  args <- list()
-  arg_names <- names(dag)
-  for (arg in arg_names) {
-    object_dag <- dag[[arg]]
-    args[[arg]] <- evaluate_dag(dag = object_dag)
+evaluate_objects <- function(dags, global_data_sm) {
+  dags_evaluated <- sapply(dags, evaluate_dag, simplify = FALSE, USE.NAMES = TRUE)
+  object_keys <- names(dags_evaluated)
+  for (object_key in object_keys) {
+    global_data_sm$set_object(object_key = object_key, data = dags_evaluated[[object_key]])
   }
-  object_data <- do.call(fun, args)
-  object_data_key <- paste0(link$project, ".", get_squared_variable(link$name))
-  global_data_sm$set_object(object_key = object_data_key, data = object_data)
   global_data_sm
 }
 

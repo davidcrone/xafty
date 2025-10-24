@@ -116,6 +116,7 @@ build_kpi <- function(active_customers) {
 }
 test_network$intelligence$add_object(name = "active_customers",
                                      fun = filter_active_customers(data = query(intelligence = "intelligence")))
+nascent(test_network, query(intelligence = c("[active_customers]")))
 test_network$intelligence$add_object("mean_intelligence", build_kpi(active_customers = query(intelligence = c("[active_customers]"))))
 
 add_mean_intelligence <- function(data, mean_intelligence) {

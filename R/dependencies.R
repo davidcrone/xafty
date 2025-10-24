@@ -176,6 +176,8 @@ remove_empty_lists <- function(li) {
 }
 
 set_nodes <- function(links, network, dag_sm) {
+  links_vec <- vapply(links, \(link) is_query_link(link) || is_context_link(link), FUN.VALUE = logical(1))
+  links <- links[links_vec]
   codes <- lapply(links, build_dependency_codes, network = network, dag_sm = dag_sm)
   mapply(dag_sm$set_nodes, links, codes, SIMPLIFY = FALSE)
   invisible(TRUE)
@@ -189,9 +191,10 @@ set_objects <- function(links, network, dag_sm) {
     if(!has_object_query) next
     object_queries <-link$args[logical_vec]
     for(object_query in object_queries) {
-      object_link <- get_links(object_query[[1]], network)
-      object_code <- setNames(list(character(0)), paste0("object.", object_query[[1]]$from, ".", object_link[[1]]$fun_name))
-      dag_sm$set_nodes(link = object_link[[1]], code = object_code)
+      query <- object_query[[1]]
+      object_key <- paste0(query$from, ".", get_squared_variable(query$select))
+      object_dag <- build_dag(object_query, network = network, frame = object_key)
+      dag_sm$set_object(object_code = object_key, dag = object_dag)
     }
   }
 }
