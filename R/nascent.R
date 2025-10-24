@@ -176,26 +176,14 @@ check_graph <- function(graph, check_projects) {
 }
 
 get_chatty_link_from_network <- function(name, project, network) {
-  validate_query(col = name, project = project, network = network, env_name = "variables")
+  validate_query(name = name, project = project, network = network)
   func_name <- network[[project]]$variables[[name]]
   network[[project]]$ruleset[[func_name]]
 }
 
-get_chatty_object_from_network <- function(name, project, network) {
-  validate_query(col = name, project = project, network = network, env_name = "objects")
-  columns_subset <- network[[project]]$objects[[name]]
-  network[[project]]$ruleset[["object"]][[columns_subset]]
-}
-
-get_chatty_context_from_network <- function(name, project, network) {
-  validate_query(col = name, project = project, network = network, env_name = "context")
-  columns_subset <- network[[project]]$context[[name]]
-  network[[project]]$ruleset[["context"]][[columns_subset]]
-}
-
-get_chatty_func_name_from_network <- function(col, project, network, env_name = "variables") {
-  validate_query(col = col, project = project, network = network, env_name = env_name)
-  columns_subset <- network[[project]][[env_name]][[col]]
+get_chatty_func_name_from_network <- function(name, project, network) {
+  validate_query(name = name, project = project, network = network)
+  columns_subset <- network[[project]]$variables[[name]]
   columns_subset
 }
 

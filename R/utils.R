@@ -236,9 +236,6 @@ build_executable_args <- function(link, data_sm, mask, default_states) {
       project <- get_lead_project(query_list = query_list)
       data <- data_sm$get_data(project = project)
       data <- unscope(data = data, link = link, arg_name = arg_name, mask = mask)
-      # Edge Case Handling, only relevant when querying an object from start e.g. nascent(test_network, intelligence = c("[active_customers]"))
-      # This assures that the queried data is exactly as the user expects within the function
-      if(is_object_link(link)) data <- data[get_column_order(query_list)]
     } else if (xo == "xafty_object") {
       object_query <- arg[[arg_name]]
       object_key <- paste0(object_query[[1]]$from, ".", get_squared_variable(object_query[[1]]$select))

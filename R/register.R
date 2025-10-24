@@ -236,23 +236,23 @@ validate_network_integrity <- function(link, network) {
     selection <- query$select
     if (is_object_variable(selection)) {
       col <- get_squared_variable(selection)
-      validate_query(col = col, project = project, network = network, env_name = "variables")
+      validate_query(name = col, project = project, network = network)
     } else {
       for (col in selection) {
-        validate_query(col = col, project = project, network = network, env_name = "variables")
+        validate_query(name = col, project = project, network = network)
       }
     }
   }
 }
 
-validate_query <- function(col, project, network, env_name = "variables") {
+validate_query <- function(name, project, network) {
   project_subset <- network[[project]]
   if(is.null(project_subset)) {
     stop(paste0("Project: ", project, " is not contained in the network"))
   }
-  columns_subset <- project_subset[[env_name]][[col]]
+  columns_subset <- project_subset$variables[[name]]
   if(is.null(columns_subset)) {
-    stop(paste0("Column: ", col, " is not contained in project: ", project))
+    stop(paste0("Variable: ", name, " is not contained in project: ", project))
   }
   invisible(TRUE)
 }
