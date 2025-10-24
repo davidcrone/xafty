@@ -10,57 +10,50 @@
 #' @returns A xafty network (invisibly)
 #' @export
 register <- function(quosure, project, network, link_type, ...) {
-  link <- create_link(quosure = quosure,  project = project, network = network, ... = ...)
+  link <- create_link(quosure = quosure, project = project, link_type = link_type, network = network, ... = ...)
   validate_network_integrity(link = link, network = network)
-  add_to_ruleset(link = link, link_type = link_type, network = network, project = project, ... = ...)
-  add_to_network(link = link, network = network, project = project, ... = ...)
+  add_to_ruleset(link = link, project = project, network = network, ... = ...)
+  add_to_network(link = link, project = project, network = network, ... = ...)
   invisible(network)
 }
 
-add_to_network <- function(link, network, project, ...) {
+add_to_network <- function(link, project, network, ...) {
   .dots <- list(...)
   project_env <- network[[project]]
   fun_name <- link$fun_name
 
-  if(!is.null(.dots[["object_name"]])) {
-    added_object <- get_squared_variable(link$added_object)
-    assign(added_object, fun_name, envir = project_env$objects)
+  if (inherits(link, "query_link")) {
+    variables <- link$variables
+    added_joins <- get_ordered_join_pairs(link = link)
+    for (new_join in added_joins) {
+      from <-  new_join[1]
+      to <- new_join[2]
+      assign(to, fun_name, envir = network[[from]]$joined_projects)
+    }
+  } else if(inherits(link, "context_link") | inherits(link, "object_link")) {
+    variables <- link$name
   }
 
-  if(!is.null(.dots[["context_name"]])) {
-    context_name <- link$name
-    assign(context_name, fun_name, envir = project_env$context)
-  }
-
-  variables <- link$variables
-  for (new_col in variables) {
-    assign(new_col, fun_name, envir = project_env$variables)
-  }
-  added_joins <- get_ordered_join_pairs(link = link)
-  for (new_join in added_joins) {
-    from <-  new_join[1]
-    to <- new_join[2]
-    assign(to, fun_name, envir = network[[from]]$joined_projects)
+  for (variable in variables) {
+    assign(variable, fun_name, envir = project_env$variables)
   }
   invisible(network)
 }
 
-add_to_ruleset <- function(link, link_type = "link", network, project, ...) {
+add_to_ruleset <- function(link, project, network,...) {
   function_name <- link$fun_name
   .dots <- list(...)
   # When registering an object or context, the object should only be registered in the project
-  # The only register that should happen in two or more projects is when these projects are joined
+  # The only register that should happen in two or more projects is when these projects are joined through a query link
   # TODO: This can be done more elegantly, by checking whether the user had the intention to join projects
   # and only if the join is symmetrical
-  if(is.null(.dots[["object_name"]]) | is.null(.dots[["context_name"]])) {
+  if(inherits(link, "query_link")) {
     projects <- unique(c(project, get_lead_projects(link)))
   } else {
     projects <- project
   }
-  new_rule <- list(link)
-  new_rule <- setNames(new_rule, function_name)
   for (proj in projects) {
-    current_rules <- network[[proj]]$ruleset[[link_type]]
+    current_rules <- network[[proj]]$ruleset
     if(function_name %in% names(current_rules)) {
       update <- isTRUE(.dots[["update"]])
       if(!update) {
@@ -88,8 +81,7 @@ add_to_ruleset <- function(link, link_type = "link", network, project, ...) {
                        paste0(projects, collapse = " and "),"'"))
       }
     }
-    add_rules <- c(current_rules, new_rule)
-    network[[proj]]$ruleset[[link_type]] <- add_rules
+    network[[proj]]$ruleset[[function_name]] <- link
   }
   network
 }
@@ -122,12 +114,16 @@ get_function_package <- function(func_name) {
   return(NA)  # Return NA if no package is found
 }
 
-create_link <- function(quosure, project, network, ...) {
+create_link <- function(quosure, project, link_type, network, ...) {
   .dots <- list(...)
   link <- create_base_link(quosure = quosure, project = project)
-  link <- link_add_variables(link = link, variable_names = .dots[["vars"]], network = network)
-  link <- link_add_context(link = link, context_name = .dots[["context_name"]])
-  link <- link_add_object(link = link, object_name = .dots[["object_name"]])
+  if (link_type == "query") {
+    link <- link_add_variables(link = link, variable_names = .dots[["vars"]], network = network)
+  } else if (link_type == "context") {
+    link <- link_add_context(link = link, name = .dots[["name"]])
+  } else if (link_type == "object") {
+    link <- link_add_object(link = link, name = .dots[["name"]])
+  }
   link <- link_add_joins(link = link, network = network)
   link
 }
@@ -142,29 +138,31 @@ create_base_link <- function(quosure, project) {
     project = project
   )
   link <- append(list_args, list_info)
-  class(link) <- c("xafty_link", "list")
+  class(link) <- c("list", "link")
   link
 }
 
-link_add_context <- function(link, context_name) {
-  if(!is.null(context_name)) {
-    if(!is_valid_variable_name(match = context_name)) stop("Name of context is not a valid variable name")
-    link$name <- context_name
+link_add_context <- function(link, name) {
+  if(!is.null(name)) {
+    if(!is_valid_variable_name(match = name)) stop(paste0("Context name '", name,"' is not a valid variable name"))
+    link$name <- name
   } else {
     link$name <- NULL
   }
+  class(link) <- c("list", "link", "context_link")
   link
 }
 
-link_add_object <- function(link, object_name = NULL) {
-  if(!is.null(object_name)) {
-    is_squared_already <- is_squared_variable(object_name)
-    if(!is_squared_already) object_name <- paste0("[", object_name, "]")
-    if(!is_object_variable(object_name)) stop("object_name is not a valid xafty object variable")
-    link$added_object <- object_name
+link_add_object <- function(link, name = NULL) {
+  if(!is.null(name)) {
+    is_squared_already <- is_squared_variable(name)
+    if(!is_squared_already) obj_name <- paste0("[", name, "]")
+    if(!is_object_variable(obj_name)) stop(paste0("Object name '", name, "' is not a valid variable name."))
+    link$name<- name
   } else {
-    link$added_object <- NULL
+    link$name <- NULL
   }
+  class(link) <- c("list", "link", "object_link")
   link
 }
 
@@ -175,6 +173,7 @@ link_add_variables <- function(link, variable_names = NULL, network) {
     # Executes pipeline
     link$variables <- get_added_variables(link = link, network = network)
   }
+  class(link) <- c("list", "link", "query_link")
   link
 }
 
@@ -236,7 +235,8 @@ validate_network_integrity <- function(link, network) {
     project <- query$from
     selection <- query$select
     if (is_object_variable(selection)) {
-      validate_query(col = get_squared_variable(selection), project = project, network = network, env_name = "objects")
+      col <- get_squared_variable(selection)
+      validate_query(col = col, project = project, network = network, env_name = "variables")
     } else {
       for (col in selection) {
         validate_query(col = col, project = project, network = network, env_name = "variables")

@@ -123,8 +123,8 @@ test_that("register can register an object", {
     data[data$intelligence > 100, ]
   }
   test_network$intelligence$add_object("active_customers", filter_active_customers(data = query(intelligence = "intelligence")))
-  expect_equal(test_network$intelligence$objects$active_customers, "filter_active_customers")
-  expect_equal(test_network$intelligence$ruleset$object$filter_active_customers$added_object, "[active_customers]")
+  expect_equal(test_network$intelligence$variables$active_customers, "filter_active_customers")
+  expect_equal(test_network$intelligence$ruleset$filter_active_customers$name, "active_customers")
 })
 
 test_that("register can register a function with an object as dependency", {
@@ -138,8 +138,8 @@ test_that("register can register a function with an object as dependency", {
     mean(active_customers$intelligence)
   }
   test_network$intelligence$add_object("mean_intelligence", build_kpi(active_customers = query(intelligence = c("[active_customers]"))))
-  expect_equal(test_network$intelligence$objects$mean_intelligence, "build_kpi")
-  expect_equal(test_network$intelligence$ruleset$object$build_kpi$added_object, "[mean_intelligence]")
+  expect_equal(test_network$intelligence$variables$mean_intelligence, "build_kpi")
+  expect_equal(test_network$intelligence$ruleset$build_kpi$name, "mean_intelligence")
 })
 
 test_that("A xafty state can be registered", {
@@ -164,8 +164,8 @@ test_that("It is possible to register a variable with interpolated state, keepin
     data
   }
   test_network$test_data$add(add_data(data = query(test_data = "data.{year}")))
-  expect_equal(test_network$test_data$ruleset$link$add_data$variables, expected = "data.2027")
-  expect_equal(test_network$test_data$ruleset$link$add_data$args$data, expected = query(test_data = "data.{year}"))
+  expect_equal(test_network$test_data$ruleset$add_data$variables, expected = "data.2027")
+  expect_equal(test_network$test_data$ruleset$add_data$args$data, expected = query(test_data = "data.{year}"))
 })
 
 test_that("Updating a function with revised variable names removes all legacy variable names of that function", {
@@ -182,9 +182,9 @@ test_that("Registering context creates the correct entry in ruleset and network"
     data[data$intelligence > 100, , drop = FALSE]
   }
   test_network$intelligence$add_context("active_customers", filter_active_customers(data = query(intelligence = "intelligence")))
-  link <- test_network$intelligence$ruleset$context$filter_active_customers
+  link <- test_network$intelligence$ruleset$filter_active_customers
   expect_equal(link$fun_name, "filter_active_customers")
   expect_equal(link$args$data, query(intelligence = "intelligence"))
   expect_equal(link$name, "active_customers")
-  expect_equal(test_network$intelligence$context$active_customers, "filter_active_customers")
+  expect_equal(test_network$intelligence$variables$active_customers, "filter_active_customers")
 })

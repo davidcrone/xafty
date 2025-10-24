@@ -83,7 +83,7 @@ remove_join_helpers <- function(stack_sorted) {
 
 get_join_functions <- function(from, to, network, sm, state_query = NULL) {
   fun_name <- network[[from]]$joined_projects[[to]]
-  link <- network[[from]]$ruleset$link[[fun_name]]
+  link <- network[[from]]$ruleset[[fun_name]]
   link <- interpolate_link_queries(link = link, state_list = state_query, network = network)
   code <- build_dependency_codes(link = link, network = network, dag_sm = sm)
   sm$set_nodes(link = link, code = code)
@@ -148,10 +148,10 @@ check_graph <- function(graph, check_projects) {
   }
 }
 
-get_chatty_link_from_network <- function(col, project, network) {
-  validate_query(col = col, project = project, network = network, env_name = "variables")
-  columns_subset <- network[[project]]$variables[[col]]
-  network[[project]]$ruleset[["link"]][[columns_subset]]
+get_chatty_link_from_network <- function(name, project, network) {
+  validate_query(col = name, project = project, network = network, env_name = "variables")
+  func_name <- network[[project]]$variables[[name]]
+  network[[project]]$ruleset[[func_name]]
 }
 
 get_chatty_object_from_network <- function(name, project, network) {
@@ -191,7 +191,7 @@ execute_stack <- function(link, mask, data_sm, default_states) {
       message(link$fun_name)
       stop(paste0("Error occurred: ", e$message))
     })
-  if(!length(link$added_object) == 1) {
+  if(!is_object_link(link)) {
     data <- scope(data = data, link = link, mask = mask)
   }
   projects_update_key <- do.call(c, lapply(projects, \(project) {
@@ -237,7 +237,7 @@ evaluate_objects <- function(dag, link, global_data_sm) {
     args[[arg]] <- evaluate_dag(dag = object_dag)
   }
   object_data <- do.call(fun, args)
-  object_data_key <- paste0(link$project, ".", get_squared_variable(link$added_object))
+  object_data_key <- paste0(link$project, ".", get_squared_variable(link$name))
   global_data_sm$set_object(object_key = object_data_key, data = object_data)
   global_data_sm
 }

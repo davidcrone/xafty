@@ -16,16 +16,30 @@ print.xafty_network <- function(x, ...) {
   }
   for(i in seq_along(projects)) {
     project <- projects[i]
-    variables <- names(x[[project]]$variables)
-    objects <- paste0("[", names(x[[project]]$objects), "]")
-    joins <- names(x[[project]]$joined_projects)
-    variables_print <- ifelse(length(variables) > 0, paste0(variables, collapse = ", "), "'none'")
-    objects_print <- ifelse(length(objects) > 0, paste0(objects, collapse = ", "), "'none'")
-    joins_print <- ifelse(length(joins) > 0, paste0(joins, collapse = ", "), "'none'")
+    variable_names <- names(x[[project]]$variables)
+    joined_projects <- names(x[[project]]$joined_projects)
+    variables_classified <- vapply(variable_names, \(name) get_variable_link_type(name = name, project = project, network = x), FUN.VALUE = character(1))
+    variables <- variable_names[variables_classified == "query_link"]
+    context <- variable_names[variables_classified == "context_link"]
+    objects <- variable_names[variables_classified == "object_link"]
+
     cat(paste0("Project: ", project, "\n"))
-    cat(paste0("Variables: ", variables_print, "\n"))
-    cat(paste0("Objects: ", objects_print, "\n"))
-    cat(paste0("Joins: ", joins_print, "\n"))
+    if(length(variables) > 0) {
+      variables_print <- paste0(variables, collapse = ", ")
+      cat(paste0("Variables: ", variables_print, "\n"))
+    }
+    if(length(context) > 0) {
+      context_print <- paste0(context, collapse = ", ")
+      cat(paste0("Context: ", context_print, "\n"))
+    }
+    if(length(objects) > 0) {
+      objects_print <- paste0(objects, collapse = ", ")
+      cat(paste0("Objects: ", objects_print, "\n"))
+    }
+    if(length(joined_projects) > 0) {
+      joins_print <- paste0(joined_projects, collapse = ", ")
+      cat(paste0("Joins: ", joins_print, "\n"))
+    }
     if(i < length(projects)) cat("\n")
   }
 }
@@ -292,8 +306,16 @@ list_graph_to_edges <- function(dag) {
   do.call(rbind, edgelist)
 }
 
+is_query_link <- function(link) {
+  inherits(link, "query_link")
+}
+
+is_context_link <- function(link) {
+  inherits(link, "context_link")
+}
+
 is_object_link <- function(link) {
-  length(link$added_object) > 0
+  inherits(link, "object_link")
 }
 
 build_fun_code <- function(link) {
@@ -349,4 +371,16 @@ project_needs_join <- function(project, query_list, network) {
   # query is depended on a root node for that project and therefore needs to be joined
   if(length(query_list) == 0) return(TRUE)
   project_needs_join(project = project, query_list = query_list, network = network)
+}
+
+check_link_type <- function(link) {
+  if (is_query_link(link)) return("query_link")
+  if (is_object_link(link)) return("object_link")
+  if (is_context_link(link)) return("context_link")
+  "unknown_link"
+}
+
+get_variable_link_type <- function(name, project, network) {
+  link <-  get_chatty_link_from_network(name = name, project = project, network = network)
+  check_link_type(link)
 }

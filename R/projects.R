@@ -36,8 +36,7 @@ create_add_project <- function(network_env) {
   force(network_env)
   add_project <- function(name, ...) {
     validate_project_name(name = name, network = network_env)
-    new_ruleset <- ruleset()
-    .network_env <- add_new_project(project = name, ruleset = new_ruleset, network_env = network_env,
+    .network_env <- add_new_project(project = name, network_env = network_env,
                                     func_types = c("get", "add", "join", "add_context", "add_object"))
     .network_env <- set_project_print_order(projects = name, network = .network_env)
     invisible(.network_env)
@@ -53,13 +52,13 @@ create_save_project <- function(network_env) {
   save_project
 }
 
-add_new_project <- function(project, ruleset, network_env, func_types = c("get", "add", "join", "add_context", "add_object")) {
-  env_names <- c("variables", "joined_projects", "objects", "context") # These will be environments for frequent look-ups during the nascent process
+add_new_project <- function(project, network_env, func_types = c("get", "add", "join", "add_context", "add_object")) {
+  env_names <- c("variables", "joined_projects") # These will be environments for frequent look-ups during the nascent process
 
   project_env <- new.env() # This is the environment, where all code will be organized
   class(project_env) <- c("xafty_project", "environment")
   network_env[[project]] <- project_env
-  network_env[[project]][["ruleset"]] <- ruleset
+  network_env[[project]][["ruleset"]] <- list()
   for (env_name in env_names) {
     assign(env_name, new.env(), envir = project_env)
   }
@@ -75,7 +74,7 @@ create_add_object <- function(project, network) {
   force(network)
   add_object <- function(name, fun, ...) {
     quosure <- rlang::enquo(fun)
-    register(quosure = quosure, link_type = "object", network = network, project = project, object_name = name, ...)
+    register(quosure = quosure, link_type = "object", network = network, project = project, name = name, ...)
   }
   add_object
 }
@@ -85,25 +84,25 @@ create_add_context <- function(project, network) {
   force(network)
   add_context <- function(name, fun, ...) {
     quosure <- rlang::enquo(fun)
-    register(quosure = quosure, link_type = "context", network = network, project = project, context_name = name, ...)
+    register(quosure = quosure, link_type = "context", network = network, project = project, name = name, ...)
   }
   add_context
 }
 
-create_register_link_func <- function(project, network, link_type = "link", operation = NULL) {
+create_register_link_func <- function(project, network, link_type = "query", operation = NULL) {
   force(project)
   force(network)
   link <- function(fun, name = NULL, vars = NULL, update = FALSE, ...) {
     .dots <- list(...)
     quosure <- rlang::enquo(fun)
     register(quosure = quosure, link_type = link_type, network = network, project = project,
-             vars = vars, object_name = name, update = update, ... = .dots)
+             vars = vars, name = name, update = update, ... = .dots)
   }
   link
 }
 
 bundle_link_functions <- function(project, network) {
-  link_fun <- create_register_link_func(project = project, network = network, link_type = "link")
+  link_fun <- create_register_link_func(project = project, network = network, link_type = "query")
   object_fun <- create_add_object(project = project, network = network)
   context_fun <- create_add_context(project = project, network = network)
   list(

@@ -67,8 +67,8 @@ test_that("an object can be build as a correct link", {
     customer_data[customer_data$intelligence > 100, ]
   }
   test_link <- test_create_link(filter_active_customers(customer_data = query(customer_data = c("id", "name"),
-                                                                                intelligence = "intelligence")), object_name = "active_customers")
-  expect_equal(test_link$added_object, "[active_customers]")
+                                 intelligence = "intelligence")), name = "active_customers", link_type = "object")
+  expect_equal(test_link$name, "active_customers")
 })
 
 test_that("get_join_dependencies returns the dependend joins of the link", {
@@ -92,3 +92,4 @@ test_that("get_join_dependencies returns the dependend joins of the link", {
                            project = "unjoined_project", vars = character(0))
   expect_in(link$joins$projects$data, c("customer_data", "occupations"))
 })
+

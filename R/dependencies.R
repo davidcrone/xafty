@@ -166,18 +166,8 @@ get_dependend_links <- function(query_list, network) {
 get_links <- function(xafty_query, network) {
   project <- xafty_query$from
   selects <- xafty_query$select
-  links <- lapply(selects, \(select) {
-    if(is_object_variable(select)) {
-      object_name <- get_squared_variable(select)
-      get_chatty_object_from_network(name = object_name, project = project, network = network)
-    } else {
-      if(inherits(xafty_query, "xafty_query")) {
-        get_chatty_link_from_network(col = select, project = project, network = network)
-      } else if (inherits(xafty_query, "context_query")) {
-        get_chatty_context_from_network(name = select, project = project, network = network)
-      }
-    }
- })
+  if(any(is_object_variable(selects))) selects <- get_squared_variable(selects)
+  links <- lapply(selects, \(select) get_chatty_link_from_network(name = select, project = project, network = network))
   links
 }
 

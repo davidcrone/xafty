@@ -75,7 +75,6 @@ test_network$occupations$get(get_additional_info())
 test_network$customer_data$join(join_datasets(main_data = query(customer_data = c("id", "category")),
                                               extra_data = query(occupations = "id")), vars = character(0))
 # Column depending on a two projects
-nascent(test_network, query(customer_data = "name", occupations = "department"))
 test_network$customer_data$add(new_column_from_both_projects(query(customer_data = "name", occupations = "department")))
 
 ## Advanced Projects
@@ -123,6 +122,7 @@ add_mean_intelligence <- function(data, mean_intelligence) {
   data$intelligence_plus_mean <- data$intelligence + mean_intelligence
   data
 }
+nascent(test_network, query(intelligence = c("[mean_intelligence]")))
 test_network$intelligence$add(add_mean_intelligence(data = query(intelligence = "intelligence"),
                               mean_intelligence = query(intelligence = "[mean_intelligence]")))
 #
