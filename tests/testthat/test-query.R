@@ -118,3 +118,25 @@ test_that("a context component is added to the where part in the query", {
   expect_equal(test_query$context$intelligence$from, "intelligence")
   expect_s3_class(test_query$context$intelligence, class = c("context_query"))
 })
+
+test_that("characters with no name are created as a raw query", {
+  test_query <- query("test")
+  expected_query <- query(unevaluated = "test")
+  class(expected_query$unevaluated) <- c("list", "raw_query")
+  expect_identical(test_query, expected_query)
+})
+
+test_that("mixing named characters with unnamed characters yields a mix of raw_query and query", {
+  test_query <- query("test", customer_data = "id")
+  expected_query <- query(unevaluated = "test", customer_data = "id")
+  class(expected_query$unevaluated) <- c("list", "raw_query")
+  expect_identical(test_query, expected_query)
+})
+
+test_that("query with multiples of the same project presevers the variables", {
+  xafty_query <- query(proj1 = "col1", proj2 = "col2", proj1 = "col3")
+  tets_projects <- vapply(xafty_query, \(query) query$from, character(1), USE.NAMES = FALSE)
+  tets_variables <- vapply(xafty_query, \(query) query$select, character(1), USE.NAMES = FALSE)
+  expect_identical(tets_projects, c("proj1", "proj2", "proj1"))
+  expect_identical(tets_variables, c("col1", "col2", "col3"))
+})

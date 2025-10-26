@@ -288,6 +288,16 @@ flatten_list <- function(li) {
   li_return
 }
 
+list_depth <- function(x) {
+  if (!is.list(x)) {
+    return(0L)
+  }
+  if (length(x) == 0) {
+    return(1L)
+  }
+  return(1L + max(sapply(x, list_depth)))
+}
+
 list_graph_to_edges <- function(dag) {
   dag_nodes <- dag$dag
   edgelist <- lapply(seq_along(dag_nodes), \(i) {
@@ -382,3 +392,5 @@ get_variable_link_type <- function(name, project, network) {
   link <-  get_chatty_link_from_network(name = name, project = project, network = network)
   check_link_type(link)
 }
+
+

@@ -7,21 +7,36 @@
 #' @export
 query <- function(...) {
   .list_dots <- list(...)
-  query_list <- lapply(seq_along(.list_dots), \(i) {
-    select <- .list_dots[i]
-    project <- names(select)
-    if (is.null(project)) {
-      select <- unlist(select, recursive = FALSE)
-      return(do.call(sub_query, args = select))
-    } else {
-      select <- select[[project]]
+  li_query_raw <- list()
+  for (i in seq_along(.list_dots)) {
+    li_sub <- .list_dots[i]
+    li_depth <- list_depth(li_sub)
+    project <-  names(li_sub)
+    while (is.null(project) & li_depth > 1) {
+      li_sub <- li_sub[[1]]
+      li_depth <- li_depth - 1
+      project <- names(li_sub)
     }
-    xafty_link <- list(select = select,
-                       from = project)
-    class(xafty_link) <- c("list", "xafty_query")
-    xafty_link
-    })
-  query_list <- purrr::list_flatten(query_list) # Worth the dependency?
+    li_query_raw <- append(li_query_raw, li_sub)
+  }
+  query_list <- lapply(seq_along(li_query_raw), \(i) {
+    li_query <- li_query_raw[i]
+    select <- unlist(li_query, recursive = FALSE, use.names = FALSE)
+    project <- names(li_query)
+    if (is.null(project) || project == "") {
+      xafty_query<- list(
+        select = select,
+        from = "unevaluated")
+      class(xafty_query) <- c("list", "raw_query")
+    } else {
+      xafty_query <- list(
+        select = select,
+        from = project
+      )
+      class(xafty_query) <- c("list", "xafty_query")
+    }
+    xafty_query
+  })
   names(query_list) <- vapply(query_list, \(query) query$from, FUN.VALUE = character(1))
   if(has_misuse_of_object_in_query_list(query_list = query_list)){
     stop("You are querying an object in an unexpected way. Please check {Vignette on objects} on how to query an object.")
@@ -188,9 +203,9 @@ get_sub_queries <- function(query, network) {
 
 #' @importFrom stats setNames
 merge_queries <- function(...) {
-  li_queries <- list(...)
+  .list_queries <- list(...)
   merged_query <- setNames(list(), character(0))
-  for (query in li_queries) {
+  for (query in .list_queries) {
     projects <- vapply(query, \(q) q$from, FUN.VALUE = character(1))
     uq_projects <- unique(projects)
     positions <- lapply(uq_projects, \(proj) which(projects %in% proj))
