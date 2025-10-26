@@ -45,31 +45,6 @@ query <- function(...) {
   query_list
 }
 
-context_query <- function(...) {
-  .list_dots <- list(...)
-  query_list <- lapply(seq_along(.list_dots), \(i) {
-    select <- .list_dots[i]
-    project <- names(select)
-    if (is.null(project)) {
-      select <- unlist(select, recursive = FALSE)
-      return(do.call(context_sub_query, args = select))
-    } else {
-      select <- select[[project]]
-    }
-    xafty_link <- list(select = select,
-                       from = project)
-    class(xafty_link) <- c("list", "context_query")
-    xafty_link
-  })
-  query_list <- purrr::list_flatten(query_list) # Worth the dependency?
-  names(query_list) <- vapply(query_list, \(query) query$from, FUN.VALUE = character(1))
-  if(has_misuse_of_object_in_query_list(query_list = query_list)){
-    stop("You are querying an object in an unexpected way. Please check {Vignette on objects} on how to query an object.")
-  }
-  query_list <- set_query_list_class(query_list = query_list)
-  query_list
-}
-
 #' Add a State to a xafty Query
 #' @description
 #' The state of a xafty query is passed to arguments that were declared as xafty states
@@ -123,13 +98,15 @@ add_join_path <- function(query_list, ...) {
 
 where <- function(query_list, ...) {
   .li_states <- list(...)
-  class(.li_states) <- c("list", "xafty_context_list")
+  query_raw <- query(.li_states)
+  context_query <- sapply(query_raw, \(query) {class(query) <- c("list", "context_query"); query}, simplify = FALSE, USE.NAMES = TRUE)
+  class(context_query) <- c("list", "xafty_context_list")
   if(inherits(query_list, "state_query")) {
-    state_query <- add_to_state_query(name = "context", what = context_query(.li_states), state_query = query_list)
+    state_query <- add_to_state_query(name = "context", what = context_query, state_query = query_list)
   } else {
     state_query <- list(
       query = query_list,
-      context = context_query(.li_states)
+      context = context_query
     )
   }
   class(state_query) <- c("list", "state_query")
@@ -334,4 +311,23 @@ interpolate_state_in_query <- function(query_list, state_list, network_env) {
     }
   }
   query_list
+}
+
+fill_raw_query <- function(query_list, network) {
+  projects <- network$settings$projects$print_order$project
+  sapply(query_list, \(query) {
+    if(inherits(query, "raw_query") | inherits(query,"raw_context_query")) {
+      variable_raw <- query$select
+      for (project in projects) {
+        variables <- names(network[[project]]$variables)
+        has_variable <- any(variable_raw %in% variables)
+        if(has_variable) {
+          query$from <-  project
+          class(query) <- c("list", "xafty_query")
+          break
+        }
+      }
+    }
+    query
+  }, simplify = FALSE, USE.NAMES = TRUE)
 }

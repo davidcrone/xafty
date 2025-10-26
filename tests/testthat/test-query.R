@@ -140,3 +140,12 @@ test_that("query with multiples of the same project presevers the variables", {
   expect_identical(tets_projects, c("proj1", "proj2", "proj1"))
   expect_identical(tets_variables, c("col1", "col2", "col3"))
 })
+
+test_that("A raw query is correctly filled with a project", {
+  raw_query_list <- query("mean_nickname", customer_data = "id", "intelligence_plus_mean", map = "id")
+  test_query <- fill_raw_query(query_list = raw_query_list, network = test_network)
+  tets_projects <- vapply(test_query, \(query) query$from, character(1), USE.NAMES = FALSE)
+  tets_variables <- vapply(test_query, \(query) query$select, character(1), USE.NAMES = FALSE)
+  expect_identical(tets_projects, c("customer_data", "customer_data", "intelligence", "map"))
+  expect_identical(tets_variables, c("mean_nickname", "id", "intelligence_plus_mean", "id"))
+})

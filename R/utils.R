@@ -7,7 +7,6 @@
 print.xafty_network <- function(x, ...) {
   network_name <- x$settings$network_name
   values_in_x <- names(x)
-  browser()
   projects <- x$settings$projects$print_order$project
   cat(paste0("Number of projects in network '", network_name, "': ", length(projects), "\n"))
   if(length(projects) > 0) {

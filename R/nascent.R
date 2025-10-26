@@ -15,7 +15,7 @@ nascent <- function(network, ...) {
 #' When querying an object, the xafty algorithm recursively iterates through the network and obtains all functions
 #' necessary. Before evaluating all functions, the xafty algorithm creates a dag-object which contains the full
 #' information about dependencies. The object can then be evaluated with function: evaluate_dag
-#' @param globals A list returned by dots_to_query()
+#' @param ... A xafty query list object
 #' @param network A xafty network
 #' @param frame Used for debugging
 #' @returns A list
