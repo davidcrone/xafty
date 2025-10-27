@@ -1,25 +1,23 @@
 
 scope <- function(data, link, mask) {
   dependend_args <- get_queries(link, which = "xafty_query", temper = FALSE)
+  merged_queries <- do.call(merge_queries, dependend_args)
   colnames_dataset <- colnames(data)
-
   # This part rescopes columns again that were used as the input of the link-function, it also checks the mask object whether a column
   # is masked
-  for (query_list in dependend_args) {
-    projects <- get_projects(query_list)
-    for (project in projects) {
-      selection <- query_list[[project]]$select
-      for (col in selection) {
-        pos_col <- which(colnames_dataset %in% col)
-        if(project %in% mask[[col]]) {
-          # TODO: This can be perhaps replaced instead of the first project with a more cleanly prepared name
-          projects_masked <- mask[[col]]
-          scoped_name <- paste0(projects_masked[1], ".", col)
-        } else {
-          scoped_name <- paste0(project, ".", col)
-        }
-        colnames_dataset[pos_col] <- scoped_name
+  projects <- get_projects(merged_queries)
+  for (project in projects) {
+    selection <- merged_queries[[project]]$select
+    for (col in selection) {
+      pos_col <- which(colnames_dataset %in% col)
+      if(project %in% mask[[col]]) {
+        # TODO: This can be perhaps replaced instead of the first project with a more cleanly prepared name
+        projects_masked <- mask[[col]]
+        scoped_name <- paste0(projects_masked[1], ".", col)
+      } else {
+        scoped_name <- paste0(project, ".", col)
       }
+      colnames_dataset[pos_col] <- scoped_name
     }
   }
 
@@ -28,8 +26,11 @@ scope <- function(data, link, mask) {
   project <- link$project
   for (var in variables) {
     pos_col <- which(colnames_dataset %in% var)
-    if(length(pos_col) <= 0) stop(paste0("Variable '", var, "' in project '", project, "' is not present in the data.",
-                                         " Perhaps the variable was registered with the wrong name?"))
+    if(length(pos_col) <= 0) stop(paste0("Function '", link$fun_name, "' in project '", project,
+                                         "' is expected to add the following variable(s): ",
+                                         paste0(variables, collapse = ", "), ". ",
+                                         "However, variable '", var, "' does not appear in the return value of '", link$fun_name,"'.",
+                                         " Was the variable perhaps registered with the wrong name?"))
     scoped_name <- paste0(project, ".", var)
     colnames_dataset[pos_col] <- scoped_name
   }

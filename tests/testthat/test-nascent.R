@@ -262,7 +262,7 @@ test_that("Registering the wrong variable name through vars yields an informativ
   network <- init_network("test", projects = "test_proj")
   network$test_proj$get(get_sample_data(), vars = c("id", "nam", "score"))
   qry <- query(test_proj = "nam")
-  expect_error(nascent(network, qry), regexp = "Variable 'nam' in project 'test_proj' is not present in the data")
+  expect_error(nascent(network, qry), regexp = "variable 'nam' does not appear in the return value of 'get_sample_data'")
 })
 
 test_that("Nascent a simple context works seamlessly in nascent", {
