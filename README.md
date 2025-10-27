@@ -15,6 +15,15 @@ complex over time through layered abstraction.
 proof of concept. The design and functionality are still evolving and
 may change significantly in future versions.
 
+## Get Involved
+
+**xafty** is in active development, and your feedback is incredibly
+valuable.  
+If you’re curious, testing it out, or have ideas to improve it [get in
+touch](mailto:davidjvcrone@gmail.com) or [open an
+issue](https://github.com/davidcrone/xafty/issues). Whether it’s bugs,
+feature requests, or just to chat, I’d love to hear from you! :)
+
 ## Installation
 
 ``` r
@@ -28,8 +37,6 @@ may change significantly in future versions.
 ########################
 ## START: Preperation ##
 ########################
-
-library(xafty)
 
 ## Build your data pipeline one step at time
 get_mtcars <- function() {
@@ -58,6 +65,8 @@ join_engine_details <- function(mtcars, engine) {
 ## END: Preperation ##
 ######################
 
+library(xafty)
+
 ## Initialize the network
 xafty_network <- init_network("example_network")
 
@@ -81,12 +90,3 @@ xafty_network
 xafty_network |> nascent(mtcars = c("hp", "wt", "vs"), engine = "type", mtcars = "power_to_weight")
  
 ```
-
-## Get Involved
-
-**xafty** is in active development, and your feedback is incredibly
-valuable.  
-If you’re curious, testing it out, or have ideas to improve it [get in
-touch](mailto:davidjvcrone@gmail.com) or [open an
-issue](https://github.com/davidcrone/xafty/issues). Whether it’s bugs,
-feature requests, or just to chat, I’d love to hear from you! :)
