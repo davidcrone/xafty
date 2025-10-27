@@ -1,5 +1,4 @@
-resolve_dependencies <- function(query_list, context_list, state_list, network, dag_sm = NULL) {
-  query_list <- append(query_list, context_list)
+resolve_dependencies <- function(query_list, state_list, network, dag_sm = NULL) {
   dependencies(query_list = query_list, state_list = state_list, network = network, dag_sm = dag_sm)
   resolve_join_dependencies(network = network, dag_sm = dag_sm, state_list = state_list)
   dag_sm

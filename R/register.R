@@ -116,7 +116,7 @@ get_function_package <- function(func_name) {
 
 create_link <- function(quosure, project, link_type, network, ...) {
   .dots <- list(...)
-  link <- create_base_link(quosure = quosure, project = project)
+  link <- create_base_link(quosure = quosure, project = project, link_type = link_type)
   if (link_type == "query") {
     link <- link_add_variables(link = link, variable_names = .dots[["vars"]], network = network)
   } else if (link_type == "context") {
@@ -128,10 +128,11 @@ create_link <- function(quosure, project, link_type, network, ...) {
   link
 }
 
-create_base_link <- function(quosure, project) {
+create_base_link <- function(quosure, project, link_type = link_type) {
   fun_exp <- rlang::get_expr(quosure)
   fun_env <- rlang::get_env(quosure)
   list_args <- unpack_args(exp = fun_exp, env = fun_env)
+  list_args$args <- unpack_query(args = list_args$args)
   list_info <- list(
     package = get_function_package(func_name = list_args$fun_name),
     language = "R",
@@ -224,6 +225,13 @@ unpack_args <- function(exp, env) {
     fun = fun,
     args = fun_args
   )
+}
+
+unpack_query <- function(args) {
+  sapply(args, \(arg) {
+    if(inherits(arg, "xafty_query")) return(arg$query)
+    arg
+  }, simplify = FALSE, USE.NAMES = TRUE)
 }
 
 validate_network_integrity <- function(link, network) {

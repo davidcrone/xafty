@@ -113,10 +113,9 @@ test_that("interpolate_state_in_query can also interpolate an object", {
 test_that("a context component is added to the where part in the query", {
   test_query <- query(intelligence = "intelligence") |>
     where(intelligence = "active_customers")
-  expect_equal(names(test_query), c("query", "context"))
-  expect_equal(test_query$context$intelligence$select, "active_customers")
-  expect_equal(test_query$context$intelligence$from, "intelligence")
-  expect_s3_class(test_query$context$intelligence, class = c("context_query"))
+  expect_equal(test_query[[2]]$select, "active_customers")
+  expect_equal(test_query[[2]]$from, "intelligence")
+  expect_s3_class(test_query[[2]], class = c("context_query"))
 })
 
 test_that("characters with no name are created as a raw query", {

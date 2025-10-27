@@ -34,7 +34,7 @@ build_query_dag <- function(globals, network) {
   dag_sm <- build_tree(network = network)
   dag_sm <- initialize_join_path(join_path = globals$join_path, dag_sm = dag_sm)
   dag_sm <- initialize_join_projects(query_list = globals$internal, network = network, dag_sm = dag_sm)
-  dag_sm <- resolve_dependencies(query_list = globals$internal, context_list = globals$context, state_list = globals$states,
+  dag_sm <- resolve_dependencies(query_list = globals$internal, state_list = globals$states,
                                  network = network, dag_sm = dag_sm)
   topological_sorted_codes <- resolve_function_stack(sm = dag_sm)
   list_links <- sort_links(topological_sorted_codes, sm = dag_sm)

@@ -392,4 +392,8 @@ get_variable_link_type <- function(name, project, network) {
   check_link_type(link)
 }
 
-
+remove_context_queries <- function(query_list) {
+  keep <- !vapply(query_list, \(e) inherits(e, "context_query"), logical(1))
+  query_list <- query_list[keep]
+  query_list
+}

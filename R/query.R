@@ -64,7 +64,7 @@ with <- function(query_list, ...) {
       states = .li_states
     )
   }
-  class(state_query) <- c("list", "state_query")
+  class(state_query) <- c("list", "xafty_query")
   state_query
 }
 
@@ -92,7 +92,7 @@ add_join_path <- function(query_list, ...) {
       join_path = .li_states
     )
   }
-  class(state_query) <- c("list", "state_query")
+  class(state_query) <- c("list", "xafty_query")
   state_query
 }
 
@@ -100,17 +100,13 @@ where <- function(query_list, ...) {
   .li_states <- list(...)
   query_raw <- query(.li_states)
   context_query <- sapply(query_raw, \(query) {class(query) <- c("list", "context_query"); query}, simplify = FALSE, USE.NAMES = TRUE)
-  class(context_query) <- c("list", "xafty_context_list")
-  if(inherits(query_list, "state_query")) {
-    state_query <- add_to_state_query(name = "context", what = context_query, state_query = query_list)
+  if(inherits(query_list, "xafty_query")) {
+    query_list <- append(query_list$query, context_query)
   } else {
-    state_query <- list(
-      query = query_list,
-      context = context_query
-    )
+    query_list <- append(query_list, context_query)
   }
-  class(state_query) <- c("list", "state_query")
-  state_query
+  class(query_list) <- c("list", "xafty_query_list")
+  query_list
 }
 
 add_to_state_query <- function(name, what, state_query) {
@@ -214,24 +210,20 @@ dots_to_query <- function(network, ...)  {
   if(length(query_raw) == 0) {
     stop("No query provided. Please pass a valid query into the function.")
   }
-  if(inherits(query_raw[[1]], "state_query")) {
+  if(inherits(query_raw[[1]], "xafty_query")) {
     query_list <- query_raw[[1]]$query
-    context_list <- query_raw[[1]]$context
     state_list <- query_raw[[1]]$states
     join_path <- query_raw[[1]]$join_path
-  } else if (inherits(query_raw, "state_query")) {
+  } else if (inherits(query_raw, "xafty_query")) {
     query_list <- query_raw$query
-    context_list <- query_raw$context
     state_list <- query_raw$states
     join_path <- query_raw$join_path
   } else if (inherits(query_raw[[1]], what = "xafty_query_list")) {
     query_list <- query_raw[[1]]
-    context_list <- list()
     state_list <- NULL
     join_path <- NULL
   } else if(!inherits(query_raw[[1]], what = "xafty_query_list")) {
     query_list <- query(query_raw)
-    context_list <- list()
     state_list <- NULL
     join_path <- NULL
   } else {
@@ -242,7 +234,6 @@ dots_to_query <- function(network, ...)  {
   list(
     internal = query_internal,
     order = query_order,
-    context = context_list,
     states = state_list,
     join_path = join_path
   )

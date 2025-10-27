@@ -103,8 +103,8 @@ get_column_order <- function(query) {
 }
 
 return_unscoped_data <- function(data, query, dag) {
-  if(inherits(query, "xafty_object_query")) return(data)
   data_cols <- colnames(data)
+  query <- remove_context_queries(query_list = query)
   data_select <- interpolate_masks(query = query, mask = dag$masked_columns, data_cols = data_cols)
   data_selected <- data[data_select]
   colnames(data_selected) <- get_column_order(query)
