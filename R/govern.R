@@ -82,6 +82,10 @@ build_tree <- function(network) {
     tree_env$links[[node_name]] <- link
   }
 
+  append_deps <- function(name, deps) {
+    tree_env$codes[[name]] <- deps
+  }
+
   get_codes <- function() {
     tree_env$codes
   }
@@ -158,6 +162,7 @@ build_tree <- function(network) {
 
   list(
     set_nodes = set_nodes,
+    append_deps = append_deps,
     get_codes = get_codes,
     get_links = get_links,
     get_query = get_query,

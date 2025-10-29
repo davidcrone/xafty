@@ -33,7 +33,7 @@ print.xafty_network <- function(x, ...) {
       cat(paste0("Context: ", context_print, "\n"))
     }
     if(length(objects) > 0) {
-      objects_print <- paste0(objects, collapse = ", ")
+      objects_print <- paste0(paste0("[", objects, "]"), collapse = ", ")
       cat(paste0("Objects: ", objects_print, "\n"))
     }
     if(length(joined_projects) > 0) {

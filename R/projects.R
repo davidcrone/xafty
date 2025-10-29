@@ -37,7 +37,7 @@ create_add_project <- function(network_env) {
   add_project <- function(name, ...) {
     validate_project_name(name = name, network = network_env)
     .network_env <- add_new_project(project = name, network_env = network_env,
-                                    func_types = c("get", "add", "join", "add_context", "add_object"))
+                                    func_types = c("get", "add", "join", "on_entry", "on_exit", "add_object"))
     .network_env <- set_project_print_order(projects = name, network = .network_env)
     invisible(.network_env)
   }
@@ -52,13 +52,14 @@ create_save_project <- function(network_env) {
   save_project
 }
 
-add_new_project <- function(project, network_env, func_types = c("get", "add", "join", "add_context", "add_object")) {
+add_new_project <- function(project, network_env, func_types) {
   env_names <- c("variables", "joined_projects") # These will be environments for frequent look-ups during the nascent process
 
   project_env <- new.env() # This is the environment, where all code will be organized
-  class(project_env) <- c("xafty_project", "environment")
+  class(project_env) <- c("environment", "xafty_project")
   network_env[[project]] <- project_env
   network_env[[project]][["ruleset"]] <- list()
+  network_env[[project]][["wrappers"]] <- list(on_entry = NULL, on_exit = NULL)
   for (env_name in env_names) {
     assign(env_name, new.env(), envir = project_env)
   }
@@ -79,12 +80,12 @@ create_add_object <- function(project, network) {
   add_object
 }
 
-create_add_context <- function(project, network) {
+create_add_context <- function(project, network, func_type = NULL) {
   force(project)
   force(network)
   add_context <- function(name, fun, ...) {
     quosure <- rlang::enquo(fun)
-    register(quosure = quosure, link_type = "context", network = network, project = project, name = name, ...)
+    register(quosure = quosure, link_type = "context", network = network, project = project, name = name, func_type = func_type, ...)
   }
   add_context
 }
@@ -104,13 +105,15 @@ create_register_link_func <- function(project, network, link_type = "query", ope
 bundle_link_functions <- function(project, network) {
   link_fun <- create_register_link_func(project = project, network = network, link_type = "query")
   object_fun <- create_add_object(project = project, network = network)
-  context_fun <- create_add_context(project = project, network = network)
+  on_entry_fun <- create_add_context(project = project, network = network, func_type = "entry")
+  on_exit_fun <- create_add_context(project = project, network = network, func_type = "exit")
   list(
+    "on_entry" = on_entry_fun,
     "get" = link_fun,
     "add" = link_fun,
     "join" = link_fun,
-    "add_context" = context_fun,
-    "add_object" = object_fun
+    "add_object" = object_fun,
+    "on_exit" = on_exit_fun
   )
 }
 

@@ -265,16 +265,33 @@ test_that("Registering the wrong variable name through vars yields an informativ
   expect_error(nascent(network, qry), regexp = "variable 'nam' does not appear in the return value of 'get_sample_data'")
 })
 
-test_that("Nascent a simple context works seamlessly in nascent", {
-  test_network <- init_network(name = "test_network", projects = "intelligence")
-  test_network$intelligence$get(intelligence_date())
-  filter_active_customers <- function(data) {
-    data[data$intelligence > 100, , drop = FALSE]
+test_that("On entry is correctly interpolated into the dag and evaluates properly", {
+  test_network <- init_network(name = "test_network", projects = c("customer_data", "occupations"))
+  test_network$customer_data$get(get_sample_data())
+  test_network$occupations$add(add_score_category(data = query(customer_data = "score")))
+  increase_score <- function(data = "{.data}") {
+    data$score <- data$score + 100
+    data
   }
-  test_network$intelligence$add_context("active_customers", filter_active_customers(data = query(intelligence = "intelligence")))
-  qry <- query(intelligence = "intelligence") |>
-    where(intelligence = "active_customers")
- test_data <- nascent(test_network, qry)
- expected_data <- structure(list(intelligence = c(120, 130)), row.names = c(1L, 4L), class = "data.frame")
- expect_identical(test_data, expected_data)
+  test_network$occupations$on_entry("increase_score", increase_score())
+  test_data <- nascent(test_network, customer_data = "name", occupations= "category")
+  expected_data <- structure(list(name = c("Alice", "Bob", "Charlie", "Diana", "Eve"),
+                                  category = c("High", "High", "High", "High", "High")),
+                             row.names = c(NA, -5L), class = "data.frame")
+  expect_identical(test_data, expected_data)
 })
+
+#### NOTE: Implementing a "free-form" context is more difficult than expected. Making efficient execution is akin to building a efficient SQL-Query
+# test_that("Nascent a simple context works seamlessly in nascent", {
+#   test_network <- init_network(name = "test_network", projects = "intelligence")
+#   test_network$intelligence$get(intelligence_date())
+#   filter_active_customers <- function(data) {
+#     data[data$intelligence > 100, , drop = FALSE]
+#   }
+#   test_network$intelligence$add_context("active_customers", filter_active_customers(data = query(intelligence = "intelligence")))
+#   qry <- query(intelligence = "intelligence") |>
+#     where(intelligence = "active_customers")
+#  test_data <- nascent(test_network, qry)
+#  expected_data <- structure(list(intelligence = c(120, 130)), row.names = c(1L, 4L), class = "data.frame")
+#  expect_identical(test_data, expected_data)
+# })

@@ -36,6 +36,7 @@ build_query_dag <- function(globals, network) {
   dag_sm <- initialize_join_projects(query_list = globals$internal, network = network, dag_sm = dag_sm)
   dag_sm <- resolve_dependencies(query_list = globals$internal, state_list = globals$states,
                                  network = network, dag_sm = dag_sm)
+  dag_sm <- resolve_wrappers(network = network, dag_sm = dag_sm)
   topological_sorted_codes <- resolve_function_stack(sm = dag_sm)
   list_links <- sort_links(topological_sorted_codes, sm = dag_sm)
   dag <- list(
@@ -277,4 +278,46 @@ initialize_join_projects <- function(query_list, network, dag_sm) {
   projects_join <- projects[logical_project_join]
   dag_sm$set_join_projects(projects = projects_join)
   dag_sm
+}
+
+resolve_wrappers <- function(network, dag_sm) {
+  projects <- get_projects(dag_sm$get_query())
+  has_wrappers <- vapply(projects, \(project) !is.null(c(network[[project]]$wrappers$on_entry,
+                                                         network[[project]]$wrappers$on_exit)), FUN.VALUE = logical(1))
+  if(all(!has_wrappers)) return(dag_sm)
+  projects_w_wrappers <- projects[has_wrappers]
+  for (project in projects_w_wrappers) {
+    resolve_on_entry(project = project, network = network, dag_sm = dag_sm)
+  }
+  dag_sm
+}
+
+resolve_on_entry <- function(project, network, dag_sm) {
+  func_names <- network[[project]]$wrappers$on_entry
+  codes <- dag_sm$get_codes()
+  links <- lapply(func_names, \(func_name) network[[project]]$ruleset[[func_name]])
+  for (link in links) {
+  fun_code <- build_fun_code(link)
+  project_codes <- codes[grepl(paste0("^", project, "."), names(codes))]
+  deps <- unique(unlist(project_codes, use.names = FALSE))
+  new_project_codes <- sapply(project_codes, \(code_dep) c(code_dep, fun_code), simplify = FALSE, USE.NAMES = TRUE)
+  deps_funcs <- names(project_codes)
+  all_links <- dag_sm$get_links()
+  dep_links <- lapply(deps_funcs, \(code) all_links[[code]])
+  dep_queries <- get_dependend_queries(dep_links)
+  link$args <- sapply(link$args, \(arg) {
+    if(!is.character(arg)) return(arg)
+    if(all(arg == "{.data}")) {
+      do.call(merge_queries, dep_queries)
+    }
+  }, simplify = FALSE, USE.NAMES = TRUE)
+  fun_node <- setNames(list(deps), fun_code)
+  dag_sm$set_nodes(link = link, code = fun_node)
+  for (i in seq_along(new_project_codes)) {
+    project_node <- new_project_codes[i]
+    name <- names(project_node)
+    deps <- project_node[[name]]
+    dag_sm$append_deps(name, deps = deps)
+  }
+  }
 }
