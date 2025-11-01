@@ -187,6 +187,18 @@ test_that("Registering on_entry creates a on_entry function in wrappers", {
   expect_identical(test_network$customer_data$ruleset$remove_redundant_data$args$values, FALSE)
 })
 
+test_that("Registering on_entry creates a on_entry function in wrappers", {
+  test_network <- init_network("test_network", projects = "customer_data")
+  add_redundant_data <- function(data, values = FALSE) {
+    data
+  }
+  test_network$customer_data$on_exit("add_redundant", add_redundant_data(data = "{.data}"))
+  expect_identical(test_network$customer_data$wrappers$on_entry, NULL)
+  expect_identical(test_network$customer_data$wrappers$on_exit, "add_redundant_data")
+  expect_identical(test_network$customer_data$ruleset$add_redundant_data$args$data, "{.data}")
+  expect_identical(test_network$customer_data$ruleset$add_redundant_data$args$values, FALSE)
+})
+
 # test_that("Registering context creates the correct entry in ruleset and network", {
 #   test_network <- init_network(name = "test_network", projects = "intelligence")
 #   test_network$intelligence$get(intelligence_date())

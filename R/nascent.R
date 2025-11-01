@@ -288,12 +288,14 @@ resolve_wrappers <- function(network, dag_sm) {
   projects_w_wrappers <- projects[has_wrappers]
   for (project in projects_w_wrappers) {
     resolve_on_entry(project = project, network = network, dag_sm = dag_sm)
+    resolve_on_exit(project = project, network = network, dag_sm = dag_sm)
   }
   dag_sm
 }
 
 resolve_on_entry <- function(project, network, dag_sm) {
   func_names <- network[[project]]$wrappers$on_entry
+  if(is.null(func_names)) return(NULL)
   codes <- dag_sm$get_codes()
   links <- lapply(func_names, \(func_name) network[[project]]$ruleset[[func_name]])
   on_entry_codes <- vapply(links, build_fun_code, FUN.VALUE = character(1))
@@ -313,6 +315,34 @@ resolve_on_entry <- function(project, network, dag_sm) {
       }
     }, simplify = FALSE, USE.NAMES = TRUE)
     fun_node <- setNames(list(deps), on_entry_code)
+    dag_sm$set_nodes(link = link, code = fun_node)
+  }
+}
+
+resolve_on_exit <- function(project, network, dag_sm) {
+  func_names <- network[[project]]$wrappers$on_exit
+  if(is.null(func_names)) return(NULL)
+  links <- lapply(func_names, \(func_name) network[[project]]$ruleset[[func_name]])
+  on_exit_codes <- vapply(links, build_fun_code, FUN.VALUE = character(1))
+  for (i in seq_along(links)) {
+    link <- links[[i]]
+    on_exit_code <- on_exit_codes[i]
+    codes <- dag_sm$get_codes()
+    name_codes <- names(codes)
+    project_code_deps <- name_codes[grepl(paste0("^", project, "."), name_codes)]
+    fun_node <- setNames(list(project_code_deps), on_exit_code)
+    all_links <- dag_sm$get_links()
+    dep_links <- lapply(project_code_deps, \(code) all_links[[code]])
+    dep_queries <- get_dependend_queries(links = dep_links)
+    merged_queries <- do.call(merge_queries, dep_queries)
+    pro_queries <- get_provided_queries(project = project, links = dep_links)
+    merged_queries <- merge_queries(merged_queries, pro_queries)
+    link$args <- sapply(link$args, \(arg) {
+      if(!is.character(arg)) return(arg)
+      if(all(arg == "{.data}")) {
+        merged_queries
+      }
+    }, simplify = FALSE, USE.NAMES = TRUE)
     dag_sm$set_nodes(link = link, code = fun_node)
   }
 }

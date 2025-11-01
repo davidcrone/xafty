@@ -201,3 +201,9 @@ set_objects <- function(links, network, dag_sm) {
 get_dependend_queries <- function(links) {
   flatten_list(remove_empty_lists(lapply(links, get_queries, which = "xafty_query")))
 }
+
+get_provided_queries <- function(project, links) {
+  variables <- do.call(c, lapply(links, \(link) if(inherits(link, "query_link")) link$variables))
+  named_project_list <- setNames(list(variables), project)
+  query(named_project_list)
+}
