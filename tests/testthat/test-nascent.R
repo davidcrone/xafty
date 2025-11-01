@@ -284,6 +284,8 @@ test_that("On entry is correctly interpolated into the dag and evaluates properl
 test_that("Two entry functions are correctly interpolated int the dag and properly evaluated", {
   test_network <- init_network(name = "test_network", projects = c("customer_data", "occupations"))
   test_network$customer_data$get(get_sample_data())
+  # Here we added name as a dependency, even though add_score_category does not depends on name, but the function
+  # decrease_score_of_hated_pupil does
   test_network$occupations$add(add_score_category(data = query(customer_data = c("score", "name"))))
   increase_score <- function(data = "{.data}") {
     data$score <- data$score + 100
