@@ -281,6 +281,27 @@ test_that("On entry is correctly interpolated into the dag and evaluates properl
   expect_identical(test_data, expected_data)
 })
 
+test_that("Two entry functions are correctly interpolated int the dag and properly evaluated", {
+  test_network <- init_network(name = "test_network", projects = c("customer_data", "occupations"))
+  test_network$customer_data$get(get_sample_data())
+  test_network$occupations$add(add_score_category(data = query(customer_data = c("score", "name"))))
+  increase_score <- function(data = "{.data}") {
+    data$score <- data$score + 100
+    data
+  }
+  decrease_score_of_hated_pupil <- function(data = "{.data}") {
+    data$score[data$name == "Alice"] <- 10
+    data
+  }
+  test_network$occupations$on_entry("increase_score", increase_score())
+  test_network$occupations$on_entry("manipulate_score", decrease_score_of_hated_pupil())
+  test_data <- nascent(test_network, customer_data = "name", occupations= "category")
+  expected_data <- structure(list(name = c("Alice", "Bob", "Charlie", "Diana", "Eve"),
+                                  category = c("Low", "High", "High", "High", "High")),
+                             row.names = c(NA, -5L), class = "data.frame")
+  expect_identical(test_data, expected_data)
+})
+
 #### NOTE: Implementing a "free-form" context is more difficult than expected. Making efficient execution is akin to building a efficient SQL-Query
 # test_that("Nascent a simple context works seamlessly in nascent", {
 #   test_network <- init_network(name = "test_network", projects = "intelligence")

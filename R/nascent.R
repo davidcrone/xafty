@@ -317,6 +317,8 @@ resolve_on_entry <- function(project, network, dag_sm) {
   }
 }
 
+# The function removes the wrapper codes that have been added during build_dependencie_codes since they are
+# not needed as dependencies upon themselves
 clean_wrapper_deps <- function(on_entry_code, on_entry_codes, project_codes) {
   deps_w_wrapper <- unique(unlist(project_codes, use.names = FALSE))
   from <- which(on_entry_codes == on_entry_code)
