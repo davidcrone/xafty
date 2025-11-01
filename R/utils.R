@@ -103,6 +103,7 @@ build_dependency_codes <- function(link, network, dag_sm) {
   }
   # This splits queries from object queries which need a different prefix
   function_codes <- unique(do.call(c, lapply(queries, get_scoped_function_order, network = network)))
+  wrapper_codes <- on_entry_codes(link = link, network = network)
   # TODO: link link$joins$projects may need re computation with project_needs_join when a variable name has been interpolated
   #  -> This would also make a differentiation necessary between a link that has been "tampered" with and one who was not
   join_codes <- character(length(link$joins$projects))
@@ -114,9 +115,16 @@ build_dependency_codes <- function(link, network, dag_sm) {
     dag_sm$set_join_projects(projects = projects)
     join_codes[i] <- join_id
   }
-  link_dependencies <- c(function_codes, join_codes)
+  link_dependencies <- c(function_codes, join_codes, wrapper_codes)
   node <- setNames(list(link_dependencies), fun_code)
   node
+}
+
+on_entry_codes <- function(link, network) {
+  project <- link$project
+  on_entry_funcs <- network[[project]]$wrappers$on_entry
+  if(is.null(on_entry_funcs)) return(NULL)
+  paste0(project, ".", on_entry_funcs)
 }
 
 interpolate_link_queries <- function(link, state_list = NULL, network) {

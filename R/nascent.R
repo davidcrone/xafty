@@ -296,28 +296,31 @@ resolve_on_entry <- function(project, network, dag_sm) {
   func_names <- network[[project]]$wrappers$on_entry
   codes <- dag_sm$get_codes()
   links <- lapply(func_names, \(func_name) network[[project]]$ruleset[[func_name]])
-  for (link in links) {
-  fun_code <- build_fun_code(link)
-  project_codes <- codes[grepl(paste0("^", project, "."), names(codes))]
-  deps <- unique(unlist(project_codes, use.names = FALSE))
-  new_project_codes <- sapply(project_codes, \(code_dep) c(code_dep, fun_code), simplify = FALSE, USE.NAMES = TRUE)
-  deps_funcs <- names(project_codes)
-  all_links <- dag_sm$get_links()
-  dep_links <- lapply(deps_funcs, \(code) all_links[[code]])
-  dep_queries <- get_dependend_queries(dep_links)
-  link$args <- sapply(link$args, \(arg) {
-    if(!is.character(arg)) return(arg)
-    if(all(arg == "{.data}")) {
-      do.call(merge_queries, dep_queries)
-    }
-  }, simplify = FALSE, USE.NAMES = TRUE)
-  fun_node <- setNames(list(deps), fun_code)
-  dag_sm$set_nodes(link = link, code = fun_node)
-  for (i in seq_along(new_project_codes)) {
-    project_node <- new_project_codes[i]
-    name <- names(project_node)
-    deps <- project_node[[name]]
-    dag_sm$append_deps(name, deps = deps)
+  on_entry_codes <- vapply(links, build_fun_code, FUN.VALUE = character(1))
+  for (i in seq_along(links)) {
+    link <- links[[i]]
+    on_entry_code <- on_entry_codes[i]
+    project_codes <- codes[grepl(paste0("^", project, "."), names(codes))]
+    deps <- clean_wrapper_deps(on_entry_code = on_entry_code, on_entry_codes = on_entry_codes, project_codes = project_codes)
+    deps_funcs <- names(project_codes)
+    all_links <- dag_sm$get_links()
+    dep_links <- lapply(deps_funcs, \(code) all_links[[code]])
+    dep_queries <- get_dependend_queries(dep_links)
+    link$args <- sapply(link$args, \(arg) {
+      if(!is.character(arg)) return(arg)
+      if(all(arg == "{.data}")) {
+        do.call(merge_queries, dep_queries)
+      }
+    }, simplify = FALSE, USE.NAMES = TRUE)
+    fun_node <- setNames(list(deps), on_entry_code)
+    dag_sm$set_nodes(link = link, code = fun_node)
   }
-  }
+}
+
+clean_wrapper_deps <- function(on_entry_code, on_entry_codes, project_codes) {
+  deps_w_wrapper <- unique(unlist(project_codes, use.names = FALSE))
+  from <- which(on_entry_codes == on_entry_code)
+  to <- length(on_entry_codes)
+  remove_codes <- on_entry_codes[seq(from = from, to)]
+  deps_w_wrapper[!deps_w_wrapper %in% remove_codes]
 }

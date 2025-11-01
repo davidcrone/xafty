@@ -177,13 +177,14 @@ test_that("Updating a function with revised variable names removes all legacy va
 
 test_that("Registering on_entry creates a on_entry function in wrappers", {
   test_network <- init_network("test_network", projects = "customer_data")
-  remove_redundant_data <- function(data) {
+  remove_redundant_data <- function(data, values = FALSE) {
     data
   }
   test_network$customer_data$on_entry("remove_redundant", remove_redundant_data(data = "{.data}"))
   expect_identical(test_network$customer_data$wrappers$on_entry, "remove_redundant_data")
   expect_identical(test_network$customer_data$wrappers$on_exit, NULL)
   expect_identical(test_network$customer_data$ruleset$remove_redundant_data$args$data, "{.data}")
+  expect_identical(test_network$customer_data$ruleset$remove_redundant_data$args$values, FALSE)
 })
 
 # test_that("Registering context creates the correct entry in ruleset and network", {
