@@ -103,7 +103,7 @@ build_dependency_codes <- function(link, network, dag_sm) {
   }
   # This splits queries from object queries which need a different prefix
   function_codes <- unique(do.call(c, lapply(queries, get_scoped_function_order, network = network)))
-  wrapper_codes <- on_entry_codes(link = link, network = network)
+  wrapper_codes <- c(on_entry_codes(link = link, network = network), on_exit_codes(link = link, network = network))
   # TODO: link link$joins$projects may need re computation with project_needs_join when a variable name has been interpolated
   #  -> This would also make a differentiation necessary between a link that has been "tampered" with and one who was not
   join_codes <- character(length(link$joins$projects))
@@ -125,6 +125,23 @@ on_entry_codes <- function(link, network) {
   on_entry_funcs <- network[[project]]$wrappers$on_entry
   if(is.null(on_entry_funcs)) return(NULL)
   paste0(project, ".", on_entry_funcs)
+}
+
+on_exit_codes <- function(link, network) {
+  arg_queries <- get_queries(link)
+  li_projects <- lapply(arg_queries, \(query_list) get_projects(query_list))
+  projects <- unique(do.call(c, li_projects))
+  li_on_exit_codes <- list()
+  for (project in projects) {
+    on_exit_funcs <- network[[project]]$wrappers$on_exit
+    if(is.null(on_exit_funcs)) {
+      on_exit_codes <- NULL
+    } else {
+      on_exit_codes <- paste0(project, ".", on_exit_funcs)
+    }
+    li_on_exit_codes[[project]] <- on_exit_codes
+  }
+  unlist(li_on_exit_codes, use.names = FALSE)
 }
 
 interpolate_link_queries <- function(link, state_list = NULL, network) {

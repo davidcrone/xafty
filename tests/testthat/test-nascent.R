@@ -325,6 +325,35 @@ test_that("On entry is correctly interpolated into the dag and evaluates properl
   expect_identical(test_data, expected_data)
 })
 
+test_that("On entry is correctly interpolated into the dag and evaluates properly", {
+  test_network <- init_network(name = "test_network", projects = c("customer_data", "occupations"))
+  test_network$customer_data$get(get_sample_data())
+  test_network$occupations$add(add_score_category(data = query(customer_data = "score")))
+  increase_score <- function(data = "{.data}") {
+    data$score <- data$score + 100
+    data
+  }
+  decrease_score <- function(data = "{.data}") {
+    data$score <- data$score - 100
+    data
+  }
+  test_network$occupations$on_entry("increase_score", increase_score())
+  test_network$occupations$on_exit("decrease_score", decrease_score())
+  test_network$add_project("final_pass")
+  add_has_passed <- function(data = query(occupations = "category")) {
+    data$has_passed <- ifelse(data$category == "High", TRUE, FALSE)
+    data
+  }
+  test_network$final_pass$add(add_has_passed())
+  test_data <- nascent(test_network, customer_data = c("name", "score"), occupations= "category", final_pass = "has_passed")
+  expected_data <- structure(list(name = c("Alice", "Bob", "Charlie", "Diana", "Eve"),
+                                  score = c(85, 92, 78, 90, 88),
+                                  category = c("High", "High", "High", "High", "High"),
+                                  has_passed =c(TRUE, TRUE, TRUE, TRUE, TRUE)),
+                             row.names = c(NA, -5L), class = "data.frame")
+  expect_identical(test_data, expected_data)
+})
+
 #### NOTE: Implementing a "free-form" context is more difficult than expected. Making efficient execution is akin to building a efficient SQL-Query
 # test_that("Nascent a simple context works seamlessly in nascent", {
 #   test_network <- init_network(name = "test_network", projects = "intelligence")
