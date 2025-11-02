@@ -122,17 +122,6 @@ build_tree <- function(network) {
     tree_env$joins
   }
 
-  set_join_projects <- function(projects) {
-    current_projects <- tree_env$join_projects
-    new_project <- projects[!projects %in% current_projects]
-    projects <- c(current_projects, new_project)
-    tree_env$join_projects <- projects
-  }
-
-  get_join_projects <- function() {
-    tree_env$join_projects
-  }
-
   set_join_path <- function(path) {
     tree_env$join_path <- path
   }
@@ -171,8 +160,6 @@ build_tree <- function(network) {
     get_objects = get_objects,
     set_join = set_join,
     get_joins = get_joins,
-    set_join_projects = set_join_projects,
-    get_join_projects = get_join_projects,
     get_object_codes = get_object_codes,
     set_join_path = set_join_path,
     get_join_path = get_join_path,

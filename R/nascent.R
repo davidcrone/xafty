@@ -33,7 +33,6 @@ build_dag <- function(..., network, frame = "main") {
 build_query_dag <- function(globals, network) {
   dag_sm <- build_tree(network = network)
   dag_sm <- initialize_join_path(join_path = globals$join_path, dag_sm = dag_sm)
-  dag_sm <- initialize_join_projects(query_list = globals$internal, network = network, dag_sm = dag_sm)
   dag_sm <- resolve_dependencies(query_list = globals$internal, state_list = globals$states,
                                  network = network, dag_sm = dag_sm)
   dag_sm <- resolve_wrappers(network = network, dag_sm = dag_sm)
@@ -269,17 +268,7 @@ initialize_join_path <- function(join_path, dag_sm) {
   if(is.null(join_path)) return(invisible(dag_sm))
   dag_sm$set_join_path(join_path)
   join_projects <- unique(unlist(join_path, recursive = TRUE, use.names = FALSE))
-  dag_sm$set_join_projects(projects = join_projects)
   invisible(dag_sm)
-}
-
-initialize_join_projects <- function(query_list, network, dag_sm) {
-  projects <- get_projects(query_list)
-  if(length(projects) <= 1) return(dag_sm)
-  logical_project_join <- sapply(projects, \(project) project_needs_join(project = project, query_list = query_list, network = network))
-  projects_join <- projects[logical_project_join]
-  dag_sm$set_join_projects(projects = projects_join)
-  dag_sm
 }
 
 resolve_wrappers <- function(network, dag_sm) {

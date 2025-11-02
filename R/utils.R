@@ -112,7 +112,6 @@ build_dependency_codes <- function(link, network, dag_sm) {
     join_id <- paste0("join.", paste0(sort(projects), collapse = "."))
     # This is later used to resolve the join
     dag_sm$set_join(id = join_id, projects = projects)
-    dag_sm$set_join_projects(projects = projects)
     join_codes[i] <- join_id
   }
   link_dependencies <- c(function_codes, join_codes, wrapper_codes)
