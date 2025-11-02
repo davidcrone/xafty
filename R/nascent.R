@@ -137,7 +137,9 @@ build_join_graph <- function(network) {
 }
 
 projects_not_in_join_path <- function(dag_sm, network) {
-  projects <- dag_sm$get_join_projects()
+  query_list <- dag_sm$get_query()
+  all_projects <- get_projects(query_list)
+  projects <- all_projects[vapply(all_projects, project_needs_join, network = network, query_list = query_list, FUN.VALUE = logical(1))]
   join_path <- dag_sm$get_join_path()
   projects_joined <- unique(do.call(c, join_path))
   projects[!projects %in% projects_joined]
