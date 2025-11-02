@@ -22,23 +22,22 @@ dependencies <- function(query_list, state_list = NULL, network, dag_sm = build_
 # Currently re-calling resolve_join_dependencies is inefficient, because if the join_path has not changed,
 # running join_dependencies again is unnecessary which would also run dependencies again. running join dependencies again
 # would only be necessary when the dependencies of the join-dependencies would need a totally different join not yet in the join_path
-# resolve_join_dependencies would need to be rewritten to only
+# resolve_join_dependencies would need to be rewritten to only join the delta projects
 resolve_join_dependencies <- function(network, dag_sm, state_list = NULL) {
   new_projects <- projects_not_in_join_path(dag_sm = dag_sm, network = network)
   if(length(new_projects) > 1) {
     join_path <- greedy_best_first_search(new_projects, network, sm = dag_sm)
     dag_sm$set_join_path(join_path)
-  } else {
-    join_path <- dag_sm$get_join_path()
   }
-  links <- join_dependencies(join_path = join_path, network = network, dag_sm = dag_sm, state_query = state_list)
+  links <- join_dependencies(network = network, dag_sm = dag_sm, state_query = state_list)
   queries <- get_dependend_queries(links)
   query_list <- do.call(merge_queries, queries)
   dependencies(query_list = query_list, network = network, dag_sm = dag_sm)
   invisible(dag_sm)
 }
 
-join_dependencies <- function(join_path, network, dag_sm, state_query) {
+join_dependencies <- function(network, dag_sm, state_query) {
+  join_path <- dag_sm$get_join_path()
   li_joins <- lapply(join_path, \(path) {
     from <- path[-length(path)]
     to <- path[-1]
