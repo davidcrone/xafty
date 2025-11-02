@@ -197,7 +197,9 @@ link_add_joins <- function(link, network) {
 
 #Get Dependent Joins for Each Argument
 get_join_dependencies <- function(link, network) {
-  queries <- get_queries(link = link, which = "xafty_query", temper = TRUE, network = network)
+  queries_raw <- get_queries(link = link, which = "xafty_query", temper = TRUE, network = network)
+  # Merging queries here for the edge case when a user duplicates the project, e.g. query(dupe = "col1", b = "col3", dupe = "col2")
+  queries <- sapply(queries_raw, merge_queries, simplify = FALSE, USE.NAMES = TRUE)
   args <- names(queries)
   list_projects <- sapply(queries, get_projects, simplify = FALSE, USE.NAMES = TRUE)
   list_join_projects <- sapply(args, \(arg) {
