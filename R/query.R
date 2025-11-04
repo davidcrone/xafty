@@ -280,25 +280,25 @@ resolve_star_select <- function(query_list, network_env) {
 }
 
 interpolate_state_in_query <- function(query_list, state_list, network_env) {
-  for (query in query_list) {
+  for (i in seq_along(query_list)) {
+    query <- query_list[[i]]
     select <- query$select
-    project <- query$from
     contains_state_logical <- vapply(select, contains_state, FUN.VALUE = logical(1), USE.NAMES = FALSE)
     if(!any(contains_state_logical)) next
     position_states <- which(contains_state_logical)
     state_names <- get_braced_variable(select[contains_state_logical])
-    for (i in seq_along(state_names)) {
-      name <- state_names[i]
+    for (j in seq_along(state_names)) {
+      name <- state_names[j]
       inter_value <- state_list[[name]]
       if(is.null(inter_value)) {
         inter_value <-  get_default_state(name = name, network_env = network_env)
         if(is.null(inter_value)) inter_value <- ""
       }
-      pos <- position_states[i]
+      pos <- position_states[j]
       variable_name <- select[pos]
       state_pattern <- paste0("{", name, "}")
       inter_variable <- gsub(state_pattern, inter_value, variable_name, fixed = TRUE)
-      query_list[[project]]$select[pos] <- inter_variable
+      query_list[[i]]$select[pos] <- inter_variable
     }
   }
   query_list

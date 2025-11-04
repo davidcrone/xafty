@@ -110,6 +110,16 @@ test_that("interpolate_state_in_query can also interpolate an object", {
   expect_identical(query_test, query_expected)
 })
 
+test_that("interpolate_state_in_query correctly fills the select variable with the same project appearing twice", {
+  network_env <- init_network("test_network")
+  network_env$add_state("year", default = "2019")
+  network_env$settings$state$global_default <- 2020
+  query_list <- query(project1 = c("population.{year}", "overall_population"), project2 = "default.{state}", project1 = "population.alive.{year}")
+  query_test <- interpolate_state_in_query(query_list = query_list, state_list = NULL, network_env = network_env)
+  query_expected <- query(project1 = c("population.2019", "overall_population"), project2 = "default.2020", project1 = "population.alive.2019")
+  expect_identical(query_test, query_expected)
+})
+
 test_that("a context component is added to the where part in the query", {
   test_query <- query(intelligence = "intelligence") |>
     where(intelligence = "active_customers")

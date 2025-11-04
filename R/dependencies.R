@@ -26,7 +26,7 @@ dependencies <- function(query_list, state_list = NULL, network, dag_sm = build_
 resolve_join_dependencies <- function(network, dag_sm, state_list = NULL) {
   new_projects <- projects_not_in_join_path(dag_sm = dag_sm, network = network)
   if(length(new_projects) > 1) {
-    join_path <- greedy_best_first_search(new_projects, network, sm = dag_sm)
+    join_path <- greedy_best_first_search(new_projects, network, dag_sm = dag_sm)
     dag_sm$set_join_path(join_path)
   }
   links <- join_dependencies(network = network, dag_sm = dag_sm, state_query = state_list)

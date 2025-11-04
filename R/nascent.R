@@ -144,10 +144,10 @@ projects_not_in_join_path <- function(dag_sm, network) {
   projects[!projects %in% projects_joined]
 }
 
-greedy_best_first_search <- function(projects, network, sm) {
+greedy_best_first_search <- function(projects, network, dag_sm) {
   graph <- build_join_graph(network)
   check_graph(graph = graph, check_projects = projects)
-  join_paths <- sm$get_join_path()
+  join_paths <- dag_sm$get_join_path()
   for (i in seq_along(projects)) {
     vec_joins <- do.call(c, join_paths)
     start <- projects[i]
