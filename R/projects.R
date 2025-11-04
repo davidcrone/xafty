@@ -83,7 +83,7 @@ create_add_object <- function(project, network) {
 create_add_context <- function(project, network, func_type = NULL) {
   force(project)
   force(network)
-  add_context <- function(name, fun, ...) {
+  add_context <- function(fun, name = NULL,  ...) {
     quosure <- rlang::enquo(fun)
     register(quosure = quosure, link_type = "context", network = network, project = project, name = name, func_type = func_type, ...)
   }

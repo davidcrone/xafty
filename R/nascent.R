@@ -35,7 +35,6 @@ build_query_dag <- function(globals, network) {
   dag_sm <- initialize_join_path(join_path = globals$join_path, dag_sm = dag_sm)
   dag_sm <- resolve_dependencies(query_list = globals$internal, state_list = globals$states,
                                  network = network, dag_sm = dag_sm)
-  dag_sm <- resolve_wrappers(network = network, dag_sm = dag_sm)
   topological_sorted_codes <- resolve_function_stack(sm = dag_sm)
   list_links <- sort_links(topological_sorted_codes, sm = dag_sm)
   dag <- list(
@@ -292,9 +291,11 @@ resolve_on_entry <- function(project, network, dag_sm) {
   on_entry_codes <- vapply(links, build_fun_code, FUN.VALUE = character(1))
   for (i in seq_along(links)) {
     link <- links[[i]]
-    on_entry_code <- on_entry_codes[i]
-    project_codes <- codes[grepl(paste0("^", project, "."), names(codes))]
+    on_entry_node <- build_dependency_codes(link, network = network, dag_sm = dag_sm)
+    on_entry_code <- names(on_entry_node)
+    project_codes <- append(codes[grepl(paste0("^", project, "."), names(codes))], on_entry_node)
     deps <- clean_wrapper_deps(on_entry_code = on_entry_code, on_entry_codes = on_entry_codes, project_codes = project_codes)
+    # Following only needs to be done when an argument of the wrapper has {.data}"
     deps_funcs <- names(project_codes)
     all_links <- dag_sm$get_links()
     dep_links <- lapply(deps_funcs, \(code) all_links[[code]])
@@ -308,6 +309,8 @@ resolve_on_entry <- function(project, network, dag_sm) {
     fun_node <- setNames(list(deps), on_entry_code)
     dag_sm$set_nodes(link = link, code = fun_node)
   }
+  on_entry_query_list <- do.call(merge_queries, get_dependend_queries(links))
+  dependencies(query_list = on_entry_query_list, state_list = NULL, network = network, dag_sm = dag_sm)
 }
 
 resolve_on_exit <- function(project, network, dag_sm) {

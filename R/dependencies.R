@@ -1,10 +1,13 @@
 resolve_dependencies <- function(query_list, state_list, network, dag_sm = NULL) {
   dependencies(query_list = query_list, state_list = state_list, network = network, dag_sm = dag_sm)
   resolve_join_dependencies(network = network, dag_sm = dag_sm, state_list = state_list)
+  resolve_wrappers(network = network, dag_sm = dag_sm)
   dag_sm
 }
 
 dependencies <- function(query_list, state_list = NULL, network, dag_sm = build_tree()) {
+  # removes already visited nodes leading to an eventual termination of the recursive function
+  query_list <- prune_query(query_list = query_list, compare = dag_sm$get_query())
   if (length(query_list) == 0) return(dag_sm)
   # The query is merged with queries dag_sm$set_query whose dependencies have already been resolved
   dag_sm$set_query(query_list)
@@ -14,9 +17,7 @@ dependencies <- function(query_list, state_list = NULL, network, dag_sm = build_
   set_objects(links = links, network = network, dag_sm = dag_sm)
   queries <- get_dependend_queries(links)
   new_query_list <- do.call(merge_queries, queries)
-  # removes already visited nodes leading to an eventual termination of the recursive function
-  query_pruned <- prune_query(query_list = new_query_list, compare = dag_sm$get_query())
-  dependencies(query_list = query_pruned, state_list = state_list, network = network, dag_sm = dag_sm)
+  dependencies(query_list = new_query_list, state_list = state_list, network = network, dag_sm = dag_sm)
 }
 
 # Currently re-calling resolve_join_dependencies is inefficient, because if the join_path has not changed,

@@ -101,3 +101,26 @@ main_network$main$join(join_main2(main = query(main = "id"), join2 = query(side2
 main_network$main$join(join_main3(main = query(main = "id"), join3 = query(side3 = "id")))
 
 data_tornado <- main_network |> nascent(query(side1 = "col1", side2 = "col2", side3 = "col3"))
+
+# Build simple wrapper
+
+reorder_cars_by_color <- function(cars) {
+  cars <- cars[order(cars$Car_Color), ]
+  cars
+}
+
+add_tries_data_license <- function(data) {
+  data_license <- data.frame(
+    Name = c("David", "Diana", "Marcel"),
+    Tries = c(5L, 1L, 2L)
+    )
+  data <- merge(data, data_license, all.x = TRUE, sort = FALSE)
+  data
+}
+
+wrapper_network <- init_network("wrapper", projects = c("cars", "group"))
+wrapper_network$cars$get(test_get_car_data(conn = TRUE))
+wrapper_network$cars$add(test_add_car_color(data = query(cars = c("Has_Drivers_License", "Name", "Car"))))
+wrapper_network$group$on_entry(reorder_cars_by_color(cars = query(cars = "Car_Color")))
+wrapper_network$group$add(add_tries_data_license(data = query(cars = "Name")))
+

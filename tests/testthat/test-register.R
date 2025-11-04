@@ -180,7 +180,7 @@ test_that("Registering on_entry creates a on_entry function in wrappers", {
   remove_redundant_data <- function(data, values = FALSE) {
     data
   }
-  test_network$customer_data$on_entry("remove_redundant", remove_redundant_data(data = "{.data}"))
+  test_network$customer_data$on_entry(name = "remove_redundant", fun = remove_redundant_data(data = "{.data}"))
   expect_identical(test_network$customer_data$wrappers$on_entry, "remove_redundant_data")
   expect_identical(test_network$customer_data$wrappers$on_exit, NULL)
   expect_identical(test_network$customer_data$ruleset$remove_redundant_data$args$data, "{.data}")
@@ -192,7 +192,7 @@ test_that("Registering on_entry creates a on_entry function in wrappers", {
   add_redundant_data <- function(data, values = FALSE) {
     data
   }
-  test_network$customer_data$on_exit("add_redundant", add_redundant_data(data = "{.data}"))
+  test_network$customer_data$on_exit(name = "add_redundant", fun = add_redundant_data(data = "{.data}"))
   expect_identical(test_network$customer_data$wrappers$on_entry, NULL)
   expect_identical(test_network$customer_data$wrappers$on_exit, "add_redundant_data")
   expect_identical(test_network$customer_data$ruleset$add_redundant_data$args$data, "{.data}")

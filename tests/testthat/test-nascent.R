@@ -273,7 +273,7 @@ test_that("On entry is correctly interpolated into the dag and evaluates properl
     data$score <- data$score + 100
     data
   }
-  test_network$occupations$on_entry("increase_score", increase_score())
+  test_network$occupations$on_entry(increase_score(), "increase_score")
   test_data <- nascent(test_network, customer_data = "name", occupations= "category")
   expected_data <- structure(list(name = c("Alice", "Bob", "Charlie", "Diana", "Eve"),
                                   category = c("High", "High", "High", "High", "High")),
@@ -295,8 +295,8 @@ test_that("Two entry functions are correctly interpolated int the dag and proper
     data$score[data$name == "Alice"] <- 10
     data
   }
-  test_network$occupations$on_entry("increase_score", increase_score())
-  test_network$occupations$on_entry("manipulate_score", decrease_score_of_hated_pupil())
+  test_network$occupations$on_entry(name = "increase_score", fun =increase_score())
+  test_network$occupations$on_entry(name = "manipulate_score", fun = decrease_score_of_hated_pupil())
   test_data <- nascent(test_network, customer_data = "name", occupations= "category")
   expected_data <- structure(list(name = c("Alice", "Bob", "Charlie", "Diana", "Eve"),
                                   category = c("Low", "High", "High", "High", "High")),
@@ -316,8 +316,8 @@ test_that("On entry is correctly interpolated into the dag and evaluates properl
     data$score <- data$score - 100
     data
   }
-  test_network$occupations$on_entry("increase_score", increase_score())
-  test_network$occupations$on_exit("decrease_score", decrease_score())
+  test_network$occupations$on_entry(name = "increase_score", fun = increase_score())
+  test_network$occupations$on_exit(name = "decrease_score", fun = decrease_score())
   test_data <- nascent(test_network, customer_data = c("name", "score"), occupations= "category")
   expected_data <- structure(list(name = c("Alice", "Bob", "Charlie", "Diana", "Eve"),
   score = c(85, 92, 78, 90, 88),
@@ -337,8 +337,8 @@ test_that("On entry is correctly interpolated into the dag and evaluates properl
     data$score <- data$score - 100
     data
   }
-  test_network$occupations$on_entry("increase_score", increase_score())
-  test_network$occupations$on_exit("decrease_score", decrease_score())
+  test_network$occupations$on_entry(name = "increase_score", fun = increase_score())
+  test_network$occupations$on_exit(name = "decrease_score", fun = decrease_score())
   test_network$add_project("final_pass")
   add_has_passed <- function(data = query(occupations = "category")) {
     data$has_passed <- ifelse(data$category == "High", TRUE, FALSE)
@@ -352,6 +352,12 @@ test_that("On entry is correctly interpolated into the dag and evaluates properl
                                   has_passed =c(TRUE, TRUE, TRUE, TRUE, TRUE)),
                              row.names = c(NA, -5L), class = "data.frame")
   expect_identical(test_data, expected_data)
+})
+
+test_that("Dependencies in wrappers are correctly resolved", {
+  test_data <- nascent(wrapper_network, query(group = "Tries"))
+  expect_data <- structure(list(Tries = c(1L, 2L, 5L)), row.names = c(NA, -3L), class = "data.frame")
+  expect_identical(test_data, expect_data)
 })
 
 #### NOTE: Implementing a "free-form" context is more difficult than expected. Making efficient execution is akin to building a efficient SQL-Query

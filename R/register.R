@@ -160,7 +160,7 @@ link_add_context <- function(link, name) {
     if(!is_valid_variable_name(match = name)) stop(paste0("Context name '", name,"' is not a valid variable name"))
     link$name <- name
   } else {
-    link$name <- NULL
+    link$name <- link$fun_name
   }
   class(link) <- c("list", "link", "context_link")
   link
