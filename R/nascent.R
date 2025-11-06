@@ -315,18 +315,21 @@ resolve_on_entry <- function(project, network, dag_sm) {
 
 resolve_on_exit <- function(project, network, dag_sm) {
   func_names <- network[[project]]$wrappers$on_exit
-  if(is.null(func_names)) return(NULL)
+  if(is.null(func_names)) return(dag_sm)
   links <- lapply(func_names, \(func_name) network[[project]]$ruleset[[func_name]])
   on_exit_codes <- vapply(links, build_fun_code, FUN.VALUE = character(1))
   for (i in seq_along(links)) {
     link <- links[[i]]
-    on_exit_code <- on_exit_codes[i]
+    on_exit_node <- build_dependency_codes(link, network = network, dag_sm = dag_sm)
+    on_exit_code <- names(on_exit_node)
+    on_exit_deps <- on_exit_node[[on_exit_code]]
     codes <- dag_sm$get_codes()
     name_codes <- names(codes)
-    project_code_deps <- name_codes[grepl(paste0("^", project, "."), name_codes)]
-    fun_node <- setNames(list(project_code_deps), on_exit_code)
+    dep_codes <- c(name_codes[grepl(paste0("^", project, "."), name_codes)])
+    fun_node <- setNames(list(c(dep_codes, on_exit_deps)), on_exit_code)
+    # TODO only needs to be done if "{.data}" is present in args
     all_links <- dag_sm$get_links()
-    dep_links <- lapply(project_code_deps, \(code) all_links[[code]])
+    dep_links <- lapply(dep_codes, \(code) all_links[[code]])
     dep_queries <- get_dependend_queries(links = dep_links)
     merged_queries <- do.call(merge_queries, dep_queries)
     pro_queries <- get_provided_queries(project = project, links = dep_links)
@@ -339,6 +342,9 @@ resolve_on_exit <- function(project, network, dag_sm) {
     }, simplify = FALSE, USE.NAMES = TRUE)
     dag_sm$set_nodes(link = link, code = fun_node)
   }
+  on_exit_query_list <- do.call(merge_queries, get_dependend_queries(links))
+  dag_sm <- dependencies(query_list = on_exit_query_list, state_list = NULL, network = network, dag_sm = dag_sm)
+  dag_sm
 }
 
 # The function removes the wrapper codes that have been added during build_dependencie_codes since they are

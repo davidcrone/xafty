@@ -118,9 +118,15 @@ add_tries_data_license <- function(data) {
   data
 }
 
-wrapper_network <- init_network("wrapper", projects = c("cars", "group"))
-wrapper_network$cars$get(test_get_car_data(conn = TRUE))
-wrapper_network$cars$add(test_add_car_color(data = query(cars = c("Has_Drivers_License", "Name", "Car"))))
-wrapper_network$group$on_entry(reorder_cars_by_color(cars = query(cars = "Car_Color")))
-wrapper_network$group$add(add_tries_data_license(data = query(cars = "Name")))
+on_entry_network <- init_network("on_entry", projects = c("cars", "group"))
+on_entry_network$cars$get(test_get_car_data(conn = TRUE))
+on_entry_network$cars$add(test_add_car_color(data = query(cars = c("Has_Drivers_License", "Name", "Car"))))
+on_entry_network$group$on_entry(reorder_cars_by_color(cars = query(cars = "Car_Color")))
+on_entry_network$group$add(add_tries_data_license(data = query(cars = "Name")))
+
+on_exit_network <- init_network("on_exit", projects = c("cars", "group"))
+on_exit_network$cars$get(test_get_car_data(conn = TRUE))
+on_exit_network$cars$add(test_add_car_color(data = query(cars = c("Has_Drivers_License", "Name", "Car"))))
+on_exit_network$group$on_exit(reorder_cars_by_color(cars = query(cars = "Car_Color")))
+on_exit_network$group$add(add_tries_data_license(data = query(cars = "Name")))
 

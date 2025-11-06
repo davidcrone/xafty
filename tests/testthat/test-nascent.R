@@ -354,9 +354,15 @@ test_that("On entry is correctly interpolated into the dag and evaluates properl
   expect_identical(test_data, expected_data)
 })
 
-test_that("Dependencies in wrappers are correctly resolved", {
-  test_data <- nascent(wrapper_network, query(group = "Tries"))
+test_that("Dependencies in on_entry are correctly resolved", {
+  test_data <- nascent(on_entry_network, query(group = "Tries"))
   expect_data <- structure(list(Tries = c(1L, 2L, 5L)), row.names = c(NA, -3L), class = "data.frame")
+  expect_identical(test_data, expect_data)
+})
+
+test_that("Dependencies in on_exit are correctly resolved", {
+  test_data <- nascent(on_exit_network, query(group = "Tries"))
+  expect_data <- structure(list(Tries = c(1L, 2L, 5L)), row.names = c(2L, 3L, 1L), class = "data.frame")
   expect_identical(test_data, expect_data)
 })
 
