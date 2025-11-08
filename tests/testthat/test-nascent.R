@@ -355,12 +355,22 @@ test_that("On entry is correctly interpolated into the dag and evaluates properl
 })
 
 test_that("Dependencies in on_entry are correctly resolved", {
+  on_entry_network <- init_network("on_entry", projects = c("cars", "group"))
+  on_entry_network$cars$get(test_get_car_data(conn = TRUE))
+  on_entry_network$cars$add(test_add_car_color(data = query(cars = c("Has_Drivers_License", "Name", "Car"))))
+  on_entry_network$group$on_entry(reorder_cars_by_color(cars = query(cars = "Car_Color")))
+  on_entry_network$group$add(add_tries_data_license(data = query(cars = "Name")))
   test_data <- nascent(on_entry_network, query(group = "Tries"))
   expect_data <- structure(list(Tries = c(1L, 2L, 5L)), row.names = c(NA, -3L), class = "data.frame")
   expect_identical(test_data, expect_data)
 })
 
 test_that("Dependencies in on_exit are correctly resolved", {
+  on_exit_network <- init_network("on_exit", projects = c("cars", "group"))
+  on_exit_network$cars$get(test_get_car_data(conn = TRUE))
+  on_exit_network$cars$add(test_add_car_color(data = query(cars = c("Has_Drivers_License", "Name", "Car"))))
+  on_exit_network$group$on_exit(reorder_cars_by_color(cars = query(cars = "Car_Color")))
+  on_exit_network$group$add(add_tries_data_license(data = query(cars = "Name")))
   test_data <- nascent(on_exit_network, query(group = "Tries"))
   expect_data <- structure(list(Tries = c(1L, 2L, 5L)), row.names = c(2L, 3L, 1L), class = "data.frame")
   expect_identical(test_data, expect_data)

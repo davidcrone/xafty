@@ -35,7 +35,7 @@ build_query_dag <- function(globals, network) {
   dag_sm <- initialize_join_path(join_path = globals$join_path, dag_sm = dag_sm)
   dag_sm <- resolve_dependencies(query_list = globals$internal, state_list = globals$states,
                                  network = network, dag_sm = dag_sm)
-  topological_sorted_codes <- resolve_function_stack(sm = dag_sm)
+  topological_sorted_codes <- resolve_function_stack(dag_sm = dag_sm, network = network)
   list_links <- sort_links(topological_sorted_codes, sm = dag_sm)
   dag <- list(
     start_query = globals$internal,
@@ -97,8 +97,8 @@ resolve_objects <- function(network, dag_sm = NULL) {
   dag_sm
 }
 
-resolve_function_stack <- function(sm) {
- stack_sorted <- toposort::topological_sort(sm$get_codes(), dependency_type = "follows")
+resolve_function_stack <- function(dag_sm, network) {
+ stack_sorted <- toposort::topological_sort(dag_sm$get_codes(), dependency_type = "follows")
  stack_prepared <- remove_join_helpers(stack_sorted)
  stack_prepared
 }
@@ -322,6 +322,7 @@ resolve_on_exit <- function(project, network, dag_sm) {
     link <- links[[i]]
     on_exit_node <- build_dependency_codes(link, network = network, dag_sm = dag_sm)
     on_exit_code <- names(on_exit_node)
+    #TODO: Needs also to correctly build dependencies if several on_exit functions are present
     on_exit_deps <- on_exit_node[[on_exit_code]]
     codes <- dag_sm$get_codes()
     name_codes <- names(codes)

@@ -421,3 +421,173 @@ remove_context_queries <- function(query_list) {
   query_list <- query_list[keep]
   query_list
 }
+
+# Handles correct context for on_entry and on_exit
+clean_wrapper <- function(project, order, dag, network) {
+  entry_funcs <- network[[project]]$wrappers$on_entry
+  exit_funcs <- network[[project]]$wrappers$on_exit
+  if (length(entry_funcs) == 0 && length(exit_funcs) == 0) return(order)
+  entry_nodes <- if (!is.null(entry_funcs)) paste0(project, ".", entry_funcs) else character(0)
+  exit_nodes  <- if (!is.null(exit_funcs))  paste0(project, ".", exit_funcs)  else character(0)
+  suffix <- paste0(project, ".")
+  is_project <- which(startsWith(order, suffix))
+
+  start_pos <- min(is_project)
+  end_pos <- max(is_project)
+  projects_extract <- order[start_pos:end_pos]
+
+  is_project_sub <- startsWith(projects_extract, suffix)
+  if(all(is_project_sub)) return(order)
+
+  project_nodes_in_context <- projects_extract[is_project_sub]
+  before <- character(0)
+  after <- character(0)
+
+  foreign_idx <- which(!is_project_sub)
+  for (i in foreign_idx) {
+    foreign <- projects_extract[i]
+    foreign_deps <- dag[[foreign]]
+    # Does this foreign depend on any project node?
+    depends_on_project <- any(foreign_deps %in% project_nodes_in_context)
+    # Do later project nodes depend on this foreign?
+    later_projects <- project_nodes_in_context[which(project_nodes_in_context %in% projects_extract[i:length(projects_extract)])]
+    later_dependent <- FALSE
+    for (p in later_projects) {
+      if (foreign %in% dag[[p]]) {
+        later_dependent <- TRUE
+        break
+      }
+    }
+    if (!depends_on_project) {
+      # Case: foreign can be moved before
+      before <- c(before, foreign)
+    } else if (depends_on_project && !later_dependent) {
+      # Case: foreign goes after the context
+      after <- c(after, foreign)
+    }
+  }
+
+  start <- if (start_pos > 1) order[1:(start_pos - 1)] else character(0)
+  end   <- if (end_pos < length(order)) order[(end_pos + 1):length(order)] else character(0)
+
+  rebuilt_context <- projects_extract[!projects_extract %in% c(before, after)]
+  is_project_sub <- startsWith(projects_extract, suffix)
+
+  if(all(is_project_sub)) {
+    reorder <- c(start, before, rebuilt_context, after, end)
+    return(reorder)
+  }
+  project_nodes_wo_context <- rebuilt_context[!rebuilt_context %in% c(entry_nodes, exit_nodes)]
+  rebuilt_context <- character(0)
+  opened <- FALSE
+  for (i in seq_along(project_nodes_wo_context)) {
+    node <- project_nodes_wo_context[i]
+    is_context <- startsWith(node, suffix)
+    if(is_context && !opened) {
+      rebuilt_context <-  c(rebuilt_context, entry_nodes, node)
+      if(i == length(project_nodes_wo_context)) rebuilt_context <- c(rebuilt_context, exit_nodes)
+      opened <- TRUE
+    } else if (is_context && opened) {
+      rebuilt_context <- c(rebuilt_context, node)
+      if(i == length(project_nodes_wo_context)) rebuilt_context <- c(rebuilt_context, exit_nodes)
+    } else if (!is_context && opened) {
+      rebuilt_context <- c(rebuilt_context, exit_nodes, node)
+      opened <- FALSE
+    } else {
+      rebuilt_context <- c(rebuilt_context, node)
+    }
+  }
+  reorder <- c(start, before, rebuilt_context, after, end)
+  reorder
+}
+
+
+clean_all_wrappers <- function(order, dag, network, contexts = NULL, resolved = NULL) {
+  projects <- names(network)
+  # Base case — no interleaving remains
+  if (length(projects) == 0) return(order)
+
+  # Step 1: find all context ranges (entry .. exit)
+  li_ranges <- lapply(projects, function(p) {
+    entry <- paste0(p, ".", network[[p]]$wrappers$on_entry)
+    exit  <- paste0(p, ".", network[[p]]$wrappers$on_exit)
+    if (any(order %in% entry) && any(order %in% exit)) {
+      start <- which(order %in% entry)
+      end   <- which(order %in% exit)
+      list(project = p, start = min(start), end = max(end))
+    } else NULL
+  })
+  li_ranges <- Filter(Negate(is.null), li_ranges)
+
+  # Step 2: find the *innermost* context (smallest range that’s not overlapping others)
+  ranges <- do.call(rbind, lapply(li_ranges, function(x) cbind(x$project, x$start, x$end)))
+  if (is.null(ranges)) return(interpolate_contexts(order = order, contexts = contexts))
+  colnames(ranges) <- c("project", "start", "end")
+  ranges <- as.data.frame(ranges, stringsAsFactors = FALSE)
+  ranges <- ranges[!ranges$project %in% resolved, ]
+  ranges$start <- as.numeric(ranges$start)
+  ranges$end   <- as.numeric(ranges$end)
+  ranges$span  <- ranges$end - ranges$start
+  innermost <- ranges[which.min(ranges$span), ]
+
+  # Step 3: resolve that project’s wrapper first
+  inner_project <- innermost$project
+  order_cleaned <- clean_wrapper(inner_project, order, dag, network)
+  packed_wrappers <- pack_project_wrappers(project = inner_project, order = order_cleaned, contexts = contexts)
+  dag <- append_dag_wrappers(project = inner_project, dag = dag, contexts = packed_wrappers$contexts)
+  resolved <- c(resolved, inner_project)
+  # Step 4: recursively repeat until no interleaving remains
+  clean_all_wrappers(order = packed_wrappers$order, dag = dag, contexts = packed_wrappers$contexts, network = network, resolved = resolved)
+}
+
+pack_project_wrappers <- function(project, order, contexts = NULL) {
+  if(is.null(contexts)) {
+    contexts <- list()
+  }
+  out <- character()
+  context_counts <- list()
+  i <- 1
+  project. <- paste0(project, ".")
+  while (i <= length(order)) {
+    val <- order[i]
+    if (startsWith(order[i], project.)) {
+      # Find matching on_exit for the same project
+      j <- i + 1
+      while (j <= length(order)) {
+        if (startsWith(order[j], project.)) j <- j + 1 else break
+      }
+      group_block <- order[i:(j - 1)]
+      if (is.null(context_counts[[project]])) context_counts[[project]] <- 0
+      context_counts[[project]] <- context_counts[[project]] + 1
+
+      ctx_name <- paste0(project, ".context_", context_counts[[project]])
+      contexts[[ctx_name]] <- group_block
+      out <- c(out, ctx_name)
+      i <- j
+    } else {
+      out <- c(out, val)
+      i <- i + 1
+    }
+  }
+  # Return both modified order and contexts
+  list(order = out, contexts = contexts)
+}
+
+append_dag_wrappers <- function(project, dag, contexts) {
+  project. <- paste0(project, ".")
+  li_context <- contexts[startsWith(names(contexts), project.)]
+  dag_append <- lapply(li_context, \(codes) unlist(lapply(codes, \(code) dag[[code]]), recursive = FALSE, use.names = FALSE))
+  dag <- append(dag, dag_append)
+  dag
+}
+
+interpolate_contexts <- function(order, contexts) {
+  result <- unlist(lapply(order, function(x) {
+    if (x %in% names(contexts)) {
+      contexts[[x]]
+    } else {
+      x
+    }
+  }))
+  return(result)
+}
