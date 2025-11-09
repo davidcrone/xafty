@@ -71,11 +71,6 @@ build_object_dag <- function(globals, network) {
   object_dag
 }
 
-sort_links <- function(codes, sm) {
-  links <- sm$get_links()
-  lapply(codes, \(code) links[[code]])
-}
-
 resolve_objects <- function(network, dag_sm = NULL) {
   codes <- names(dag_sm$get_codes())
   log_object <- vapply(codes, \(code) grepl("^object", code), FUN.VALUE = logical(1))
