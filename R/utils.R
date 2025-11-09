@@ -501,23 +501,30 @@ clean_wrapper <- function(project, order, dag, network) {
   reorder
 }
 
+projects_with_context <- function(projects, network) {
+  has_on_entry <- vapply(projects, \(project) !is.null(network[[project]]$wrappers$on_entry), FUN.VALUE = logical(1))
+  has_on_exit <- vapply(projects, \(project) !is.null(network[[project]]$wrappers$on_exit), FUN.VALUE = logical(1))
+  project_w_contect <- unique(c(projects[has_on_entry], projects[has_on_exit]))
+  project_w_contect
+}
+
 
 clean_all_wrappers <- function(projects, order, dag, network) {
   # Step 1: find all context ranges (entry .. exit)
+  projects <- projects_with_context(projects = projects, network = network)
+  if(length(projects) <= 0) return(order)
+
   li_ranges <- lapply(projects, function(p) {
-    entry <- paste0(p, ".", network[[p]]$wrappers$on_entry)
-    exit  <- paste0(p, ".", network[[p]]$wrappers$on_exit)
-    if (any(order %in% entry) && any(order %in% exit)) {
-      start <- which(order %in% entry)
-      end   <- which(order %in% exit)
-      list(project = p, start = min(start), end = max(end))
+    project. <- paste0(p, ".")
+    project_start <- startsWith(order, project.)
+    if (any(project_start)) {
+      project_pos <- which(project_start)
+      list(project = p, start = min(project_pos), end = max(project_pos))
     } else NULL
   })
   li_ranges <- Filter(Negate(is.null), li_ranges)
-
   # Step 2: find the *innermost* context (smallest range that’s not overlapping others)
   ranges <- do.call(rbind, lapply(li_ranges, function(x) cbind(x$project, x$start, x$end)))
-  if(is.null(ranges)) return(order)
   colnames(ranges) <- c("project", "start", "end")
   ranges <- as.data.frame(ranges, stringsAsFactors = FALSE)
   ranges$start <- as.numeric(ranges$start)

@@ -232,7 +232,7 @@ evaluate_dag <- function(dag) {
     return(data)
   }
   data_sm <- set_states(states = dag$query_states, data_sm = data_sm)
-  data_sm <- evaluate_objects(dag = dag$objects, global_data_sm = data_sm)
+  data_sm <- evaluate_objects(dags = dag$objects, global_data_sm = data_sm)
   links <- dag$sorted_links
   execution_order <- dag$execution_order
   mask <- dag$masked_columns

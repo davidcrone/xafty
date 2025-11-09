@@ -345,3 +345,33 @@ test_that("clean_all_wrappers correctly keeps minimal context compuation when it
   order_test <- clean_all_wrappers(projects = names(network), order = order, dag = dag, network = network)
   expect_identical(order_test, exp_order)
 })
+
+test_that("clean_wrapper moves the functions together even if only an on_entry context is given", {
+  network <- list(projectB = list(wrappers = list(on_entry = "order", on_exit = NULL)))
+  dag <- list(
+    projectA.get_data = character(0),
+    projectB.order = c("projectA.get_data"),
+    projectB.add_variable_A = c("projectA.get_data", "projectB.order"),
+    projectC.add_variable_B = c("projectB.add_variable_A"),
+    projectB.add_variable_C = c("projectB.order")
+  )
+  execution_order_input <- c("projectA.get_data", "projectB.order", "projectB.add_variable_A", "projectC.add_variable_B", "projectB.add_variable_C")
+  expected_order <- c("projectA.get_data", "projectB.order", "projectB.add_variable_A", "projectB.add_variable_C", "projectC.add_variable_B")
+  expect_identical(clean_wrapper(project = "projectB", order = execution_order_input, dag = dag, network = network), expected_order)
+  expect_identical(clean_all_wrappers(projects = names(network), order = execution_order_input, dag = dag, network = network), expected_order)
+})
+
+test_that("clean_wrapper moves the functions together even if only an on_exit context is given", {
+  network <- list(projectB = list(wrappers = list(on_entry = NULL, on_exit = "order")))
+  dag <- list(
+    projectA.get_data = character(0),
+    projectB.add_variable_A = c("projectA.get_data", "projectB.order"),
+    projectC.add_variable_B = c("projectB.add_variable_A"),
+    projectB.add_variable_C = c("projectB.order"),
+    projectB.order = c("projectA.get_data")
+  )
+  execution_order_input <- c("projectA.get_data", "projectB.order", "projectB.add_variable_A", "projectC.add_variable_B", "projectB.add_variable_C")
+  expected_order <- c("projectA.get_data", "projectB.add_variable_A", "projectB.add_variable_C", "projectB.order", "projectC.add_variable_B")
+  expect_identical(clean_wrapper(project = "projectB", order = execution_order_input, dag = dag, network = network), expected_order)
+  expect_identical(clean_all_wrappers(projects = names(network), order = execution_order_input, dag = dag, network = network), expected_order)
+})
