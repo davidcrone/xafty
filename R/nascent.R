@@ -98,8 +98,11 @@ resolve_objects <- function(network, dag_sm = NULL) {
 }
 
 resolve_function_stack <- function(dag_sm, network) {
- stack_sorted <- toposort::topological_sort(dag_sm$get_codes(), dependency_type = "follows")
+ dag <- dag_sm$get_codes()
+ projects <- get_projects(dag_sm$get_query())
+ stack_sorted <- toposort::topological_sort(dag, dependency_type = "follows")
  stack_prepared <- remove_join_helpers(stack_sorted)
+ correct_wrappers <- clean_all_wrappers(projects = projects, order = stack_prepared, dag = dag, network = network)
  stack_prepared
 }
 

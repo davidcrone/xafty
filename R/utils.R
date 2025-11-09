@@ -502,11 +502,7 @@ clean_wrapper <- function(project, order, dag, network) {
 }
 
 
-clean_all_wrappers <- function(order, dag, network, contexts = NULL, resolved = NULL) {
-  projects <- names(network)
-  # Base case — no interleaving remains
-  if (length(projects) == 0) return(order)
-
+clean_all_wrappers <- function(projects, order, dag, network) {
   # Step 1: find all context ranges (entry .. exit)
   li_ranges <- lapply(projects, function(p) {
     entry <- paste0(p, ".", network[[p]]$wrappers$on_entry)
@@ -521,23 +517,25 @@ clean_all_wrappers <- function(order, dag, network, contexts = NULL, resolved = 
 
   # Step 2: find the *innermost* context (smallest range that’s not overlapping others)
   ranges <- do.call(rbind, lapply(li_ranges, function(x) cbind(x$project, x$start, x$end)))
-  if (is.null(ranges)) return(interpolate_contexts(order = order, contexts = contexts))
+  if(is.null(ranges)) return(order)
   colnames(ranges) <- c("project", "start", "end")
   ranges <- as.data.frame(ranges, stringsAsFactors = FALSE)
-  ranges <- ranges[!ranges$project %in% resolved, ]
   ranges$start <- as.numeric(ranges$start)
   ranges$end   <- as.numeric(ranges$end)
   ranges$span  <- ranges$end - ranges$start
-  innermost <- ranges[which.min(ranges$span), ]
 
-  # Step 3: resolve that project’s wrapper first
-  inner_project <- innermost$project
-  order_cleaned <- clean_wrapper(inner_project, order, dag, network)
-  packed_wrappers <- pack_project_wrappers(project = inner_project, order = order_cleaned, contexts = contexts)
-  dag <- append_dag_wrappers(project = inner_project, dag = dag, contexts = packed_wrappers$contexts)
-  resolved <- c(resolved, inner_project)
-  # Step 4: recursively repeat until no interleaving remains
-  clean_all_wrappers(order = packed_wrappers$order, dag = dag, contexts = packed_wrappers$contexts, network = network, resolved = resolved)
+  ranges <- ranges[order(ranges$span, decreasing = FALSE), ]
+  projects <- ranges$project
+
+  contexts = NULL
+  for (project in projects) {
+    order <- clean_wrapper(project = project, order = order, dag = dag, network = network)
+    packed_wrappers <- pack_project_wrappers(project = project, order = order, contexts = contexts)
+    order <- packed_wrappers$order
+    contexts <- packed_wrappers$contexts
+    dag <- append_dag_wrappers(project = project, dag = dag, contexts = contexts)
+  }
+  interpolate_contexts(order = order, contexts = contexts)
 }
 
 pack_project_wrappers <- function(project, order, contexts = NULL) {
