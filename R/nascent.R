@@ -35,15 +35,14 @@ build_query_dag <- function(globals, network) {
   dag_sm <- initialize_join_path(join_path = globals$join_path, dag_sm = dag_sm)
   dag_sm <- resolve_dependencies(query_list = globals$internal, state_list = globals$states,
                                  network = network, dag_sm = dag_sm)
-  topological_sorted_codes <- resolve_function_stack(dag_sm = dag_sm, network = network)
-  list_links <- sort_links(topological_sorted_codes, sm = dag_sm)
+  execution_order <- resolve_function_stack(dag_sm = dag_sm, network = network)
   dag <- list(
+    links = dag_sm$get_links(),
+    dag = dag_sm$get_codes(),
+    query = dag_sm$get_query(),
     start_query = globals$internal,
     order_query = globals$order,
-    full_query = dag_sm$get_query(),
-    dag = dag_sm$get_codes(),
-    execution_order = topological_sorted_codes,
-    sorted_links = list_links,
+    execution_order = execution_order,
     join_path = dag_sm$get_join_path(),
     masked_columns = dag_sm$get_mask(),
     network_states = dag_sm$get_network_state(),
@@ -103,7 +102,7 @@ resolve_function_stack <- function(dag_sm, network) {
  stack_sorted <- toposort::topological_sort(dag, dependency_type = "follows")
  stack_prepared <- remove_join_helpers(stack_sorted)
  correct_wrappers <- clean_all_wrappers(projects = projects, order = stack_prepared, dag = dag, network = network)
- stack_prepared
+ correct_wrappers
 }
 
 remove_join_helpers <- function(stack_sorted) {
@@ -233,13 +232,13 @@ evaluate_dag <- function(dag) {
   }
   data_sm <- set_states(states = dag$query_states, data_sm = data_sm)
   data_sm <- evaluate_objects(dags = dag$objects, global_data_sm = data_sm)
-  links <- dag$sorted_links
+  links <- dag$links
   execution_order <- dag$execution_order
   mask <- dag$masked_columns
   default_states <- dag$network_states
   for (i in seq_along(execution_order)) {
     code <- execution_order[i]
-    link <- links[[i]]
+    link <- links[[code]]
     execute_stack(link = link, mask = mask, data_sm = data_sm, default_states = default_states)
   }
   data_key <- get_data_key(data_sm = data_sm, dag = dag)
@@ -257,7 +256,7 @@ evaluate_objects <- function(dags, global_data_sm) {
 }
 
 get_data_key <- function(data_sm, dag, network) {
-  unique(vapply(get_projects(dag$full_query), \(project) data_sm$get_data_key(project), FUN.VALUE = character(1)))
+  unique(vapply(get_projects(dag$query), \(project) data_sm$get_data_key(project), FUN.VALUE = character(1)))
 }
 
 set_states <- function(states, data_sm) {
