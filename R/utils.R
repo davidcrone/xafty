@@ -284,7 +284,7 @@ build_object_args <- function(link, state_list, network) {
     arg <- args[i]
     arg_name <- names(arg)
     if(xo == "xafty_query" || xo == "xafty_object") {
-      query_list <- arg[[arg_name]]
+      query_list <- interpolate_state_in_query(arg[[arg_name]], state_list = state_list, network_env = network)
       data <- build_dag(query_list, network = network)
     }  else if (xo == "xafty_state") {
       name <- get_braced_variable(args[[arg_name]])

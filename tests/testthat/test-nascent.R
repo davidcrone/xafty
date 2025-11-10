@@ -389,6 +389,7 @@ test_that("Non-query default args are available in nascent", {
   expected_data <- structure(list(intelligence = c(120, 130), state = c(2, 2)), row.names = c(1L, 4L), class = "data.frame")
   expect_identical(test_data, expected_data)
 })
+
 #### NOTE: Implementing a "free-form" context is more difficult than expected. Making efficient execution is akin to building a efficient SQL-Query
 # test_that("Nascent a simple context works seamlessly in nascent", {
 #   test_network <- init_network(name = "test_network", projects = "intelligence")
