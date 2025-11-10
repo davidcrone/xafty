@@ -375,3 +375,20 @@ test_that("clean_wrapper moves the functions together even if only an on_exit co
   expect_identical(clean_wrapper(project = "projectB", order = execution_order_input, dag = dag, network = network), expected_order)
   expect_identical(clean_all_wrappers(projects = names(network), order = execution_order_input, dag = dag, network = network), expected_order)
 })
+
+test_that("clean_wrapper duplicates a context when a function within the context is broken up", {
+  network <- list(projectB = list(wrappers = list(on_entry = "group_by_relation", on_exit  = "ungroup")))
+  dag <- list(
+    projectA.get_data = character(0),
+    projectB.group_by_relation = c("projectA.get_data"),
+    projectB.add_variable_A = c("projectA.get_data", "projectB.group_by_relation"),
+    projectC.add_variable_B = c("projectB.add_variable_A"),
+    projectC.add_variable_Y = c("projectC.add_variable_B"),
+    projectB.ungroup = c("projectB.add_variable_A", "projectB.group_by_relation")
+  )
+  execution_order_input <- c("projectA.get_data", "projectB.group_by_relation", "projectB.add_variable_A", "projectC.add_variable_B", "projectC.add_variable_Y", "projectB.ungroup")
+  test_order <- clean_wrapper(project = "projectB", order = execution_order_input, dag = dag, network = network)
+  expected_order <- c("projectA.get_data", "projectB.group_by_relation", "projectB.add_variable_A", "projectB.ungroup", "projectC.add_variable_B", "projectC.add_variable_Y")
+  expect_identical(test_order, expected_order)
+  expect_identical(clean_all_wrappers(projects = names(network), order = execution_order_input, dag = dag, network = network), expected_order)
+})

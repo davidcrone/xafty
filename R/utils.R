@@ -473,18 +473,26 @@ clean_wrapper <- function(project, order, dag, network) {
     # Does this foreign depend on any project node?
     depends_on_project <- any(foreign_deps %in% project_nodes_in_context)
     # Do later project nodes depend on this foreign?
+    # If they depend on later projects from the context, the context will need to be broken up
     later_projects <- project_nodes_in_context[which(project_nodes_in_context %in% projects_extract[i:length(projects_extract)])]
     later_dependent <- FALSE
-    for (p in later_projects) {
-      if (foreign %in% dag[[p]]) {
+    for (code in later_projects) {
+      if (foreign %in% dag[[code]]) {
         later_dependent <- TRUE
         break
       }
     }
-    if (!depends_on_project) {
+    # Does the node depend on any in the after variable, then it should also be appended to after since
+    after_dependent <- FALSE
+    if(length(after) > 0) {
+     if (any(dag[[foreign]] %in% after)) {
+        after_dependent <- TRUE
+      }
+    }
+    if (!depends_on_project & !after_dependent) {
       # Case: foreign can be moved before
       before <- c(before, foreign)
-    } else if (depends_on_project && !later_dependent) {
+    } else if (depends_on_project && !later_dependent || after_dependent) {
       # Case: foreign goes after the context
       after <- c(after, foreign)
     }
