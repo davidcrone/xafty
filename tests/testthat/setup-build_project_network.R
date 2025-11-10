@@ -119,11 +119,12 @@ test_network$intelligence$add_object(name = "active_customers",
 nascent(test_network, query(intelligence = c("[active_customers]")))
 test_network$intelligence$add_object("mean_intelligence", build_kpi(active_customers = query(intelligence = c("[active_customers]"))))
 
+nascent(test_network, query(intelligence = c("[mean_intelligence]")))
+
 add_mean_intelligence <- function(data, mean_intelligence) {
   data$intelligence_plus_mean <- data$intelligence + mean_intelligence
   data
 }
-nascent(test_network, query(intelligence = c("[mean_intelligence]")))
 test_network$intelligence$add(add_mean_intelligence(data = query(intelligence = "intelligence"),
                               mean_intelligence = query(intelligence = "[mean_intelligence]")))
 #

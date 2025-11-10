@@ -59,8 +59,7 @@ build_object_dag <- function(globals, network) {
   object_name <- get_squared_variable(object_query[[1]]$select)
   object_link <- get_chatty_link_from_network(name = object_name, project = project, network = network)
   object_query <- get_queries(link = object_link, temper = TRUE, state_list = globals$states, network = network)
-  object_args <- names(object_query)
-  dag_args <- sapply(object_query, build_dag, network = network, simplify = FALSE, USE.NAMES = TRUE)
+  dag_args <- build_object_args(link = object_link, state_list = globals$states, network = network)
   object_dag <- list(
     name = object_name,
     project = project,
@@ -221,7 +220,13 @@ evaluate_dag <- function(dag) {
   data_sm <- data_sm()
   if(inherits(dag, "object_dag")) {
     object_fun <- dag$object_link$fun
-    evaluated_args <- sapply(dag$args, evaluate_dag, simplify = FALSE, USE.NAMES = TRUE)
+    evaluated_args <- sapply(dag$args, \(arg) {
+      if (inherits(arg, "query_dag") || inherits(arg, "object_dag")) {
+        evaluate_dag(arg)
+      } else {
+        arg
+      }
+    }, simplify = FALSE, USE.NAMES = TRUE)
     data <- do.call(object_fun, evaluated_args)
     return(data)
   }

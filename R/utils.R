@@ -275,6 +275,29 @@ build_executable_args <- function(link, data_sm, mask, default_states) {
   executable_args
 }
 
+build_object_args <- function(link, state_list, network) {
+  args <- link$args
+  object_args <- list()
+  object_types <- get_xafty_objects_vec(link)
+  for (i in seq_along(args)) {
+    xo <- object_types[i]
+    arg <- args[i]
+    arg_name <- names(arg)
+    if(xo == "xafty_query" || xo == "xafty_object") {
+      query_list <- arg[[arg_name]]
+      data <- build_dag(query_list, network = network)
+    }  else if (xo == "xafty_state") {
+      name <- get_braced_variable(args[[arg_name]])
+      data <- state_list[[name]]
+      if(is.null(data)) data <- get_default_state(name = name, network_env = network)
+    } else if (xo == "none_xafty_object") {
+      data <- args[[arg_name]]
+    }
+    object_args[[arg_name]] <- data
+  }
+  object_args
+}
+
 get_lead_projects <- function(link, which = c("xafty_query", "xafty_object")) {
   queries <- get_queries(link, which = which)
   arg_w_query <- names(queries)

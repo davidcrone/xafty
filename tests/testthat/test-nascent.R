@@ -376,6 +376,19 @@ test_that("Dependencies in on_exit are correctly resolved", {
   expect_identical(test_data, expect_data)
 })
 
+test_that("Non-query default args are available in nascent", {
+  state_object_test <- function(data, state = "{state_test}", logical = TRUE) {
+    if(logical) {
+      data$state <- state
+    }
+    data
+  }
+  test_network$add_state(name = "state_test", default = 2)
+  test_network$occupations$add_object("object_with_state", state_object_test(data = query(intelligence = "[active_customers]")))
+  test_data <- nascent(test_network, query(occupations = "[object_with_state]"))
+  expected_data <- structure(list(intelligence = c(120, 130), state = c(2, 2)), row.names = c(1L, 4L), class = "data.frame")
+  expect_identical(test_data, expected_data)
+})
 #### NOTE: Implementing a "free-form" context is more difficult than expected. Making efficient execution is akin to building a efficient SQL-Query
 # test_that("Nascent a simple context works seamlessly in nascent", {
 #   test_network <- init_network(name = "test_network", projects = "intelligence")
