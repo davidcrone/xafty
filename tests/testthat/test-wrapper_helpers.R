@@ -103,3 +103,73 @@ test_that("splitting an order into a package", {
   )
   expect_identical(test_pack, exp_pack)
 })
+
+test_that("get_upstream_dependencies returns only relevant dependencies to the extracted pipeline", {
+  dag <- list(
+    group.add_tries_data_license = "cars.test_get_car_data",
+    cars.test_add_car_color = "cars.test_get_car_data",
+    group.reorder_cars_by_color = c("group.add_tries_data_license", "cars.test_add_car_color")
+  )
+  test_deps <- get_upstream_dependencies(project = "group", dag = dag, targets = "group.reorder_cars_by_color")
+  exp_deps <- c("cars.test_add_car_color")
+  expect_identical(test_deps, exp_deps)
+})
+
+test_that("get_upstream_dependencies returns immediate group dependency", {
+  dag <- list(
+    group.add_tries_data_license = "cars.test_get_car_data",
+    cars.test_add_car_color = c("cars.test_get_car_data", "group.add_tries_data_license"),
+    group.reorder_cars_by_color = c("group.add_tries_data_license", "cars.test_add_car_color")
+  )
+  test_deps <- get_upstream_dependencies(project = "group", dag = dag, targets = "group.reorder_cars_by_color")
+  exp_deps <- c("cars.test_add_car_color", "group.add_tries_data_license")
+  expect_identical(test_deps, exp_deps)
+})
+
+test_that("get_upstream_dependencies returns whole chain of thought leading up to group dependency", {
+  dag <- list(
+    group.add_tries_data_license = "cars.test_get_car_data",
+    cars.depends_on_group = "group.add_tries_data_license",
+    cars.test_add_car_color = c("cars.test_get_car_data", "cars.depends_on_group"),
+    group.reorder_cars_by_color = c("group.add_tries_data_license", "cars.test_add_car_color")
+  )
+  test_deps <- get_upstream_dependencies(project = "group", dag = dag, targets = "group.reorder_cars_by_color")
+  exp_deps <- c("cars.test_add_car_color", "cars.depends_on_group", "group.add_tries_data_license")
+  expect_identical(test_deps, exp_deps)
+})
+
+test_that("A target idependent of foreign functions returns an empty character", {
+  dag <- list(
+    group.add_tries_data_license = "cars.test_get_car_data",
+    cars.depends_on_group = "group.add_tries_data_license",
+    cars.test_add_car_color = c("cars.test_get_car_data", "cars.depends_on_group"),
+    group.reorder_cars_by_color = c("group.add_tries_data_license")
+  )
+  test_deps <- get_upstream_dependencies(project = "group", dag = dag, targets = "group.reorder_cars_by_color")
+  exp_deps <- c(character(0))
+  expect_identical(test_deps, exp_deps)
+})
+
+test_that("Targets idependent of foreign functions returns an empty character", {
+  dag <- list(
+    group.add_tries_data_license = "cars.test_get_car_data",
+    cars.test_add_car_color = c("cars.test_get_car_data", "cars.depends_on_group"),
+    group.reorder_cars_by_color = "group.add_tries_data_license",
+    group.reorder_cars_by_id = "group.reorder_cars_by_color"
+  )
+  test_deps <- get_upstream_dependencies(project = "group", dag = dag, targets = c("group.reorder_cars_by_color", "group.reorder_cars_by_id"))
+  exp_deps <- c(character(0))
+  expect_identical(test_deps, exp_deps)
+})
+
+test_that("Several Targets while only one depends on foreign functions returns the dependency", {
+  dag <- list(
+    group.add_tries_data_license = "cars.test_get_car_data",
+    cars.test_add_car_color = c("cars.test_get_car_data", "cars.depends_on_group"),
+    group.reorder_cars_by_color = c("group.add_tries_data_license", "cars.test_get_car_data"),
+    group.reorder_cars_by_id = c("group.reorder_cars_by_color", "cars.test_add_car_color")
+  )
+  test_deps <- get_upstream_dependencies(project = "group", dag = dag, targets = c("group.reorder_cars_by_color", "group.reorder_cars_by_id"))
+  exp_deps <- c("cars.test_add_car_color")
+  expect_identical(test_deps, exp_deps)
+})

@@ -413,7 +413,6 @@ test_that("clean_wrapper duplicates a context when a function within the context
 })
 
 test_that("clean_wrappers can resolve a dependency on exit", {
-  skip("TODO")
   dag <- list(
     cars.test_get_car_data = character(0),
     group.add_tries_data_license = "cars.test_get_car_data",

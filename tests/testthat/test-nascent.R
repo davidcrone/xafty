@@ -366,7 +366,6 @@ test_that("Dependencies in on_entry are correctly resolved", {
 })
 
 test_that("Dependencies in on_exit are correctly resolved", {
-  skip("Depends on implementing test-resolve_dependencies.R:416:3")
   on_exit_network <- init_network("on_exit", projects = c("cars", "group"))
   on_exit_network$cars$get(test_get_car_data(conn = TRUE))
   on_exit_network$cars$add(test_add_car_color(data = query(cars = c("Has_Drivers_License", "Name", "Car"))))

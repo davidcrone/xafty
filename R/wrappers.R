@@ -18,11 +18,28 @@ clean_wrapper <- function(project, order, dag, contexts, network) {
   if(all(is_project_sub)) return(order)
   entry_nodes <- if (!is.null(entry_funcs)) paste0(project, ".", entry_funcs) else character(0)
   exit_nodes  <- if (!is.null(exit_funcs))  paste0(project, ".", exit_funcs)  else character(0)
-  # Remove all on entry and on exit functions
+
+
+  # Hanlde on exit nodes which may depend on a foreign function
+  dependend_foreign <- get_upstream_dependencies(project = project, dag = dag[projects_extract], targets = exit_nodes, stop_at = character(0))
+
+  # Remove all on entry and on exit functions in order to begin rebuilding context from a clean slate
   extract <- projects_extract[!projects_extract %in% c(entry_nodes, exit_nodes)]
+
 
   start <- if (start_pos > 1) order[1:(start_pos - 1)] else character(0)
   end   <- if (end_pos < length(order)) order[(end_pos + 1):length(order)] else character(0)
+
+  if(length(dependend_foreign) > 0) {
+    is_polluted_context <- any(startsWith(dependend_foreign, suffix))
+    # remove depndency from extract and move to before context
+    if(!is_polluted_context) {
+      extract <- extract[!extract %in% dependend_foreign]
+      start <- c(start, dependend_foreign)
+    } else {
+      # TODO: foreigns need to remain in the context and might be temporary cloaked with the prefix 'project.' to keep them at place
+    }
+  }
   # Package order into building blocks for easy resolving of wrappers
   packages <- package_wrapper(project = project, extract = extract)
 
@@ -221,4 +238,41 @@ rebuild_context <- function(project, order, on_entry, on_exit) {
     }
   }
   rebuilt_context
+}
+
+## Handle dependencies on 'on_exit'
+
+get_upstream_dependencies <- function(project, dag, targets, stop_at = character(0)) {
+  if (length(targets) == 0) return(character(0))
+  visited <- character(0)
+  suffix <- paste0(project, ".")
+  # convert NULL dag edges to character(0) safely
+  get_deps <- function(node) {
+    if (is.null(dag[[node]])) character(0) else dag[[node]]
+  }
+
+  relevant <- names(dag)
+  stack <- unlist(lapply(targets, \(target) { deps <- get_deps(target); deps[!startsWith(deps, suffix) & deps %in% relevant] }))
+
+  while (length(stack) > 0) {
+    node <- stack[[1]]
+    stack <- stack[-1]
+
+    # Skip if we already visited this node
+    if (node %in% visited) next
+    visited <- c(visited, node)
+
+    # If node is in stop_at, do not explore its dependencies (but still include node if discovered)
+    if (node %in% stop_at) next
+
+    deps <- get_deps(node)
+    if (length(deps) > 0) {
+      # push deps to stack (only those not yet visited and relevant to the extracted upstream pipeline)
+      new_deps <- deps[!deps %in% visited & deps %in% relevant]
+      if (length(new_deps) > 0) stack <- c(new_deps, stack)
+    }
+  }
+  # visited contains targets + their upstream nodes in discovery order.
+  result <- unique(visited)
+  result
 }
