@@ -265,7 +265,7 @@ test_that("Registering the wrong variable name through vars yields an informativ
   expect_error(nascent(network, qry), regexp = "variable 'nam' does not appear in the return value of 'get_sample_data'")
 })
 
-test_that("On entry is correctly interpolated into the dag and evaluates properly", {
+test_that("On entry is correctly interweaved into the dag and evaluates properly", {
   test_network <- init_network(name = "test_network", projects = c("customer_data", "occupations"))
   test_network$customer_data$get(get_sample_data())
   test_network$occupations$add(add_score_category(data = query(customer_data = "score")))
@@ -388,6 +388,56 @@ test_that("Non-query default args are available in nascent", {
   test_data <- nascent(test_network, query(occupations = "[object_with_state]"))
   expected_data <- structure(list(intelligence = c(120, 130), state = c(2, 2)), row.names = c(1L, 4L), class = "data.frame")
   expect_identical(test_data, expected_data)
+})
+
+test_that("on_exit function does not take duplicated dependencies", {
+  reorder_cars_by_color2 <- reorder_cars_by_color
+  network <- init_network("on_exit", projects = c("cars", "group"))
+  network$cars$get(test_get_car_data(conn = TRUE))
+  network$cars$add(test_add_car_color(data = query(cars = c("Has_Drivers_License", "Name", "Car"))))
+  network$group$on_entry(reorder_cars_by_color(cars = query(cars = "Car_Color")))
+  network$group$on_exit(reorder_cars_by_color2(cars = query(cars = "Car_Color")))
+  network$group$add(add_tries_data_license(data = query(cars = "Name")))
+  test_data <- nascent(network, query(group = "Tries"))
+  expect_data <- structure(list(Tries = c(1L, 2L, 5L)), row.names = c(1L, 2L, 3L), class = "data.frame")
+  expect_identical(test_data, expect_data)
+})
+
+test_that("fucntion in context depending on another function of the same context does not create a cycle", {
+  reorder_cars_by_color2 <- reorder_cars_by_color
+  add_tries_data_license2 <- function(data) {
+    data$Tries2 <- data$Tries + 1
+    data
+  }
+  network <- init_network("on_exit", projects = c("cars", "group"))
+  network$cars$get(test_get_car_data(conn = TRUE))
+  network$cars$add(test_add_car_color(data = query(cars = c("Has_Drivers_License", "Name", "Car"))))
+  network$group$on_entry(reorder_cars_by_color(cars = query(cars = "Car_Color")))
+  network$group$on_exit(reorder_cars_by_color2(cars = query(cars = "Car_Color")))
+  network$group$add(add_tries_data_license(data = query(cars = "Name")))
+  network$group$add(add_tries_data_license2(data = query(group = "Tries")), vars = c("Tries2"))
+  test_data <- nascent(network, query(group = c("Tries2")))
+  expect_data <- structure(list(Tries2 = c(2, 3, 6)), row.names = c(1L, 2L, 3L), class = "data.frame")
+  expect_identical(test_data, expect_data)
+})
+
+test_that("foreign function dependend on function with context and needs by a function also in context is correctly ignored by on_entry as dependency", {
+  reorder_cars_by_color2 <- reorder_cars_by_color
+  add_tries_data_license2 <- function(data) {
+    data$Tries2 <- data$Tries + 1
+    data
+  }
+  network <- init_network("on_exit", projects = c("cars", "group"))
+  network$cars$get(test_get_car_data(conn = TRUE))
+  network$cars$add(test_add_car_color(data = query(cars = c("Has_Drivers_License", "Name", "Car"))))
+  network$group$on_entry(reorder_cars_by_color(cars = query(cars = "Car_Color")))
+  network$group$on_exit(reorder_cars_by_color2(cars = query(cars = "Car_Color")))
+  network$group$add(add_tries_data_license(data = query(cars = "Name")))
+  network$cars$add(add_id_to_car(data = query(cars = "Car_Color", group = "Tries")))
+  network$group$add(add_tries_data_license2(data = query(cars = c("ID"), group = "Tries")))
+  test_data <- nascent(network, query(group = c("Tries2")))
+  expect_data <- structure(list(Tries2 = c(2, 3, 6)), row.names = c(1L, 3L, 2L), class = "data.frame")
+  expect_identical(test_data, expect_data)
 })
 
 #### NOTE: Implementing a "free-form" context is more difficult than expected. Making efficient execution is akin to building a efficient SQL-Query

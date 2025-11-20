@@ -91,12 +91,12 @@ resolve_objects <- function(network, dag_sm = NULL) {
 }
 
 resolve_function_stack <- function(dag_sm, network) {
- dag <- dag_sm$get_codes()
- projects <- get_projects(dag_sm$get_query())
- stack_sorted <- toposort::topological_sort(dag, dependency_type = "follows")
- stack_prepared <- remove_join_helpers(stack_sorted)
- correct_wrappers <- clean_all_wrappers(projects = projects, order = stack_prepared, dag = dag, network = network)
- correct_wrappers
+  dag <- dag_sm$get_codes()
+  projects <- get_projects(dag_sm$get_query())
+  stack_sorted <- toposort::topological_sort(dag, dependency_type = "follows")
+  stack_prepared <- remove_join_helpers(stack_sorted)
+  correct_wrappers <- clean_all_wrappers(projects = projects, order = stack_prepared, dag = dag, network = network)
+  correct_wrappers
 }
 
 remove_join_helpers <- function(stack_sorted) {
@@ -295,10 +295,12 @@ resolve_on_entry <- function(project, network, dag_sm) {
     link <- links[[i]]
     on_entry_node <- build_dependency_codes(link, network = network, dag_sm = dag_sm)
     on_entry_code <- names(on_entry_node)
-    project_codes <- append(codes[grepl(paste0("^", project, "."), names(codes))], on_entry_node)
-    deps <- clean_wrapper_deps(on_entry_code = on_entry_code, on_entry_codes = on_entry_codes, project_codes = project_codes)
+    dependend_codes <- append(codes[grepl(paste0("^", project, "."), names(codes))], on_entry_node)
+    project_codes <- unique(get_all_non_project_codes(project = project, codes = dependend_codes))
+    project_codes <- filter_targets_without_prefix(project = project, targets = project_codes, dag = codes)
+    deps <- clean_wrapper_deps(project = project, on_entry_code = on_entry_code, on_entry_codes = on_entry_codes, project_codes = project_codes)
     # Following only needs to be done when an argument of the wrapper has {.data}"
-    deps_funcs <- names(project_codes)
+    deps_funcs <- names(dependend_codes)
     all_links <- dag_sm$get_links()
     dep_links <- lapply(deps_funcs, \(code) all_links[[code]])
     dep_queries <- get_dependend_queries(dep_links)
@@ -315,6 +317,45 @@ resolve_on_entry <- function(project, network, dag_sm) {
   dependencies(query_list = on_entry_query_list, state_list = NULL, network = network, dag_sm = dag_sm)
 }
 
+filter_targets_without_prefix <- function(project, targets, dag) {
+
+  # recursive DFS to collect all upstream dependencies
+  collect_deps <- function(node, dag, visited = character()) {
+    if (node %in% visited) return(visited)
+
+    visited <- c(visited, node)
+    deps <- dag[[node]]
+
+    if (is.null(deps) || length(deps) == 0) return(visited)
+
+    for (d in deps) {
+      visited <- unique(c(visited, collect_deps(d, dag, visited)))
+    }
+    visited
+  }
+
+  result <- c()
+
+  for (t in targets) {
+    upstream <- collect_deps(t, dag)
+
+    # does this target avoid project-prefixed nodes?
+    has_project <- any(startsWith(upstream, paste0(project, ".")))
+
+    if (!has_project) {
+      result <- c(result, t)
+    }
+  }
+
+  return(result)
+}
+
+get_all_non_project_codes <- function(project, codes) {
+  prefix <- paste0(project, ".")
+  codes <- unlist(codes, use.names = FALSE)
+  codes[!startsWith(codes, prefix)]
+}
+
 resolve_on_exit <- function(project, network, dag_sm) {
   func_names <- network[[project]]$wrappers$on_exit
   if(is.null(func_names)) return(dag_sm)
@@ -329,7 +370,8 @@ resolve_on_exit <- function(project, network, dag_sm) {
     codes <- dag_sm$get_codes()
     name_codes <- names(codes)
     dep_codes <- c(name_codes[grepl(paste0("^", project, "."), name_codes)])
-    fun_node <- setNames(list(c(dep_codes, on_exit_deps)), on_exit_code)
+    total_deps <- unique(c(dep_codes, on_exit_deps))
+    fun_node <- setNames(list(total_deps), on_exit_code)
     # TODO only needs to be done if "{.data}" is present in args
     all_links <- dag_sm$get_links()
     dep_links <- lapply(dep_codes, \(code) all_links[[code]])
@@ -352,10 +394,10 @@ resolve_on_exit <- function(project, network, dag_sm) {
 
 # The function removes the wrapper codes that have been added during build_dependencie_codes since they are
 # not needed as dependencies upon themselves
-clean_wrapper_deps <- function(on_entry_code, on_entry_codes, project_codes) {
-  deps_w_wrapper <- unique(unlist(project_codes, use.names = FALSE))
+clean_wrapper_deps <- function(project, on_entry_code, on_entry_codes, project_codes) {
+  prefix <- paste0(project, ".")
   from <- which(on_entry_codes == on_entry_code)
   to <- length(on_entry_codes)
   remove_codes <- on_entry_codes[seq(from = from, to)]
-  deps_w_wrapper[!deps_w_wrapper %in% remove_codes]
+  project_codes[!project_codes %in% remove_codes]
 }

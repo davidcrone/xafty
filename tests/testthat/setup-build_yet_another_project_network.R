@@ -118,4 +118,8 @@ add_tries_data_license <- function(data) {
   data
 }
 
-
+add_id_to_car <- function(data) {
+  data_id <- test_get_car_color_id()
+  data <- merge(data, data_id, by = "Car_Color", all.x = TRUE, sort = FALSE)
+  data
+}
