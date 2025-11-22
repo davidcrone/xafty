@@ -158,3 +158,4 @@ test_that("A raw query is correctly filled with a project", {
   expect_identical(tets_projects, c("customer_data", "customer_data", "intelligence", "map"))
   expect_identical(tets_variables, c("mean_nickname", "id", "intelligence_plus_mean", "id"))
 })
+

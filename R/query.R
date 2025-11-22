@@ -273,7 +273,12 @@ resolve_star_select <- function(query_list, network_env) {
   sapply(query_list, \(query) {
     project <- query$from
     if (any(query$select == "*")) {
-      query$select <- names(network_env[[project]]$variables)
+      variable_names <- names(network_env[[project]]$variables)
+      variable_query <- query(setNames(list(variable_names), query$from))
+      links <- lapply(variable_query, get_links, network = network_env)[[1]]
+      selection <- variable_names[vapply(links, check_link_type, FUN.VALUE = character(1)) == "query_link"]
+      if(length(selection) == 0) stop(paste0("No query found in project ", project, ". Star select (*) cannot select contexts or objects."))
+      query$select <- selection
     }
     query
   }, simplify = FALSE, USE.NAMES = TRUE)

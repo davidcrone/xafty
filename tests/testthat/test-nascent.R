@@ -440,6 +440,18 @@ test_that("foreign function dependend on function with context and needs by a fu
   expect_identical(test_data, expect_data)
 })
 
+test_that("Star (*) select only retrieves queries and not objects or contexts", {
+  on_entry_network <- init_network("on_entry", projects = c("cars", "group"))
+  on_entry_network$cars$get(test_get_car_data(conn = TRUE))
+  on_entry_network$cars$add(test_add_car_color(data = query(cars = c("Has_Drivers_License", "Name", "Car"))))
+  on_entry_network$group$on_entry(reorder_cars_by_color(cars = query(cars = "Car_Color")))
+  expect_error(nascent(on_entry_network, query(group = "*")), regexp = "Star select")
+  on_entry_network$group$add(add_tries_data_license(data = query(cars = "Name")))
+  test_data <- nascent(on_entry_network, query(group = "*"))
+  expect_data <- structure(list(Tries = c(1L, 2L, 5L)), row.names = c(NA, -3L), class = "data.frame")
+  expect_identical(test_data, expect_data)
+})
+
 #### NOTE: Implementing a "free-form" context is more difficult than expected. Making efficient execution is akin to building a efficient SQL-Query
 # test_that("Nascent a simple context works seamlessly in nascent", {
 #   test_network <- init_network(name = "test_network", projects = "intelligence")
