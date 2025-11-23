@@ -38,12 +38,16 @@ add_to_network <- function(link, project, network, ...) {
     project <- link$project
     if(.dots[["func_type"]] == "entry") {
       current_entries <- network[[project]]$wrappers$on_entry
-      new_entries <- c(current_entries, link$fun_name)
-      network[[project]]$wrappers$on_entry <- new_entries
+      if(!link$fun_name %in% current_entries) {
+        new_entries <- c(current_entries, link$fun_name)
+        network[[project]]$wrappers$on_entry <- new_entries
+      }
     } else if (.dots[["func_type"]] == "exit") {
       current_exits <- network[[project]]$wrappers$on_exit
-      new_exits <- c(current_exits, link$fun_name)
-      network[[project]]$wrappers$on_exit <- new_exits
+      if(!link$fun_name %in% current_exits) {
+        new_exits <- c(current_exits, link$fun_name)
+        network[[project]]$wrappers$on_exit <- new_exits
+      }
     }
   }
   for (variable in variables) {

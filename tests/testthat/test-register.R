@@ -199,6 +199,22 @@ test_that("Registering on_entry creates a on_entry function in wrappers", {
   expect_identical(test_network$customer_data$ruleset$add_redundant_data$args$values, FALSE)
 })
 
+test_that("Registering a on_entry with the same name twice, does not create a duplicate entries in wrappers", {
+  test_network <- init_network("test_network", projects = "customer_data")
+  test_network$customer_data$on_entry(reorder_cars_by_color(cars = "test"), name = "reorder", update = TRUE)
+  test_network$customer_data$on_entry(reorder_cars_by_color(cars = "test"), name = "reorder", update = TRUE)
+  expect_length(test_network$customer_data$wrappers$on_entry, 1)
+  expect_equal(test_network$customer_data$wrappers$on_entry, "reorder_cars_by_color")
+})
+
+test_that("Registering a on_entry with the same name twice, does not create a duplicate entries in wrappers", {
+  test_network <- init_network("test_network", projects = "customer_data")
+  test_network$customer_data$on_exit(reorder_cars_by_color(cars = "test"), name = "reorder", update = TRUE)
+  test_network$customer_data$on_exit(reorder_cars_by_color(cars = "test"), name = "reorder", update = TRUE)
+  expect_length(test_network$customer_data$wrappers$on_exit, 1)
+  expect_equal(test_network$customer_data$wrappers$on_exit, "reorder_cars_by_color")
+})
+
 # test_that("Registering context creates the correct entry in ruleset and network", {
 #   test_network <- init_network(name = "test_network", projects = "intelligence")
 #   test_network$intelligence$get(intelligence_date())
