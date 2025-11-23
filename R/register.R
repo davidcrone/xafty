@@ -59,11 +59,7 @@ add_to_network <- function(link, project, network, ...) {
 add_to_ruleset <- function(link, project, network,...) {
   function_name <- link$fun_name
   .dots <- list(...)
-  # When registering an object or context, the object should only be registered in the project
-  # The only register that should happen in two or more projects is when these projects are joined through a query link
-  # TODO: This can be done more elegantly, by checking whether the user had the intention to join projects
-  # and only if the join is symmetrical
-  if(inherits(link, "query_link")) {
+  if(.dots[["func_type"]] == "join") {
     projects <- unique(c(project, get_lead_projects(link)))
   } else {
     projects <- project

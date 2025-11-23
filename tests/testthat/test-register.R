@@ -215,6 +215,8 @@ test_that("Registering a on_entry with the same name twice, does not create a du
   expect_equal(test_network$customer_data$wrappers$on_exit, "reorder_cars_by_color")
 })
 
+
+
 # test_that("Registering context creates the correct entry in ruleset and network", {
 #   test_network <- init_network(name = "test_network", projects = "intelligence")
 #   test_network$intelligence$get(intelligence_date())

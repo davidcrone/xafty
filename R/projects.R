@@ -70,12 +70,13 @@ add_new_project <- function(project, network_env, func_types) {
   invisible(network_env)
 }
 
-create_add_object <- function(project, network) {
+create_add_object <- function(project, network, func_type = "object") {
   force(project)
   force(network)
+  force(func_type)
   add_object <- function(name, fun, ...) {
     quosure <- rlang::enquo(fun)
-    register(quosure = quosure, link_type = "object", network = network, project = project, name = name, ...)
+    register(quosure = quosure, link_type = "object", network = network, project = project, name = name, func_type = func_type, ...)
   }
   add_object
 }
@@ -83,6 +84,7 @@ create_add_object <- function(project, network) {
 create_add_context <- function(project, network, func_type = NULL) {
   force(project)
   force(network)
+  force(func_type)
   add_context <- function(fun, name = NULL, update = FALSE, ...) {
     quosure <- rlang::enquo(fun)
     register(quosure = quosure, link_type = "context", network = network, project = project, name = name, update = update, func_type = func_type, ...)
@@ -90,28 +92,31 @@ create_add_context <- function(project, network, func_type = NULL) {
   add_context
 }
 
-create_register_link_func <- function(project, network, link_type = "query", operation = NULL) {
+create_register_link_func <- function(project, network, link_type = "query", func_type) {
   force(project)
   force(network)
+  force(func_type)
   link <- function(fun, name = NULL, vars = NULL, update = FALSE, ...) {
     .dots <- list(...)
     quosure <- rlang::enquo(fun)
     register(quosure = quosure, link_type = link_type, network = network, project = project,
-             vars = vars, name = name, update = update, ... = .dots)
+             vars = vars, name = name, update = update, func_type = func_type, ... = .dots)
   }
   link
 }
 
 bundle_link_functions <- function(project, network) {
-  link_fun <- create_register_link_func(project = project, network = network, link_type = "query")
-  object_fun <- create_add_object(project = project, network = network)
+  get_fun <- create_register_link_func(project = project, network = network, link_type = "query", func_type = "get")
+  add_fun <- create_register_link_func(project = project, network = network, link_type = "query", func_type = "add")
+  join_fun <- create_register_link_func(project = project, network = network, link_type = "query", func_type = "join")
+  object_fun <- create_add_object(project = project, network = network, func_type = "object")
   on_entry_fun <- create_add_context(project = project, network = network, func_type = "entry")
   on_exit_fun <- create_add_context(project = project, network = network, func_type = "exit")
   list(
     "on_entry" = on_entry_fun,
-    "get" = link_fun,
-    "add" = link_fun,
-    "join" = link_fun,
+    "get" = get_fun,
+    "add" = add_fun,
+    "join" = join_fun,
     "add_object" = object_fun,
     "on_exit" = on_exit_fun
   )
