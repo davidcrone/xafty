@@ -10,11 +10,11 @@ Build a collaborative, scalable data pipeline.
 
 ## What it does
 
-**xafty** helps you to turn your data pipeline into a dependency graph
-rather than a linear script. Each step becomes a reusable node that
-explicitly declares what it needs and what it provides, allowing the
-system to resolve execution order, reuse logic, and hide complexity
-behind clean layers of abstraction.
+**xafty** turns your data pipeline into a dependency graph instead of a
+linear script. Each step becomes a reusable node that declares what it
+needs and what it provides. xafty resolves the execution order for you,
+enables reuse across projects, and hides complexity behind clean layers
+of abstraction.
 
 ## Why it matters
 
@@ -37,8 +37,8 @@ easier to extend over time.
 
 ## Basic Concept
 
-Let’s go step-by-step from a simple script to a network pipeline using
-xafty.
+Let’s understand the idea behind xafty by going step-by-step from a
+simple script to a network pipeline.
 
 - Step 1: “Stateful” pipeline
 - Step 2: Functional pipeline
@@ -135,9 +135,8 @@ mtcars_plot()
 ```
 
 This is already a major improvement. It’s cleaner, testable, reusable,
-and much easier to understand due to its modular structure. However,
-this function-based approach still does not address every issue and runs
-into structural problems as your pipeline and team grow:
+and much easier to understand due to its modular structure. While this
+approach modularizes the logic, it still needs to be assembled manually:
 
 - **Implicit dependency chains:** Each function still relies on being
   called in the correct order. Dependencies remain implicit in the code
@@ -145,9 +144,9 @@ into structural problems as your pipeline and team grow:
   functions without fully understanding upstream assumptions.
 - **Limited flexibility for different outputs:** If you need to return a
   slightly different subset of the data, or produce multiple alternative
-  outputs, you end up copying or branching the orchestration function.
-  The pipeline becomes a tangle of custom assembly code instead of a
-  reusable structure.
+  outputs, you end up copying, commenting out or branching some of the
+  functions. The pipeline becomes a tangle of custom assembly code
+  instead of a reusable structure.
 - **Difficult to reason about impact:** If a function is modified, there
   is no built-in way to ask: Which parts of the pipeline rely on this?
   What might this change affect? Understanding ripple effects becomes a
@@ -184,6 +183,12 @@ xafty_network$mtcars$add_object("mtcars_plot", plot_mtcars(mtcars = query(engine
 # Pull an "object" from the network
 xafty_network |> nascent(mtcars = "[mtcars_plot]")
 ```
+
+In xafty, each function becomes a node: it declares its inputs through
+query() and xafty uses these declarations to build a dependency graph.
+When you request data using nascent(), the system resolves the required
+nodes, computes them in topological order, and returns exactly what you
+asked for.
 
 ## Get Involved
 

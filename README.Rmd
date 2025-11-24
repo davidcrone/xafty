@@ -124,7 +124,7 @@ mtcars_plot()
 This is already a major improvement. It’s cleaner, testable, reusable, and much easier to understand due to its modular structure. While this approach modularizes the logic, it still needs to be assembled manually:
 
 - **Implicit dependency chains:** Each function still relies on being called in the correct order. Dependencies remain implicit in the code flow, so the pipeline can break if someone rearranges or reuses functions without fully understanding upstream assumptions.
-- **Limited flexibility for different outputs:** If you need to return a slightly different subset of the data, or produce multiple alternative outputs, you end up copying or branching the orchestration function. The pipeline becomes a tangle of custom assembly code instead of a reusable structure.
+- **Limited flexibility for different outputs:** If you need to return a slightly different subset of the data, or produce multiple alternative outputs, you end up copying, commenting out or branching some of the functions. The pipeline becomes a tangle of custom assembly code instead of a reusable structure.
 - **Difficult to reason about impact:** If a function is modified, there is no built-in way to ask: Which parts of the pipeline rely on this? What might this change affect? Understanding ripple effects becomes a manual and error-prone process.
 
 ### Step 3: Network pipeline
