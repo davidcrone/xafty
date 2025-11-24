@@ -110,11 +110,13 @@ get_engine_details <- function() {
 }
 
 join_engine_details <- function(mtcars, engine) {
-  merge(mtcars, engine, all.x = TRUE, sort = FALSE)
+  joined <- merge(mtcars, engine, all.x = TRUE, sort = FALSE)
+  joined
 }
 
 plot_mtcars <- function(mtcars) {
- plot(mtcars$type, mtcars$power_to_weight)
+ mtcars_plot <- plot(mtcars$type, mtcars$power_to_weight)
+ mtcars_plot
 }
 
 # Build the pipeline
@@ -133,9 +135,9 @@ mtcars_plot()
 ```
 
 This is already a major improvement. It’s cleaner, testable, reusable,
-and much easier to understand. However, this function-based approach
-still does not address every issue and runs into structural problems as
-your pipeline and team grow:
+and much easier to understand due to its modular structure. However,
+this function-based approach still does not address every issue and runs
+into structural problems as your pipeline and team grow:
 
 - **Implicit dependency chains:** Each function still relies on being
   called in the correct order. Dependencies remain implicit in the code
@@ -156,27 +158,27 @@ your pipeline and team grow:
 ``` r
 library(xafty)
 
-## Initialize the network with the desired structure
+# Initialize the network with the desired structure
 xafty_network <- init_network("example_network", projects = c("mtcars", "engine"))
 
-## Register the functions in project "mtcars"
+# Register the functions in project "mtcars"
 xafty_network$mtcars$get(get_mtcars())
 xafty_network$mtcars$add(add_power_to_weight(mtcars = query(mtcars = c("hp", "wt"))))
 
-## Register the function in project "engine"
+# Register the function in project "engine"
 xafty_network$engine$get(get_engine_details())
 
 # Join the two projects together
 xafty_network$mtcars$join(join_engine_details(mtcars = query(mtcars = "vs"),
                                               engine = query(engine = "vs")))
 
-# Print the network
+# Inspect the network
 xafty_network
 
 # Pull data as needed from the network
 xafty_network |> nascent(mtcars = c("hp", "wt", "vs"), engine = "type", mtcars = "power_to_weight")
 
-# Add finished data product
+# Add a finished data product
 xafty_network$mtcars$add_object("mtcars_plot", plot_mtcars(mtcars = query(engine = "type", mtcars = "power_to_weight")))
 
 # Pull an "object" from the network
