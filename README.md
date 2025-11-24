@@ -3,26 +3,31 @@
 
 # xafty
 
+Build a collaborative, scalable data pipeline.
+
 <!-- badges: start -->
 <!-- badges: end -->
 
-**xafty** lets you build data pipelines as a directed acyclic graph
-(DAG), turning each step into a reusable node in a knowledge network.
-This makes pipelines more scalable, easier to collaborate on, and less
-complex over time through layered abstraction.
+## What it does
 
-⚠️ **Note:** In its current iteration, xafty should be understood as a
-proof of concept. The design and functionality are still evolving and
-may change significantly in future versions.
+**xafty** helps you to turn your data pipeline into a dependency graph
+rather than a linear script. Each step becomes a reusable node that
+explicitly declares what it needs and what it provides, allowing the
+system to resolve execution order, reuse logic, and hide complexity
+behind clean layers of abstraction.
 
-## Get Involved
+## Why it matters
 
-**xafty** is in active development, and your feedback is incredibly
-valuable.  
-If you’re curious, testing it out, or have ideas to improve it [get in
-touch](mailto:davidjvcrone@gmail.com) or [open an
-issue](https://github.com/davidcrone/xafty/issues). Whether it’s bugs,
-feature requests, or just to chat, I’d love to hear from you! :)
+Most data pipelines are built as one-off scripts: hard to reuse, fragile
+to change, and difficult for teams to collaborate on. As projects grow,
+this leads to duplicated logic, inconsistent results, and a constant
+need to rebuild work that already exists.
+
+xafty solves this by treating every transformation as a reusable node in
+a shared dependency graph. Instead of rewriting the same steps for every
+new project, teams compose pipelines from existing, validated building
+blocks. This makes data work more reliable, more maintainable, and far
+easier to extend over time.
 
 ## Installation
 
@@ -30,17 +35,64 @@ feature requests, or just to chat, I’d love to hear from you! :)
  pak::pkg_install("davidcrone/xafty")
 ```
 
-## Basic Functionality
+## Basic Concept
+
+Let’s go step-by-step from a simple script to a network pipeline using
+xafty.
+
+- Step 1: “Stateful” pipeline
+- Step 2: Functional pipeline
+- Step 3: Network pipeline
+
+### Step 1: “Stateful” pipeline
+
+Probably everyone starting off with data analytics has written a data
+pipeline that looked similar to the following:
 
 ``` r
+# Load data
+data("mtcars")
 
-########################
-## START: Preperation ##
-########################
+# Add derived variable
+mtcars$power_to_weight <- mtcars$hp / mtcars$wt
 
-## Build your data pipeline one step at time
+# Get engine lookup table
+engine <- data.frame(
+  type = as.factor(c("Straight", "V-Shape")),
+  vs = c(1, 0)
+)
+
+# Join everything together
+mtcars <- merge(mtcars, engine, by = "vs", all.x = TRUE, sort = FALSE)
+
+# Use results
+plot(mtcars$type, mtcars$power_to_weight)
+```
+
+This is a good start. It gets to the point, fast and comprehensible. But
+as your codebase and use-cases grow, several problems emerge:
+
+- **Hard to reuse:** Scripts are linear and stateful. If you or a
+  colleague want only part of the logic, you need to copy-paste code and
+  manually recreate upstream context. This often breaks because steps
+  depend on hidden side effects or object states.
+- **Difficult to scale:** As the script grows, earlier steps become
+  tightly coupled to later ones. Small changes upstream can
+  unintentionally cascade downstream, making the pipeline fragile and
+  harder to extend.
+- **Locked to one use-case:** A linear script encodes a single way to
+  run the pipeline. If you later need different subsets of the data,
+  alternative derivations, or multiple outputs, the entire script must
+  be restructured or duplicated.
+
+### Step 2: Functional pipeline
+
+We can address many of the shortcomings of such a “stateful” script, by
+writing everything as a function:
+
+``` r
 get_mtcars <- function() {
-  data("mtcars", envir = environment())
+  data("mtcars")
   mtcars
 }
 
@@ -51,7 +103,7 @@ add_power_to_weight <- function(mtcars) {
 
 get_engine_details <- function() {
   engine <- data.frame(
-    type = c("Straight", "V-Shape"),
+    type = as.factor(c("Straight", "V-Shape")),
     vs = c(1, 0)
   )
   engine
@@ -61,22 +113,57 @@ join_engine_details <- function(mtcars, engine) {
   merge(mtcars, engine, all.x = TRUE, sort = FALSE)
 }
 
-######################
-## END: Preperation ##
-######################
+plot_mtcars <- function(mtcars) {
+ plot(mtcars$type, mtcars$power_to_weight)
+}
 
+# Build the pipeline
+mtcars_plot <- function() {
+ mtcars <- get_mtcars()
+ engine <- get_engine_details()
+ 
+ mtcars <- join_engine_details(mtcars = mtcars, engine = engine)
+ mtcars <- add_power_to_weight(mtcars = mtcars)
+ 
+ plot_mtcars(mtcars = mtcars)
+}
+
+# Run the pipeline
+mtcars_plot()
+```
+
+This is already a major improvement. It’s cleaner, testable, reusable,
+and much easier to understand. However, this function-based approach
+still does not address every issue and runs into structural problems as
+your pipeline and team grow:
+
+- **Implicit dependency chains:** Each function still relies on being
+  called in the correct order. Dependencies remain implicit in the code
+  flow, so the pipeline can break if someone rearranges or reuses
+  functions without fully understanding upstream assumptions.
+- **Limited flexibility for different outputs:** If you need to return a
+  slightly different subset of the data, or produce multiple alternative
+  outputs, you end up copying or branching the orchestration function.
+  The pipeline becomes a tangle of custom assembly code instead of a
+  reusable structure.
+- **Difficult to reason about impact:** If a function is modified, there
+  is no built-in way to ask: Which parts of the pipeline rely on this?
+  What might this change affect? Understanding ripple effects becomes a
+  manual and error-prone process.
+
+### Step 3: Network pipeline
+
+``` r
 library(xafty)
 
-## Initialize the network
-xafty_network <- init_network("example_network")
+## Initialize the network with the desired structure
+xafty_network <- init_network("example_network", projects = c("mtcars", "engine"))
 
-## Register the functions in project 1
-xafty_network$add_project("mtcars")
+## Register the functions in project "mtcars"
 xafty_network$mtcars$get(get_mtcars())
 xafty_network$mtcars$add(add_power_to_weight(mtcars = query(mtcars = c("hp", "wt"))))
 
-## Register the function in project 2
-xafty_network$add_project("engine")
+## Register the function in project "engine"
 xafty_network$engine$get(get_engine_details())
 
 # Join the two projects together
@@ -86,7 +173,22 @@ xafty_network$mtcars$join(join_engine_details(mtcars = query(mtcars = "vs"),
 # Print the network
 xafty_network
 
-# Pull data from the network
+# Pull data as needed from the network
 xafty_network |> nascent(mtcars = c("hp", "wt", "vs"), engine = "type", mtcars = "power_to_weight")
- 
+
+# Add finished data product
+xafty_network$mtcars$add_object("mtcars_plot", plot_mtcars(mtcars = query(engine = "type", mtcars = "power_to_weight")))
+
+# Pull an "object" from the network
+xafty_network |> nascent(mtcars = "[mtcars_plot]")
 ```
+
+## Get Involved
+
+**xafty** is in active development, and your feedback is incredibly
+valuable!
+
+If you’re curious, testing it out, or have ideas to improve it [get in
+touch](mailto:davidjvcrone@gmail.com) or [open an
+issue](https://github.com/davidcrone/xafty/issues). Whether it’s bugs,
+feature requests, or just to chat, I’d love to hear from you! :)
