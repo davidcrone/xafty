@@ -7,6 +7,8 @@ Turn your R data pipelines into a scalable and collaborative network
 graph.
 
 <!-- badges: start -->
+
+[![R-CMD-check](https://github.com/davidcrone/xafty/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/davidcrone/xafty/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
 ## What It Does
