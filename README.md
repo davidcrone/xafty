@@ -3,7 +3,8 @@
 
 # xafty
 
-Build a collaborative, scalable data pipeline.
+Turn your R data pipelines into a scalable and collaborative network
+graph.
 
 <!-- badges: start -->
 <!-- badges: end -->
@@ -29,6 +30,24 @@ new project, teams compose pipelines from existing, validated building
 blocks. This makes data work more reliable, more maintainable, and far
 easier to extend over time.
 
+## Key Advantages
+
+- **High flexibility with no overhead:** Since each node is just a
+  function from data.frame → data.frame, you don’t have to adopt a new
+  data model or rewrite existing logic. Existing code drops directly
+  into the network with minimal changes.
+- **Reduced cognitive burden:** You don’t need to remember the correct
+  sequence of function calls. Colleagues don’t need to study the
+  pipeline to figure out how to get the data they need. They simply
+  query the variables, and xafty evaluates the required steps.
+- **Effortless extensibility:** Adding a new step is as simple as:
+  1.  deciding which variables it needs,
+  2.  writing a function that takes and returns a data.frame,
+  3.  registering it in the network.
+- **Effortless collaboration:** Networks invite contribution. Dropping
+  in a new node is simple and low-risk, unlike pipelines where every
+  change risks breaking the flow.
+
 ## Installation
 
 ``` r
@@ -37,7 +56,7 @@ easier to extend over time.
 
 ## Basic Concept
 
-Let’s understand the idea behind xafty by going step-by-step from a
+Let’s understand the idea behind xafty by going step by step from a
 simple script to a network pipeline.
 
 - Step 1: “Stateful” pipeline
@@ -50,22 +69,22 @@ Probably everyone starting off with data analytics has written a data
 pipeline that looked similar to the following:
 
 ``` r
-# Load data
+# 1. Load data
 data("mtcars")
 
-# Add derived variable
+# 2. Add derived variable
 mtcars$power_to_weight <- mtcars$hp / mtcars$wt
 
-# Get engine lookup table
+# 3. Get engine lookup table
 engine <- data.frame(
   type = as.factor(c("Straight", "V-Shape")),
   vs = c(1, 0)
 )
 
-# Join everything together
+# 4. Join everything together
 mtcars <- merge(mtcars, engine, by = "vs", all.x = TRUE, sort = FALSE)
 
-# Use results
+# 5. Use results
 plot(mtcars$type, mtcars$power_to_weight)
 ```
 
@@ -92,7 +111,7 @@ writing everything as a function:
 
 ``` r
 get_mtcars <- function() {
-  data("mtcars")
+  data("mtcars", envir = environment())
   mtcars
 }
 
@@ -119,7 +138,7 @@ plot_mtcars <- function(mtcars) {
  mtcars_plot
 }
 
-# Build the pipeline
+# Assemble the pipeline
 mtcars_plot <- function() {
  mtcars <- get_mtcars()
  engine <- get_engine_details()
@@ -134,9 +153,10 @@ mtcars_plot <- function() {
 mtcars_plot()
 ```
 
-This is already a major improvement. It’s cleaner, testable, reusable,
-and much easier to understand due to its modular structure. While this
-approach modularizes the logic, it still needs to be assembled manually:
+This is already a major improvement. The modular structure makes the
+pipeline composable, testable, reusable, and much easier to understand.
+While this approach modularizes the logic, it still needs to be
+assembled manually:
 
 - **Implicit dependency chains:** Each function still relies on being
   called in the correct order. Dependencies remain implicit in the code
@@ -154,20 +174,35 @@ approach modularizes the logic, it still needs to be assembled manually:
 
 ### Step 3: Network pipeline
 
+Moving from a functional pipeline to a network pipeline is the final
+step in making our code fully declarative, flexible, and scalable.
+
+Here is how the same logic from Step 2 looks when expressed as a xafty
+network:
+
 ``` r
+## Preparation: 
+# Make sure that the functions from Step 2 are loaded into memory.
+## /Preparation
+
 library(xafty)
 
 # Initialize the network with the desired structure
 xafty_network <- init_network("example_network", projects = c("mtcars", "engine"))
 
-# Register the functions in project "mtcars"
+## Register the functions in project "mtcars" ##
+
+# The function `get_mtcars()` is registered as a root node in the project "mtcars".
 xafty_network$mtcars$get(get_mtcars())
+
+# Instead of passing data to `add_power_to_weight`, we register a dependency using query()
 xafty_network$mtcars$add(add_power_to_weight(mtcars = query(mtcars = c("hp", "wt"))))
 
-# Register the function in project "engine"
+## Register the functions in project "engine" ##
+
 xafty_network$engine$get(get_engine_details())
 
-# Join the two projects together
+# Here we register a join, by passing two separate queries to the according parameters
 xafty_network$mtcars$join(join_engine_details(mtcars = query(mtcars = "vs"),
                                               engine = query(engine = "vs")))
 
@@ -177,25 +212,83 @@ xafty_network
 # Pull data as needed from the network
 xafty_network |> nascent(mtcars = c("hp", "wt", "vs"), engine = "type", mtcars = "power_to_weight")
 
-# Add a finished data product
-xafty_network$mtcars$add_object("mtcars_plot", plot_mtcars(mtcars = query(engine = "type", mtcars = "power_to_weight")))
+# We can also add the plot to the network as a finished data product
+xafty_network$mtcars$add_object("mtcars_plot", 
+                                plot_mtcars(mtcars = query(engine = "type", mtcars = "power_to_weight")))
 
-# Pull an "object" from the network
+# To query an object from the network, write the object's name in squared brackets
 xafty_network |> nascent(mtcars = "[mtcars_plot]")
 ```
 
-In xafty, each function becomes a node: it declares its inputs through
-query() and xafty uses these declarations to build a dependency graph.
-When you request data using nascent(), the system resolves the required
-nodes, computes them in topological order, and returns exactly what you
-asked for.
+In xafty, each function from Step 2 becomes a node in the network. The
+query() calls declare which variables are needed as inputs. Using these
+declarations, xafty builds a dependency graph that knows:
+
+- what needs to be computed,
+- in which order,
+- and from which data sources.
+
+When you call nascent(), xafty walks the graph, resolves only the nodes
+required for your request, evaluates them in topological order, and
+returns precisely what you asked for. Pipelines are no longer assembled
+manually. You simply query the data you need and let the system do the
+orchestration.
+
+## Additional Features
+
+While **xafty is still in active development**, you will find it already
+being quite feature rich:
+
+- Stateful programming with `{states}`, passed alongside queries via
+  `with()`.
+- Context on entry/exit for each project, similar to
+  `dplyr::group_by() / ungroup()`, enabling wrapping for lossless
+  transformations.
+- Wildcard selection with `query(project = "*")` to request all
+  variables from a project.
+- Inspection tools, such as `xafty::build_dag()`, to view the internal
+  dependency graph.
+
+## Ideas for Future Enhancements
+
+Network-based pipelines open the door to many extensions and
+integrations. Below is an overview of both the near-term roadmap and
+more ambitious directions.
+
+### Core Features
+
+Version 1.0 aims to make xafty a practical solution for ~95% of everyday
+data-pipeline workflows. To reach that milestone, several essential
+features still need to be implemented:
+
+- **Support for lossy transformations** (e.g.,
+  `dplyr::group_by() / summarise()`), integrated seamlessly into a
+  network structure
+- **A flexible filtering mechanism** using a `where()` clause, providing
+  fine-grained control over when filtering is applied
+- **Developer tooling**, such as visualizations and printable summaries
+  of network components, to make building with xafty easier
+- **Robust testing and bug fixing** to ensure reliability at scale
+
+### Visionary Features
+
+Beyond the core roadmap, xafty can evolve into a powerful component
+within existing analytic ecosystems:
+
+- **Integration with {targets}:** A DAG created via xafty::build_dag()
+  could be translated directly into a {targets} pipeline, unlocking
+  caching, parallel processing, and full reproducibility
+- **Interoperability with DuckDB and Arrow:** Allowing nodes backed by
+  SQL or Python would enable cross-language collaboration and
+  high-performance hybrid networks
 
 ## Get Involved
 
 **xafty** is in active development, and your feedback is incredibly
 valuable!
 
-If you’re curious, testing it out, or have ideas to improve it [get in
-touch](mailto:davidjvcrone@gmail.com) or [open an
-issue](https://github.com/davidcrone/xafty/issues). Whether it’s bugs,
-feature requests, or just to chat, I’d love to hear from you! :)
+If you’re curious, testing it out, have ideas to improve it, or want me
+to prioritize a feature [get in touch](mailto:davidjvcrone@gmail.com) or
+[open an issue](https://github.com/davidcrone/xafty/issues). Whether
+it’s bugs, feature requests, or just to chat, I’d love to hear from you!
+:)
