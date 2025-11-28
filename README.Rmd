@@ -19,11 +19,11 @@ Turn your R data pipelines into a scalable and collaborative network graph.
 <!-- badges: start -->
 <!-- badges: end -->
 
-## What it does
+## What It Does
 
 **xafty** turns your data pipeline into a dependency graph instead of a linear script. Each step becomes a reusable node that declares what it needs and what it provides. xafty resolves the execution order for you, enables reuse across projects, and hides complexity behind clean layers of abstraction.
 
-## Why it matters
+## Why It Matters
 
 Most data pipelines are built as one-off scripts: hard to reuse, fragile to change, and difficult for teams to collaborate on. As projects grow, this leads to duplicated logic, inconsistent results, and a constant need to rebuild work that already exists.
 
@@ -45,7 +45,7 @@ xafty solves this by treating every transformation as a reusable node in a share
  pak::pkg_install("davidcrone/xafty")
 ```
 
-## Basic concept
+## Basic Concept
 
 Let's understand the idea behind xafty by going step by step from a simple script to a network pipeline.
 

@@ -9,7 +9,7 @@ graph.
 <!-- badges: start -->
 <!-- badges: end -->
 
-## What it does
+## What It Does
 
 **xafty** turns your data pipeline into a dependency graph instead of a
 linear script. Each step becomes a reusable node that declares what it
@@ -17,7 +17,7 @@ needs and what it provides. xafty resolves the execution order for you,
 enables reuse across projects, and hides complexity behind clean layers
 of abstraction.
 
-## Why it matters
+## Why It Matters
 
 Most data pipelines are built as one-off scripts: hard to reuse, fragile
 to change, and difficult for teams to collaborate on. As projects grow,
