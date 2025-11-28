@@ -13,7 +13,7 @@
 #'
 #' @export
 init_network <- function(name, projects = NULL) {
-  network_env <- new.env() # This is the list where all projects will be merged together
+  network_env <- new.env() # This is the network where all projects will be merged together
   network_env$settings <- settings(network_name = name)
   network_env$states <- list()
   add_project <- create_add_project(network_env = network_env)
@@ -92,23 +92,22 @@ create_add_context <- function(project, network, func_type = NULL) {
   add_context
 }
 
-create_register_link_func <- function(project, network, link_type = "query", func_type) {
+compose_link_function <- function(project, network) {
   force(project)
   force(network)
-  force(func_type)
   link <- function(fun, name = NULL, vars = NULL, update = FALSE, ...) {
     .dots <- list(...)
     quosure <- rlang::enquo(fun)
-    register(quosure = quosure, link_type = link_type, network = network, project = project,
-             vars = vars, name = name, update = update, func_type = func_type, ... = .dots)
+    register(quosure = quosure, link_type = "query", network = network, project = project,
+             vars = vars, name = name, update = update, ... = .dots)
   }
   link
 }
 
 bundle_link_functions <- function(project, network) {
-  get_fun <- create_register_link_func(project = project, network = network, link_type = "query", func_type = "get")
-  add_fun <- create_register_link_func(project = project, network = network, link_type = "query", func_type = "add")
-  join_fun <- create_register_link_func(project = project, network = network, link_type = "query", func_type = "join")
+  get_fun <- compose_link_function(project = project, network = network)
+  add_fun <- compose_link_function(project = project, network = network)
+  join_fun <- compose_link_function(project = project, network = network)
   object_fun <- create_add_object(project = project, network = network, func_type = "object")
   on_entry_fun <- create_add_context(project = project, network = network, func_type = "entry")
   on_exit_fun <- create_add_context(project = project, network = network, func_type = "exit")

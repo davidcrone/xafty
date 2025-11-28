@@ -59,8 +59,10 @@ add_to_network <- function(link, project, network, ...) {
 add_to_ruleset <- function(link, project, network,...) {
   function_name <- link$fun_name
   .dots <- list(...)
-  if(.dots[["func_type"]] == "join") {
-    projects <- unique(c(project, get_lead_projects(link)))
+  func_type <- .dots[["func_type"]]
+  if(is.null(func_type)) func_type <- decide_link_func_type(link)
+  if(func_type== "join") {
+    projects <- unique(c(project, get_lead_projects( link)))
   } else {
     projects <- project
   }
@@ -277,4 +279,17 @@ validate_query <- function(name, project, network) {
     stop(paste0("Variable: ", name, " is not contained in project: ", project))
   }
   invisible(TRUE)
+}
+
+decide_link_func_type <- function(link) {
+  is_query_list <- vapply(link$args, \(arg) inherits(arg, "xafty_query_list"), FUN.VALUE = logical(1))
+  n_queries <- sum(is_query_list)
+  if (n_queries == 0) {
+    link_func_type <- "get"
+  } else if (n_queries == 1) {
+    link_func_type <- "add"
+  } else {
+    link_func_type <- "join"
+  }
+  link_func_type
 }

@@ -218,7 +218,7 @@ dots_to_query <- function(network, ...)  {
     query_list <- query_raw$query
     state_list <- query_raw$states
     join_path <- query_raw$join_path
-  } else if (inherits(query_raw[[1]], what = "xafty_query_list")) {
+  } else if (inherits(query_raw[[1]], what = "xafty_query_list") || inherits(query_raw[[1]], what = "xafty_object_query")) {
     query_list <- query_raw[[1]]
     state_list <- NULL
     join_path <- NULL
@@ -248,7 +248,7 @@ is_object_query_list <- function(query_list) {
 
 set_query_list_class <- function(query_list) {
   if (is_object_query_list(query_list = query_list)) {
-    class(query_list) <- c("list", "xafty_query_list", "xafty_object_query")
+    class(query_list) <- c("list", "xafty_object_query")
   } else {
     class(query_list) <- c("list", "xafty_query_list")
   }
