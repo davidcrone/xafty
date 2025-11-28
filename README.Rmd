@@ -195,7 +195,7 @@ When you call nascent(), xafty walks the graph, resolves only the nodes required
 
 While **xafty is still in active development**, you will find it already being quite feature rich:
 
-- Stateful programming with `{states}`, passed alongside queries via `with()`.
+- Stateful programming with `{states}`, passed alongside queries via `with_state()`.
 - Context on entry/exit for each project, similar to `dplyr::group_by() / ungroup()`, enabling wrapping for lossless transformations.
 - Wildcard selection with `query(project = "*")` to request all variables from a project.
 - Inspection tools, such as `xafty::build_dag()`, to view the internal dependency graph.

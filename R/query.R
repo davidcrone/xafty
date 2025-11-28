@@ -53,7 +53,7 @@ query <- function(...) {
 #' @param ... Declaration of the states e.g. state_name = TRUE
 #' @returns A list state_query which is a query bundled with a state
 #' @export
-with <- function(query_list, ...) {
+with_state <- function(query_list, ...) {
   .li_states <- list(...)
   class(.li_states) <- c("list", "xafty_states_list")
   if(inherits(query_list, "state_query")) {
@@ -75,9 +75,11 @@ with <- function(query_list, ...) {
 #' @param query_list A xafty query list returned by query()
 #' @param ... List of the join path
 #' @examples
-#' query(projectA = "col1", projectB = "col2", projectC = "col3") |>
-#' add_join_path(path1 = c("projectA", "projectB"), path2 = c("projectA", "projectC"))
-#' # this creates the following joins projectA joins with projectB and projectA joins with projectC
+#' \dontrun{
+#' qry <- query(projectA = "col1", projectB = "col2", projectC = "col3")
+#' add_join_path(qry, path1 = c("projectA", "projectB"), path2 = c("projectA", "projectC"))
+#' # this creates the following joins: projectA joins with projectB and projectA joins with projectC
+#' }
 #' @returns A list
 #' @export
 add_join_path <- function(query_list, ...) {

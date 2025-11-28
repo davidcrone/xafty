@@ -134,7 +134,7 @@ test_that("State argument correclty passes the argument into the state variable"
   }
   test_network$customer_data$add(add_score_category(data = query(customer_data = "score"),
                                                     na_as_negative = "{na_as_negative}"), vars = "category")
-  query <- query(customer_data = c("name", "category")) |> with(na_as_negative = TRUE)
+  query <- query(customer_data = c("name", "category")) |> with_state(na_as_negative = TRUE)
   test_data <- nascent(test_network, query)
   expected_data <- structure(list(name = c("Alice", "Bob", "Charlie", "Diana", "Eve"),
                                   category = c("Low", "High", "Low", "High", "Low")),
@@ -175,8 +175,8 @@ test_that("Flow of functions can be controlled through states", {
     data
   }
   test_network$customer_data$add(add_score_category(data = query(customer_data = "score")))
-  query1 <- query(customer_data = c("name", "category")) |> with(na_as_negative = TRUE)
-  query2 <- query(customer_data = c("name", "category")) |> with(na_as_negative = FALSE)
+  query1 <- query(customer_data = c("name", "category")) |> with_state(na_as_negative = TRUE)
+  query2 <- query(customer_data = c("name", "category")) |> with_state(na_as_negative = FALSE)
   test_data1 <- nascent(test_network, query1)
   test_data2 <- nascent(test_network, query2)
   expected_data1 <- structure(list(name = c("Alice", "Bob", "Charlie", "Diana", "Eve"),
@@ -198,8 +198,8 @@ test_that("Interpolating a state into a variable name allows to retrieve differe
     )
   }
   test_network$customer_data$get(get_data())
-  qry1 <- query(customer_data = "data.{year}") |> with(year = 2025)
-  qry2 <- query(customer_data = "data.{year}") |> with(year = 2026)
+  qry1 <- query(customer_data = "data.{year}") |> with_state(year = 2025)
+  qry2 <- query(customer_data = "data.{year}") |> with_state(year = 2026)
   tets_data1 <- nascent(test_network, qry1)
   tets_data2 <- nascent(test_network, qry2)
   expected_data1 <- get_data()[, 1, drop = FALSE]
@@ -223,7 +223,7 @@ test_that("interpolated dependend query is correctly interpolated and executed",
     data
   }
   test_network$test_data$add(add_data(data = query(test_data = "data.{year}")))
-  query <- query(test_data = c("data.{current_year}", "data.{year}")) |> with(current_year = 2027, year = 2025)
+  query <- query(test_data = c("data.{current_year}", "data.{year}")) |> with_state(current_year = 2027, year = 2025)
   test_data <- nascent(test_network, query)
   expected_data <- structure(list(data.2027 = c("E", "F"), data.2025 = c("A", "B"
   )), row.names = c(NA, -2L), class = "data.frame")
@@ -251,7 +251,7 @@ test_that("nascent has access to default state and returns the default value dur
 })
 
 test_that("Objects and States are correctly integrated during join_dependencies", {
-  qry <- query(occupations = "id", map = "secret_id") |> with(column_name = "id")
+  qry <- query(occupations = "id", map = "secret_id") |> with_state(column_name = "id")
   test_data <- nascent(test_network, qry)
   expected_data <-structure(list(id = c(1, 2, 3, 4, 5),
                                  secret_id = c(2, 3, 4, 5, 6)), row.names = c(NA, -5L), class = "data.frame")

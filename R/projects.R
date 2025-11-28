@@ -5,12 +5,13 @@
 #' @param projects Character vector of project names that should be added to the network
 #' @returns A 'xafty_network' environment
 #' @examples
+#' {
 #' # Initialize the network
 #' new_network <- init_network(name = "network_1")
 #'
 #' # Add a new project
 #' new_network$add_project("project1")
-#'
+#' }
 #' @export
 init_network <- function(name, projects = NULL) {
   network_env <- new.env() # This is the network where all projects will be merged together

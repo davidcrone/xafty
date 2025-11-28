@@ -240,7 +240,7 @@ While **xafty is still in active development**, you will find it already
 being quite feature rich:
 
 - Stateful programming with `{states}`, passed alongside queries via
-  `with()`.
+  `with_state()`.
 - Context on entry/exit for each project, similar to
   `dplyr::group_by() / ungroup()`, enabling wrapping for lossless
   transformations.

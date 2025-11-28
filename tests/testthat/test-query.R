@@ -65,7 +65,7 @@ test_that("trying to query an object and any other column or object gives an inf
 
 test_that("adding a with list for states will return the query with the state list", {
   xafty_query <- query(customer_data = c("id", "score")) |>
-    with(param1 = TRUE, param2 = FALSE)
+    with_state(param1 = TRUE, param2 = FALSE)
   expect_equal(xafty_query$states$param1, expected = TRUE)
   expect_true(inherits(xafty_query$states, "xafty_states_list"))
 })
@@ -76,7 +76,7 @@ test_that("interpolate_state_in_query correctly fills the select variable with s
   network_env$settings$state$global_default <- 2020
 
   state_query <- query(project1 = c("population.{year}", "overall_population{fromStateQuery}"), project2 = "default.{state}") |>
-    with(fromStateQuery = 2023)
+    with_state(fromStateQuery = 2023)
   query_test <- interpolate_state_in_query(query_list = state_query$query, state_list = state_query$states, network_env = network_env)
   query_expected <- query(project1 = c("population.2019", "overall_population2023"), project2 = "default.2020")
   expect_identical(query_test, query_expected)

@@ -18,3 +18,5 @@ RoxygenNote: 7.2.3
 Imports: 
     rlang,
     toposort
+URL: https://github.com/davidcrone/xafty, https://davidcrone.github.io/xafty/
+BugReports: https://github.com/davidcrone/xafty/issues
