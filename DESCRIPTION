@@ -12,6 +12,8 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Suggests: 
+    knitr,
+    rmarkdown,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 RoxygenNote: 7.2.3
@@ -20,3 +22,4 @@ Imports:
     toposort
 URL: https://github.com/davidcrone/xafty, https://davidcrone.github.io/xafty/
 BugReports: https://github.com/davidcrone/xafty/issues
+VignetteBuilder: knitr

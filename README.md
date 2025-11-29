@@ -3,13 +3,17 @@
 
 # xafty
 
-Turn your R data pipelines into a scalable and collaborative network
-graph.
-
 <!-- badges: start -->
 
 [![R-CMD-check](https://github.com/davidcrone/xafty/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/davidcrone/xafty/actions/workflows/R-CMD-check.yaml)
+![Lifecycle:
+experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)
+[![License:
+MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 <!-- badges: end -->
+
+Turn your R data pipelines into a scalable and collaborative network
+graph.
 
 ## What It Does
 
