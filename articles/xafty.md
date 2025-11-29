@@ -1,0 +1,39 @@
+# Introduction to xafty
+
+The goal of xafty is to build R-based pipelines that are reusable,
+scalable, and easy to collaborate on. To achieve this end, xafty
+represents your pipeline as a directed acyclic graph (DAG) where each
+step becomes a node in a network.
+
+This changes how you work with pipelines in one significant way: instead
+of executing steps in a predetermined sequence, xafty dynamically
+constructs the pipeline at run time based on the data you request.
+
+This article gives you an intro to building network-pipelines. If you’ve
+already put together pipelines in R using base R or dplyr, you’ve got
+everything you need to start building them with xafty.
+
+``` r
+library(xafty)
+```
+
+To create a network object, we call the
+[`init_network()`](https://davidcrone.github.io/xafty/reference/init_network.md)
+function.
+
+``` r
+network <- init_network("intro_network")
+```
+
+Each network object must have at least one project in order to start
+building the network pipeline.
+
+A project can be added as following:
+
+``` r
+network$add_project("mtcars")
+```
+
+Projects are multi-purpose structures which are used to hold and
+organize your nodes, as well as encapsulate logic and settings how nodes
+should be treated within their respective projects.
