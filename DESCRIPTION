@@ -1,6 +1,6 @@
 Package: xafty
 Type: Package
-Title: Build a Scalable Data Pipeline
+Title: Build Scalable Data Pipelines
 Version: 0.2.0
 Author: person(given = "David", family = "Crone", email = "davidjvcrone@gmail.com")
 Maintainer: David Crone <davidjvcrone@gmail.com>

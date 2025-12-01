@@ -116,64 +116,12 @@ add_to_state_query <- function(name, what, state_query) {
   state_query
 }
 
-sub_query <- function(...) {
-  .list_dots <- list(...)
-  query_list <- lapply(seq_along(.list_dots), \(i) {
-    select <- .list_dots[i]
-    project <- names(select)
-    if (is.character(select) & length(select) == 1 & is.null(project)) {
-      select <-  "*"
-      project <- select
-    } else if (is.null(project)) {
-      select <- unlist(select, recursive = FALSE)
-      return(do.call(query, args = select))
-    } else {
-      select <- select[[project]]
-    }
-    xafty_link <- list(select = select,
-                       from = project)
-    class(xafty_link) <- c("list", "xafty_query")
-    xafty_link
-  })
-  query_list
-}
-
-context_sub_query <- function(...) {
-  .list_dots <- list(...)
-  query_list <- lapply(seq_along(.list_dots), \(i) {
-    select <- .list_dots[i]
-    project <- names(select)
-    if (is.character(select) & length(select) == 1 & is.null(project)) {
-      select <-  "*"
-      project <- select
-    } else if (is.null(project)) {
-      select <- unlist(select, recursive = FALSE)
-      return(do.call(query, args = select))
-    } else {
-      select <- select[[project]]
-    }
-    xafty_link <- list(select = select,
-                       from = project)
-    class(xafty_link) <- c("list", "context_query")
-    xafty_link
-  })
-  query_list
-}
-
 temper_query <- function(query_list, state_list = NULL, network) {
   class_input <- class(query_list)
   query_list <- resolve_star_select(query_list = query_list, network_env = network)
   query_list <- interpolate_state_in_query(query_list = query_list, state_list = state_list, network_env = network)
   class(query_list) <- class_input
   query_list
-}
-
-get_sub_queries <- function(query, network) {
-  projecs <- names(query)
-  sub_query_list <- lapply(projecs, \(project) {
-    project_env <- network[[project]]
-  })
-  sub_query_list[!vapply(sub_query_list, \(query) is.null(query), FUN.VALUE = logical(1))]
 }
 
 #' @importFrom stats setNames
