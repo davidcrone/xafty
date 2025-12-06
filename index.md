@@ -52,7 +52,7 @@ easier to extend over time.
 
 ![Diagram illustrating the evolution from a single processing step to a
 chained and branched network
-pipeline.](reference/figures/Mental%20Model%20Pipelines.png)
+pipeline.](reference/figures/Mental_Model_Pipelines.png)
 
 Diagram illustrating the evolution from a single processing step to a
 chained and branched network pipeline.
@@ -67,7 +67,7 @@ simple script to a network pipeline.
 ### Step 1: Stateful Pipeline
 
 ![Diagram illustrating a stateful pipeline, as a “single purpose”
-block](reference/figures/Stateful%20Pipeline.png)
+block](reference/figures/Stateful_Pipeline.png)
 
 Diagram illustrating a stateful pipeline, as a “single purpose” block
 
@@ -114,7 +114,7 @@ as your codebase and use-cases grow, several problems emerge:
 
 ![Diagram illustrating a functional pipeline as a modularized and linear
 structure, where each step is cleanly
-seperated](reference/figures/Functional%20Pipeline.png)
+seperated](reference/figures/Functional_Pipeline.png)
 
 Diagram illustrating a functional pipeline as a modularized and linear
 structure, where each step is cleanly seperated
@@ -189,7 +189,7 @@ assembled manually:
 
 ![Diagram illustrating a network pipeline, where each step is a node
 connected according to its
-dependencies](reference/figures/Network%20Pipeline.png)
+dependencies](reference/figures/Network_Pipeline.png)
 
 Diagram illustrating a network pipeline, where each step is a node
 connected according to its dependencies
@@ -258,7 +258,7 @@ xafty_network |> nascent(mtcars = c("hp"), engine = "type")
 **The resulting pipeline can be represented as follows:**
 
 ![Diagram illustrating the “collapsed” pipeline from a xafty
-network](reference/figures/Example%20Sub%20Pipeline.png)
+network](reference/figures/Example_Sub_Pipeline.png)
 
 Diagram illustrating the “collapsed” pipeline from a xafty network
 
@@ -284,7 +284,7 @@ xafty_network |> nascent(mtcars = "[mtcars_plot]")
 This assembles our original pipeline, we have already seen in step 2
 
 ![Diagram illustrating the same pipeline introduced in step
-2](reference/figures/Functional%20Pipeline.png)
+2](reference/figures/Functional_Pipeline.png)
 
 Diagram illustrating the same pipeline introduced in step 2
 

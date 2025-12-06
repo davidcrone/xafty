@@ -92,7 +92,7 @@
 <div class="section level2">
 <h2 id="basic-concept">Basic Concept<a class="anchor" aria-label="anchor" href="#basic-concept"></a>
 </h2>
-<figure><img src="reference/figures/Mental%20Model%20Pipelines.png" alt="Diagram illustrating the evolution from a single processing step to a chained and branched network pipeline."><figcaption aria-hidden="true">
+<figure><img src="reference/figures/Mental_Model_Pipelines.png" alt="Diagram illustrating the evolution from a single processing step to a chained and branched network pipeline."><figcaption aria-hidden="true">
 Diagram illustrating the evolution from a single processing step to a chained and branched network pipeline.
 </figcaption></figure><p>Let’s understand the idea behind xafty by going step by step from a simple script to a network pipeline.</p>
 <ul>
@@ -103,7 +103,7 @@ Diagram illustrating the evolution from a single processing step to a chained an
 <div class="section level3">
 <h3 id="step-1-stateful-pipeline">Step 1: Stateful Pipeline<a class="anchor" aria-label="anchor" href="#step-1-stateful-pipeline"></a>
 </h3>
-<figure><img src="reference/figures/Stateful%20Pipeline.png" alt="Diagram illustrating a stateful pipeline, as a “single purpose” block"><figcaption aria-hidden="true">
+<figure><img src="reference/figures/Stateful_Pipeline.png" alt="Diagram illustrating a stateful pipeline, as a “single purpose” block"><figcaption aria-hidden="true">
 Diagram illustrating a stateful pipeline, as a “single purpose” block
 </figcaption></figure><p>Probably everyone starting off with data analytics has written a data pipeline that looked similar to the following:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
@@ -137,7 +137,7 @@ Diagram illustrating a stateful pipeline, as a “single purpose” block
 <div class="section level3">
 <h3 id="step-2-functional-pipeline">Step 2: Functional Pipeline<a class="anchor" aria-label="anchor" href="#step-2-functional-pipeline"></a>
 </h3>
-<figure><img src="reference/figures/Functional%20Pipeline.png" alt="Diagram illustrating a functional pipeline as a modularized and linear structure, where each step is cleanly seperated"><figcaption aria-hidden="true">
+<figure><img src="reference/figures/Functional_Pipeline.png" alt="Diagram illustrating a functional pipeline as a modularized and linear structure, where each step is cleanly seperated"><figcaption aria-hidden="true">
 Diagram illustrating a functional pipeline as a modularized and linear structure, where each step is cleanly seperated
 </figcaption></figure><p>We can address many of the shortcomings of such a stateful script, by writing everything as a function:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
@@ -195,7 +195,7 @@ Diagram illustrating a functional pipeline as a modularized and linear structure
 <div class="section level3">
 <h3 id="step-3-network-pipeline">Step 3: Network Pipeline<a class="anchor" aria-label="anchor" href="#step-3-network-pipeline"></a>
 </h3>
-<figure><img src="reference/figures/Network%20Pipeline.png" alt="Diagram illustrating a network pipeline, where each step is a node connected according to its dependencies"><figcaption aria-hidden="true">
+<figure><img src="reference/figures/Network_Pipeline.png" alt="Diagram illustrating a network pipeline, where each step is a node connected according to its dependencies"><figcaption aria-hidden="true">
 Diagram illustrating a network pipeline, where each step is a node connected according to its dependencies
 </figcaption></figure><p>Moving from a functional pipeline to a network pipeline is the final step in making our code fully declarative, flexible, and scalable.</p>
 <p>We <strong>reuse the functions from <a href="#step-2-functional-pipeline">step 2</a></strong> and express them as a xafty network:</p>
@@ -239,7 +239,7 @@ Diagram illustrating a network pipeline, where each step is a node connected acc
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">xafty_network</span> <span class="op">|&gt;</span> <span class="fu"><a href="reference/nascent.html">nascent</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"hp"</span><span class="op">)</span>, engine <span class="op">=</span> <span class="st">"type"</span><span class="op">)</span></span></code></pre></div>
 <p><strong>The resulting pipeline can be represented as follows:</strong></p>
-<figure><img src="reference/figures/Example%20Sub%20Pipeline.png" alt="Diagram illustrating the “collapsed” pipeline from a xafty network"><figcaption aria-hidden="true">
+<figure><img src="reference/figures/Example_Sub_Pipeline.png" alt="Diagram illustrating the “collapsed” pipeline from a xafty network"><figcaption aria-hidden="true">
 Diagram illustrating the “collapsed” pipeline from a xafty network
 </figcaption></figure><p>➜ Pipelines are no longer assembled manually. You simply query the data you need and let the system do the orchestration.</p>
 <p>Finally, to add the original plot to the network, we now need to use “objects”:</p>
@@ -252,7 +252,7 @@ Diagram illustrating the “collapsed” pipeline from a xafty network
 <code class="sourceCode R"><span><span class="co"># To query an object from the network, we must write the object's name in squared brackets</span></span>
 <span><span class="va">xafty_network</span> <span class="op">|&gt;</span> <span class="fu"><a href="reference/nascent.html">nascent</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="st">"[mtcars_plot]"</span><span class="op">)</span></span></code></pre></div>
 <p>This assembles our original pipeline, we have already seen in step 2</p>
-<figure><img src="reference/figures/Functional%20Pipeline.png" alt="Diagram illustrating the same pipeline introduced in step 2"><figcaption aria-hidden="true">
+<figure><img src="reference/figures/Functional_Pipeline.png" alt="Diagram illustrating the same pipeline introduced in step 2"><figcaption aria-hidden="true">
 Diagram illustrating the same pipeline introduced in step 2
 </figcaption></figure><p>This highlights another key advantage:</p>
 <p>➜ In network pipelines, intermediate steps are just as accessible as the final data product. This makes it easy to “branch off” from these intermediate steps and reuse them, rather than starting from a blank slate, as is common in many data analytics projects.</p>
