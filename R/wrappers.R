@@ -3,7 +3,6 @@
 clean_wrapper <- function(project, order, dag, contexts, network) {
   entry_funcs <- network[[project]]$wrappers$on_entry
   exit_funcs <- network[[project]]$wrappers$on_exit
-
   # Early exit when no wrapper functions are available
   if (length(entry_funcs) == 0 && length(exit_funcs) == 0) return(order)
   suffix <- paste0(project, ".")
@@ -20,7 +19,7 @@ clean_wrapper <- function(project, order, dag, contexts, network) {
   exit_nodes  <- if (!is.null(exit_funcs))  paste0(project, ".", exit_funcs)  else character(0)
 
 
-  # Hanlde on exit nodes which may depend on a foreign function
+  # Handle on exit nodes which may depend on a foreign function
   dependend_foreign <- get_upstream_dependencies(project = project, dag = dag[projects_extract], targets = exit_nodes, stop_at = character(0))
 
   # Remove all on entry and on exit functions in order to begin rebuilding context from a clean slate
@@ -103,7 +102,6 @@ clean_all_wrappers <- function(projects, order, dag, network) {
 
   ranges <- ranges[order(ranges$span, decreasing = FALSE), ]
   projects <- ranges$project
-
   contexts <-  NULL
   for (project in projects) {
     order <- clean_wrapper(project = project, order = order, dag = dag, contexts = contexts, network = network)

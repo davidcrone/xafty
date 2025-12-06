@@ -427,14 +427,14 @@ test_that("clean_wrappers can resolve a dependency on exit", {
   expect_identical(clean_all_wrappers(projects = names(network), order = order, dag = dag, network = network), exp_order)
 })
 
-test_that("clean_all_wrappers resolves a nested group, that is corss-nested", {
+test_that("clean_all_wrappers resolves a nested group, that is 'cross-nested'", {
   dag <- list(
     projectA.start = character(0),
     projectC.group = "projectA.start",
-    projectB.group = c("projectA.start"),
+    projectC.add_y = c("projectC.group"),
+    projectB.group = c("projectA.start", "projectC.add_y"),
     projectB.filter = c("projectA.start", "projectB.group"),
     projectB.add_x = "projectB.group",
-    projectC.add_y = c("projectC.group", "projectB.add_x"),
     projectB.add_z = c("projectB.group", "projectC.add_y"),
     projectC.ungroup = "projectC.add_y",
     projectB.ungroup = "projectB.add_x"
@@ -444,10 +444,9 @@ test_that("clean_all_wrappers resolves a nested group, that is corss-nested", {
     projectB = list(wrappers = list(on_entry = c("group", "filter"), on_exit = "ungroup")),
     projectC = list(wrappers = list(on_entry = "group", on_exit = "ungroup"))
   )
-  order <- c("projectA.start", "projectC.group", "projectB.group", "projectB.filter", "projectB.add_x", "projectC.add_y", "projectB.add_z", "projectB.ungroup", "projectC.ungroup")
-  exp_order <- c("projectA.start",
-                 "projectB.group", "projectB.filter", "projectB.add_x", "projectB.add_z", "projectB.ungroup",
-                 "projectC.group", "projectC.add_y", "projectC.ungroup")
+  order <- c("projectA.start", "projectC.group", "projectC.add_y", "projectB.group", "projectB.filter", "projectB.add_x", "projectB.add_z", "projectB.ungroup", "projectC.ungroup")
+  exp_order <- c("projectA.start", "projectC.group", "projectC.add_y", "projectC.ungroup",
+                 "projectB.group", "projectB.filter", "projectB.add_x", "projectB.add_z", "projectB.ungroup")
   order_test <- clean_all_wrappers(projects = names(network), order = order, dag = dag, network = network)
   expect_identical(order_test, exp_order)
 })
