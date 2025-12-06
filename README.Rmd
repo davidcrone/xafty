@@ -36,7 +36,7 @@ xafty solves this by treating every transformation as a reusable node in a share
 ## Key Advantages
 
 - **High flexibility with no overhead:** Since each node is just a function from data.frame → data.frame, you don’t have to adopt a new data model or rewrite existing logic. Existing code drops directly into the network with minimal changes.
-- **Reduced cognitive burden:** You don’t need to remember the correct sequence of function calls. Colleagues don’t need to study the pipeline to figure out how to get the data they need. They simply query the variables, and xafty evaluates the required steps.
+- **Reduced cognitive burden:** You don’t need to remember the correct sequence of function calls. Colleagues can retrieve the data they need without studying the entire pipeline. They simply query the variables, and xafty evaluates the required steps.
 - **Effortless extensibility:** Adding a new step is as simple as:
   1. deciding which variables it needs,
   2. writing a function that takes and returns a data.frame,
@@ -51,13 +51,17 @@ xafty solves this by treating every transformation as a reusable node in a share
 
 ## Basic Concept
 
+![Diagram illustrating the evolution from a single processing step to a chained and branched network pipeline.](man/figures/Mental Model Pipelines.png)
+
 Let's understand the idea behind xafty by going step by step from a simple script to a network pipeline.
 
-- Step 1: "Stateful" pipeline
-- Step 2: Functional pipeline
-- Step 3: Network pipeline
+- [Step 1: Stateful Pipeline](#step-1-stateful-pipeline)
+- [Step 2: Functional Pipeline](#step-2-functional-pipeline)
+- [Step 3: Network Pipeline](#step-3-network-pipeline)
 
-### Step 1: "Stateful" pipeline
+### Step 1: Stateful Pipeline
+
+![Diagram illustrating a stateful pipeline, as a "single purpose" block](man/figures/Stateful Pipeline.png)
 
 Probably everyone starting off with data analytics has written a data pipeline that looked similar to the following:
 
@@ -87,9 +91,11 @@ This is a good start. It gets to the point, fast and comprehensible. But as your
 - **Difficult to scale:** As the script grows, earlier steps become tightly coupled to later ones. Small changes upstream can unintentionally cascade downstream, making the pipeline fragile and harder to extend.
 - **Locked to one use-case:** A linear script encodes a single way to run the pipeline. If you later need different subsets of the data, alternative derivations, or multiple outputs, the entire script must be restructured or duplicated.
 
-### Step 2: Functional pipeline
+### Step 2: Functional Pipeline
 
-We can address many of the shortcomings of such a "stateful" script, by writing everything as a function:
+![Diagram illustrating a functional pipeline as a modularized and linear structure, where each step is cleanly seperated](man/figures/Functional Pipeline.png)
+
+We can address many of the shortcomings of such a stateful script, by writing everything as a function:
 
 ``` r
 get_mtcars <- function() {
@@ -141,15 +147,17 @@ This is already a major improvement. The modular structure makes the pipeline co
 - **Limited flexibility for different outputs:** If you need to return a slightly different subset of the data, or produce multiple alternative outputs, you end up copying, commenting out or branching some of the functions. The pipeline becomes a tangle of custom assembly code instead of a reusable structure.
 - **Difficult to reason about impact:** If a function is modified, there is no built-in way to ask: Which parts of the pipeline rely on this? What might this change affect? Understanding ripple effects becomes a manual and error-prone process.
 
-### Step 3: Network pipeline
+### Step 3: Network Pipeline
+
+![Diagram illustrating a network pipeline, where each step is a node connected according to its dependencies](man/figures/Network Pipeline.png)
 
 Moving from a functional pipeline to a network pipeline is the final step in making our code fully declarative, flexible, and scalable. 
 
-Here is how the same logic from Step 2 looks when expressed as a xafty network:
+We **reuse the functions from [step 2](#step-2-functional-pipeline)** and express them as a xafty network:
 
 ``` r
 ## Preparation: 
-# Make sure that the functions from Step 2 are loaded into memory.
+# Make sure that the functions from step 2 are loaded into memory.
 ## /Preparation
 
 library(xafty)
@@ -165,43 +173,72 @@ xafty_network$mtcars$get(get_mtcars())
 # Instead of passing data to `add_power_to_weight`, we register a dependency using query()
 xafty_network$mtcars$add(add_power_to_weight(mtcars = query(mtcars = c("hp", "wt"))))
 
-## Register the functions in project "engine" ##
-
+## Register the function `get_engine_details()` in project "engine" ##
 xafty_network$engine$get(get_engine_details())
 
-# Here we register a join, by passing two separate queries to the according parameters
+# Finally, we register the join between the two projects, 
+# by passing two separate queries to the respective parameters
 xafty_network$mtcars$join(join_engine_details(mtcars = query(mtcars = "vs"),
                                               engine = query(engine = "vs")))
 
 # Inspect the network
 xafty_network
 
-# Pull data as needed from the network
-xafty_network |> nascent(mtcars = c("hp", "wt", "vs"), engine = "type", mtcars = "power_to_weight")
-
-# We can also add the plot to the network as a finished data product
-xafty_network$mtcars$add_object("mtcars_plot", 
-                                plot_mtcars(mtcars = query(engine = "type", mtcars = "power_to_weight")))
-
-# To query an object from the network, write the object's name in squared brackets
-xafty_network |> nascent(mtcars = "[mtcars_plot]")
+# Pull data as needed from the network in the desired column order
+xafty_network |> nascent(mtcars = c("hp", "wt", "vs"), 
+                         engine = "type", 
+                         mtcars = "power_to_weight")
 
 ```
-In xafty, each function from Step 2 becomes a node in the network. The query() calls declare which variables are needed as inputs. Using these declarations, xafty builds a dependency graph that knows:
+In xafty, each function from step 2 becomes a node in the network. Instead of passing data to each function, we use `xafty::query()` to declare which input variables are needed. 
 
-- what needs to be computed,
-- in which order,
-- and from which data sources.
+In order to retrieve data from the network, we simply tell `xafty::nascent()` which variables we want. 
 
-When you call nascent(), xafty walks the graph, resolves only the nodes required for your request, evaluates them in topological order, and returns precisely what you asked for. Pipelines are no longer assembled manually. You simply query the data you need and let the system do the orchestration.
+xafty then 
+1. walks the graph, 
+2. resolves the required nodes in topological order, 
+3. and returns a single data.frame containing precisely what you asked for.
+
+For example, if we use the above network to query the following variables:
+
+``` r
+xafty_network |> nascent(mtcars = c("hp"), engine = "type")
+```
+**The resulting pipeline can be represented as follows:**
+
+![Diagram illustrating the "collapsed" pipeline from a xafty network](man/figures/Example Sub Pipeline.png)
+
+➜ Pipelines are no longer assembled manually. You simply query the data you need and let the system do the orchestration.
+
+Finally, to add the original plot to the network, we now need to use "objects":
+
+``` r
+# This is how you would add the plot as a finished data product to the network:
+xafty_network$mtcars$add_object("mtcars_plot", 
+                                plot_mtcars(mtcars = query(engine = "type", mtcars = "power_to_weight")))
+```
+To retrieve an object from a network, we query the network as follows:
+
+``` r
+# To query an object from the network, we must write the object's name in squared brackets
+xafty_network |> nascent(mtcars = "[mtcars_plot]")
+```
+
+This assembles our original pipeline, we have already seen in step 2
+
+![Diagram illustrating the same pipeline introduced in step 2](man/figures/Functional Pipeline.png)
+
+This highlights another key advantage: 
+
+➜ In network pipelines, intermediate steps are just as accessible as the final data product. This makes it easy to “branch off” from these intermediate steps and reuse them, rather than starting from a blank slate, as is common in many data analytics projects.
 
 ## Additional Features
 
 While **xafty is still in active development**, you will find it already being quite feature rich:
 
-- Stateful programming with `{states}`, passed alongside queries via `with_state()`.
+- Programming with `{states}`, passed alongside queries via `xafty::with_state()`.
 - Context on entry/exit for each project, similar to `dplyr::group_by() / ungroup()`, enabling wrapping for lossless transformations.
-- Wildcard selection with `query(project = "*")` to request all variables from a project.
+- Wildcard selection with `xafty::query(project = "*")` to request all variables from a project.
 - Inspection tools, such as `xafty::build_dag()`, to view the internal dependency graph.
 
 ## Ideas for Future Enhancements

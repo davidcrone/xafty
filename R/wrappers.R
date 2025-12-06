@@ -109,7 +109,7 @@ clean_all_wrappers <- function(projects, order, dag, network) {
     order <- clean_wrapper(project = project, order = order, dag = dag, contexts = contexts, network = network)
     packed_wrappers <- pack_project_wrappers(project = project, order = order, contexts = contexts)
     order <- packed_wrappers$order
-    contexts <- c(contexts, packed_wrappers$contexts)
+    contexts <- packed_wrappers$contexts
   }
   interpolate_contexts(order = order, contexts = contexts)
 }
