@@ -63,7 +63,7 @@ easier to extend over time.
 ## Basic Concept
 
 <figure>
-<img src="man/figures/Mental%20Model%20Pipelines.png"
+<img src="man/figures/Mental_Model_Pipelines.png"
 alt="Diagram illustrating the evolution from a single processing step to a chained and branched network pipeline." />
 <figcaption aria-hidden="true">Diagram illustrating the evolution from a
 single processing step to a chained and branched network
@@ -80,7 +80,7 @@ simple script to a network pipeline.
 ### Step 1: Stateful Pipeline
 
 <figure>
-<img src="man/figures/Stateful%20Pipeline.png"
+<img src="man/figures/Stateful_Pipeline.png"
 alt="Diagram illustrating a stateful pipeline, as a “single purpose” block" />
 <figcaption aria-hidden="true">Diagram illustrating a stateful pipeline,
 as a “single purpose” block</figcaption>
@@ -128,7 +128,7 @@ as your codebase and use-cases grow, several problems emerge:
 ### Step 2: Functional Pipeline
 
 <figure>
-<img src="man/figures/Functional%20Pipeline.png"
+<img src="man/figures/Functional_Pipeline.png"
 alt="Diagram illustrating a functional pipeline as a modularized and linear structure, where each step is cleanly seperated" />
 <figcaption aria-hidden="true">Diagram illustrating a functional
 pipeline as a modularized and linear structure, where each step is
@@ -204,7 +204,7 @@ assembled manually:
 ### Step 3: Network Pipeline
 
 <figure>
-<img src="man/figures/Network%20Pipeline.png"
+<img src="man/figures/Network_Pipeline.png"
 alt="Diagram illustrating a network pipeline, where each step is a node connected according to its dependencies" />
 <figcaption aria-hidden="true">Diagram illustrating a network pipeline,
 where each step is a node connected according to its
@@ -273,7 +273,7 @@ xafty_network |> nascent(mtcars = c("hp"), engine = "type")
 **The resulting pipeline can be represented as follows:**
 
 <figure>
-<img src="man/figures/Example%20Sub%20Pipeline.png"
+<img src="man/figures/Example_Sub_Pipeline.png"
 alt="Diagram illustrating the “collapsed” pipeline from a xafty network" />
 <figcaption aria-hidden="true">Diagram illustrating the “collapsed”
 pipeline from a xafty network</figcaption>
@@ -301,7 +301,7 @@ xafty_network |> nascent(mtcars = "[mtcars_plot]")
 This assembles our original pipeline, we have already seen in step 2
 
 <figure>
-<img src="man/figures/Functional%20Pipeline.png"
+<img src="man/figures/Functional_Pipeline.png"
 alt="Diagram illustrating the same pipeline introduced in step 2" />
 <figcaption aria-hidden="true">Diagram illustrating the same pipeline
 introduced in step 2</figcaption>
