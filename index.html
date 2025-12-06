@@ -58,12 +58,6 @@
 <p><strong>xafty</strong> turns your data pipeline into a dependency graph instead of a linear script. Each step becomes a reusable node that declares what it needs and what it provides. xafty resolves the execution order for you, enables reuse across projects, and hides complexity behind clean layers of abstraction.</p>
 </div>
 <div class="section level2">
-<h2 id="why-it-matters">Why It Matters<a class="anchor" aria-label="anchor" href="#why-it-matters"></a>
-</h2>
-<p>Most data pipelines are built as one-off scripts: hard to reuse, fragile to change, and difficult for teams to collaborate on. As projects grow, this leads to duplicated logic, inconsistent results, and a constant need to rebuild work that already exists.</p>
-<p>xafty solves this by treating every transformation as a reusable node in a shared dependency graph. Instead of rewriting the same steps for every new project, teams compose pipelines from existing, validated building blocks. This makes data work more reliable, more maintainable, and far easier to extend over time.</p>
-</div>
-<div class="section level2">
 <h2 id="key-advantages">Key Advantages<a class="anchor" aria-label="anchor" href="#key-advantages"></a>
 </h2>
 <ul>
@@ -82,6 +76,12 @@
 <li>
 <strong>Effortless collaboration:</strong> Networks invite contribution. Dropping in a new node is simple and low-risk, unlike pipelines where every change risks breaking the flow.</li>
 </ul>
+</div>
+<div class="section level2">
+<h2 id="why-it-matters">Why It Matters<a class="anchor" aria-label="anchor" href="#why-it-matters"></a>
+</h2>
+<p>Most data pipelines are built as one-off scripts: hard to reuse, fragile to change, and difficult for teams to collaborate on. As projects grow, this leads to duplicated logic, inconsistent results, and a constant need to rebuild work that already exists.</p>
+<p>xafty solves this by treating every transformation as a reusable node in a shared dependency graph. Instead of rewriting the same steps for every new project, teams compose pipelines from existing, validated building blocks. This makes data work more reliable, more maintainable, and far easier to extend over time.</p>
 </div>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
@@ -237,25 +237,24 @@ Diagram illustrating a network pipeline, where each step is a node connected acc
 <p>xafty then 1. walks the graph, 2. resolves the required nodes in topological order, 3. and returns a single data.frame containing precisely what you asked for.</p>
 <p>For example, if we use the above network to query the following variables:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">xafty_network</span> <span class="op">|&gt;</span> <span class="fu"><a href="reference/nascent.html">nascent</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"hp"</span><span class="op">)</span>, engine <span class="op">=</span> <span class="st">"type"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">xafty_network</span> <span class="op">|&gt;</span> <span class="fu"><a href="reference/nascent.html">nascent</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="st">"hp"</span>, engine <span class="op">=</span> <span class="st">"type"</span><span class="op">)</span></span></code></pre></div>
 <p><strong>The resulting pipeline can be represented as follows:</strong></p>
 <figure><img src="reference/figures/Example_Sub_Pipeline.png" alt="Diagram illustrating the “collapsed” pipeline from a xafty network"><figcaption aria-hidden="true">
 Diagram illustrating the “collapsed” pipeline from a xafty network
 </figcaption></figure><p>➜ Pipelines are no longer assembled manually. You simply query the data you need and let the system do the orchestration.</p>
-<p>Finally, to add the original plot to the network, we now need to use “objects”:</p>
+<p>➜ In network pipelines, intermediate steps are just as accessible as final data products. This makes it easy to “branch off” from these intermediate steps and reuse them, rather than starting from a blank slate, as is common in many data analytics projects.</p>
+<p>Finally, to add the original plot to the network, we now use “objects”:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># This is how you would add the plot as a finished data product to the network:</span></span>
+<code class="sourceCode R"><span><span class="co"># The add_object function allows us to register a function with any return value to our network</span></span>
 <span><span class="va">xafty_network</span><span class="op">$</span><span class="va">mtcars</span><span class="op">$</span><span class="fu">add_object</span><span class="op">(</span><span class="st">"mtcars_plot"</span>, </span>
-<span>                                <span class="fu">plot_mtcars</span><span class="op">(</span>mtcars <span class="op">=</span> <span class="fu"><a href="reference/query.html">query</a></span><span class="op">(</span>engine <span class="op">=</span> <span class="st">"type"</span>, mtcars <span class="op">=</span> <span class="st">"power_to_weight"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p>To retrieve an object from a network, we query the network as follows:</p>
+<span>                                <span class="fu">plot_mtcars</span><span class="op">(</span>mtcars <span class="op">=</span> <span class="fu"><a href="reference/query.html">query</a></span><span class="op">(</span>engine <span class="op">=</span> <span class="st">"type"</span>, </span>
+<span>                                                           mtcars <span class="op">=</span> <span class="st">"power_to_weight"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>And this is how we retrieve the object again from our network:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># To query an object from the network, we must write the object's name in squared brackets</span></span>
-<span><span class="va">xafty_network</span> <span class="op">|&gt;</span> <span class="fu"><a href="reference/nascent.html">nascent</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="st">"[mtcars_plot]"</span><span class="op">)</span></span></code></pre></div>
-<p>This assembles our original pipeline, we have already seen in step 2</p>
-<figure><img src="reference/figures/Functional_Pipeline.png" alt="Diagram illustrating the same pipeline introduced in step 2"><figcaption aria-hidden="true">
-Diagram illustrating the same pipeline introduced in step 2
-</figcaption></figure><p>This highlights another key advantage:</p>
-<p>➜ In network pipelines, intermediate steps are just as accessible as the final data product. This makes it easy to “branch off” from these intermediate steps and reuse them, rather than starting from a blank slate, as is common in many data analytics projects.</p>
+<code class="sourceCode R"><span><span class="co"># Write the object's name in squared brackets</span></span>
+<span><span class="va">xafty_network</span> <span class="op">|&gt;</span> <span class="fu"><a href="reference/nascent.html">nascent</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="st">"[mtcars_plot]"</span><span class="op">)</span></span>
+<span><span class="co"># As of now, only a single object per query might be retrieved from the network</span></span></code></pre></div>
+<p>This finally allows us to fully represent the functional pipeline from step 2 as a network pipeline.</p>
 </div>
 </div>
 <div class="section level2">
