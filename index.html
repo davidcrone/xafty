@@ -70,7 +70,7 @@
 <li>
 <strong>High flexibility with no overhead:</strong> Since each node is just a function from data.frame → data.frame, you don’t have to adopt a new data model or rewrite existing logic. Existing code drops directly into the network with minimal changes.</li>
 <li>
-<strong>Reduced cognitive burden:</strong> You don’t need to remember the correct sequence of function calls. Colleagues don’t need to study the pipeline to figure out how to get the data they need. They simply query the variables, and xafty evaluates the required steps.</li>
+<strong>Reduced cognitive burden:</strong> You don’t need to remember the correct sequence of function calls. Colleagues can retrieve the data they need without studying the entire pipeline. They simply query the variables, and xafty evaluates the required steps.</li>
 <li>
 <strong>Effortless extensibility:</strong> Adding a new step is as simple as:
 <ol style="list-style-type: decimal">
@@ -92,16 +92,20 @@
 <div class="section level2">
 <h2 id="basic-concept">Basic Concept<a class="anchor" aria-label="anchor" href="#basic-concept"></a>
 </h2>
-<p>Let’s understand the idea behind xafty by going step by step from a simple script to a network pipeline.</p>
+<figure><img src="reference/figures/Mental%20Model%20Pipelines.png" alt="Diagram illustrating the evolution from a single processing step to a chained and branched network pipeline."><figcaption aria-hidden="true">
+Diagram illustrating the evolution from a single processing step to a chained and branched network pipeline.
+</figcaption></figure><p>Let’s understand the idea behind xafty by going step by step from a simple script to a network pipeline.</p>
 <ul>
-<li>Step 1: “Stateful” pipeline</li>
-<li>Step 2: Functional pipeline</li>
-<li>Step 3: Network pipeline</li>
+<li><a href="#step-1-stateful-pipeline">Step 1: Stateful Pipeline</a></li>
+<li><a href="#step-2-functional-pipeline">Step 2: Functional Pipeline</a></li>
+<li><a href="#step-3-network-pipeline">Step 3: Network Pipeline</a></li>
 </ul>
 <div class="section level3">
-<h3 id="step-1-stateful-pipeline">Step 1: “Stateful” pipeline<a class="anchor" aria-label="anchor" href="#step-1-stateful-pipeline"></a>
+<h3 id="step-1-stateful-pipeline">Step 1: Stateful Pipeline<a class="anchor" aria-label="anchor" href="#step-1-stateful-pipeline"></a>
 </h3>
-<p>Probably everyone starting off with data analytics has written a data pipeline that looked similar to the following:</p>
+<figure><img src="reference/figures/Stateful%20Pipeline.png" alt="Diagram illustrating a stateful pipeline, as a “single purpose” block"><figcaption aria-hidden="true">
+Diagram illustrating a stateful pipeline, as a “single purpose” block
+</figcaption></figure><p>Probably everyone starting off with data analytics has written a data pipeline that looked similar to the following:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># 1. Load data</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"mtcars"</span><span class="op">)</span></span>
@@ -131,9 +135,11 @@
 </ul>
 </div>
 <div class="section level3">
-<h3 id="step-2-functional-pipeline">Step 2: Functional pipeline<a class="anchor" aria-label="anchor" href="#step-2-functional-pipeline"></a>
+<h3 id="step-2-functional-pipeline">Step 2: Functional Pipeline<a class="anchor" aria-label="anchor" href="#step-2-functional-pipeline"></a>
 </h3>
-<p>We can address many of the shortcomings of such a “stateful” script, by writing everything as a function:</p>
+<figure><img src="reference/figures/Functional%20Pipeline.png" alt="Diagram illustrating a functional pipeline as a modularized and linear structure, where each step is cleanly seperated"><figcaption aria-hidden="true">
+Diagram illustrating a functional pipeline as a modularized and linear structure, where each step is cleanly seperated
+</figcaption></figure><p>We can address many of the shortcomings of such a stateful script, by writing everything as a function:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">get_mtcars</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"mtcars"</span>, envir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/environment.html" class="external-link">environment</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
@@ -187,13 +193,15 @@
 </ul>
 </div>
 <div class="section level3">
-<h3 id="step-3-network-pipeline">Step 3: Network pipeline<a class="anchor" aria-label="anchor" href="#step-3-network-pipeline"></a>
+<h3 id="step-3-network-pipeline">Step 3: Network Pipeline<a class="anchor" aria-label="anchor" href="#step-3-network-pipeline"></a>
 </h3>
-<p>Moving from a functional pipeline to a network pipeline is the final step in making our code fully declarative, flexible, and scalable.</p>
-<p>Here is how the same logic from Step 2 looks when expressed as a xafty network:</p>
+<figure><img src="reference/figures/Network%20Pipeline.png" alt="Diagram illustrating a network pipeline, where each step is a node connected according to its dependencies"><figcaption aria-hidden="true">
+Diagram illustrating a network pipeline, where each step is a node connected according to its dependencies
+</figcaption></figure><p>Moving from a functional pipeline to a network pipeline is the final step in making our code fully declarative, flexible, and scalable.</p>
+<p>We <strong>reuse the functions from <a href="#step-2-functional-pipeline">step 2</a></strong> and express them as a xafty network:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## Preparation: </span></span>
-<span><span class="co"># Make sure that the functions from Step 2 are loaded into memory.</span></span>
+<span><span class="co"># Make sure that the functions from step 2 are loaded into memory.</span></span>
 <span><span class="co">## /Preparation</span></span>
 <span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/davidcrone/xafty" class="external-link">xafty</a></span><span class="op">)</span></span>
@@ -209,33 +217,45 @@
 <span><span class="co"># Instead of passing data to `add_power_to_weight`, we register a dependency using query()</span></span>
 <span><span class="va">xafty_network</span><span class="op">$</span><span class="va">mtcars</span><span class="op">$</span><span class="fu">add</span><span class="op">(</span><span class="fu">add_power_to_weight</span><span class="op">(</span>mtcars <span class="op">=</span> <span class="fu"><a href="reference/query.html">query</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"hp"</span>, <span class="st">"wt"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co">## Register the functions in project "engine" ##</span></span>
-<span></span>
+<span><span class="co">## Register the function `get_engine_details()` in project "engine" ##</span></span>
 <span><span class="va">xafty_network</span><span class="op">$</span><span class="va">engine</span><span class="op">$</span><span class="fu">get</span><span class="op">(</span><span class="fu">get_engine_details</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Here we register a join, by passing two separate queries to the according parameters</span></span>
+<span><span class="co"># Finally, we register the join between the two projects, </span></span>
+<span><span class="co"># by passing two separate queries to the respective parameters</span></span>
 <span><span class="va">xafty_network</span><span class="op">$</span><span class="va">mtcars</span><span class="op">$</span><span class="fu">join</span><span class="op">(</span><span class="fu">join_engine_details</span><span class="op">(</span>mtcars <span class="op">=</span> <span class="fu"><a href="reference/query.html">query</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="st">"vs"</span><span class="op">)</span>,</span>
 <span>                                              engine <span class="op">=</span> <span class="fu"><a href="reference/query.html">query</a></span><span class="op">(</span>engine <span class="op">=</span> <span class="st">"vs"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Inspect the network</span></span>
 <span><span class="va">xafty_network</span></span>
 <span></span>
-<span><span class="co"># Pull data as needed from the network</span></span>
-<span><span class="va">xafty_network</span> <span class="op">|&gt;</span> <span class="fu"><a href="reference/nascent.html">nascent</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"hp"</span>, <span class="st">"wt"</span>, <span class="st">"vs"</span><span class="op">)</span>, engine <span class="op">=</span> <span class="st">"type"</span>, mtcars <span class="op">=</span> <span class="st">"power_to_weight"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># We can also add the plot to the network as a finished data product</span></span>
+<span><span class="co"># Pull data as needed from the network in the desired column order</span></span>
+<span><span class="va">xafty_network</span> <span class="op">|&gt;</span> <span class="fu"><a href="reference/nascent.html">nascent</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"hp"</span>, <span class="st">"wt"</span>, <span class="st">"vs"</span><span class="op">)</span>, </span>
+<span>                         engine <span class="op">=</span> <span class="st">"type"</span>, </span>
+<span>                         mtcars <span class="op">=</span> <span class="st">"power_to_weight"</span><span class="op">)</span></span></code></pre></div>
+<p>In xafty, each function from step 2 becomes a node in the network. Instead of passing data to each function, we use <code><a href="reference/query.html">xafty::query()</a></code> to declare which input variables are needed.</p>
+<p>In order to retrieve data from the network, we simply tell <code><a href="reference/nascent.html">xafty::nascent()</a></code> which variables we want.</p>
+<p>xafty then 1. walks the graph, 2. resolves the required nodes in topological order, 3. and returns a single data.frame containing precisely what you asked for.</p>
+<p>For example, if we use the above network to query the following variables:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">xafty_network</span> <span class="op">|&gt;</span> <span class="fu"><a href="reference/nascent.html">nascent</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"hp"</span><span class="op">)</span>, engine <span class="op">=</span> <span class="st">"type"</span><span class="op">)</span></span></code></pre></div>
+<p><strong>The resulting pipeline can be represented as follows:</strong></p>
+<figure><img src="reference/figures/Example%20Sub%20Pipeline.png" alt="Diagram illustrating the “collapsed” pipeline from a xafty network"><figcaption aria-hidden="true">
+Diagram illustrating the “collapsed” pipeline from a xafty network
+</figcaption></figure><p>➜ Pipelines are no longer assembled manually. You simply query the data you need and let the system do the orchestration.</p>
+<p>Finally, to add the original plot to the network, we now need to use “objects”:</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># This is how you would add the plot as a finished data product to the network:</span></span>
 <span><span class="va">xafty_network</span><span class="op">$</span><span class="va">mtcars</span><span class="op">$</span><span class="fu">add_object</span><span class="op">(</span><span class="st">"mtcars_plot"</span>, </span>
-<span>                                <span class="fu">plot_mtcars</span><span class="op">(</span>mtcars <span class="op">=</span> <span class="fu"><a href="reference/query.html">query</a></span><span class="op">(</span>engine <span class="op">=</span> <span class="st">"type"</span>, mtcars <span class="op">=</span> <span class="st">"power_to_weight"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># To query an object from the network, write the object's name in squared brackets</span></span>
+<span>                                <span class="fu">plot_mtcars</span><span class="op">(</span>mtcars <span class="op">=</span> <span class="fu"><a href="reference/query.html">query</a></span><span class="op">(</span>engine <span class="op">=</span> <span class="st">"type"</span>, mtcars <span class="op">=</span> <span class="st">"power_to_weight"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>To retrieve an object from a network, we query the network as follows:</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># To query an object from the network, we must write the object's name in squared brackets</span></span>
 <span><span class="va">xafty_network</span> <span class="op">|&gt;</span> <span class="fu"><a href="reference/nascent.html">nascent</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="st">"[mtcars_plot]"</span><span class="op">)</span></span></code></pre></div>
-<p>In xafty, each function from Step 2 becomes a node in the network. The query() calls declare which variables are needed as inputs. Using these declarations, xafty builds a dependency graph that knows:</p>
-<ul>
-<li>what needs to be computed,</li>
-<li>in which order,</li>
-<li>and from which data sources.</li>
-</ul>
-<p>When you call nascent(), xafty walks the graph, resolves only the nodes required for your request, evaluates them in topological order, and returns precisely what you asked for. Pipelines are no longer assembled manually. You simply query the data you need and let the system do the orchestration.</p>
+<p>This assembles our original pipeline, we have already seen in step 2</p>
+<figure><img src="reference/figures/Functional%20Pipeline.png" alt="Diagram illustrating the same pipeline introduced in step 2"><figcaption aria-hidden="true">
+Diagram illustrating the same pipeline introduced in step 2
+</figcaption></figure><p>This highlights another key advantage:</p>
+<p>➜ In network pipelines, intermediate steps are just as accessible as the final data product. This makes it easy to “branch off” from these intermediate steps and reuse them, rather than starting from a blank slate, as is common in many data analytics projects.</p>
 </div>
 </div>
 <div class="section level2">
@@ -243,9 +263,9 @@
 </h2>
 <p>While <strong>xafty is still in active development</strong>, you will find it already being quite feature rich:</p>
 <ul>
-<li>Stateful programming with <a href="https://github.com/andybega/states" class="external-link">states</a>, passed alongside queries via <code><a href="reference/with_state.html">with_state()</a></code>.</li>
+<li>Programming with <a href="https://github.com/andybega/states" class="external-link">states</a>, passed alongside queries via <code><a href="reference/with_state.html">xafty::with_state()</a></code>.</li>
 <li>Context on entry/exit for each project, similar to <code>dplyr::group_by() / ungroup()</code>, enabling wrapping for lossless transformations.</li>
-<li>Wildcard selection with <code>query(project = "*")</code> to request all variables from a project.</li>
+<li>Wildcard selection with <code>xafty::query(project = "*")</code> to request all variables from a project.</li>
 <li>Inspection tools, such as <code><a href="reference/build_dag.html">xafty::build_dag()</a></code>, to view the internal dependency graph.</li>
 </ul>
 </div>

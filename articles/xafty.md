@@ -37,3 +37,5 @@ network$add_project("mtcars")
 Projects are multi-purpose structures which are used to hold and
 organize your nodes, as well as encapsulate logic and settings how nodes
 should be treated within their respective projects.
+
+This is all the setup we need, to start building our network.
