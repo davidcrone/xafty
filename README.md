@@ -23,19 +23,6 @@ needs and what it provides. xafty resolves the execution order for you,
 enables reuse across projects, and hides complexity behind clean layers
 of abstraction.
 
-## Why It Matters
-
-Most data pipelines are built as one-off scripts: hard to reuse, fragile
-to change, and difficult for teams to collaborate on. As projects grow,
-this leads to duplicated logic, inconsistent results, and a constant
-need to rebuild work that already exists.
-
-xafty solves this by treating every transformation as a reusable node in
-a shared dependency graph. Instead of rewriting the same steps for every
-new project, teams compose pipelines from existing, validated building
-blocks. This makes data work more reliable, more maintainable, and far
-easier to extend over time.
-
 ## Key Advantages
 
 - **High flexibility with no overhead:** Since each node is just a
@@ -53,6 +40,19 @@ easier to extend over time.
 - **Effortless collaboration:** Networks invite contribution. Dropping
   in a new node is simple and low-risk, unlike pipelines where every
   change risks breaking the flow.
+
+## Why It Matters
+
+Most data pipelines are built as one-off scripts: hard to reuse, fragile
+to change, and difficult for teams to collaborate on. As projects grow,
+this leads to duplicated logic, inconsistent results, and a constant
+need to rebuild work that already exists.
+
+xafty solves this by treating every transformation as a reusable node in
+a shared dependency graph. Instead of rewriting the same steps for every
+new project, teams compose pipelines from existing, validated building
+blocks. This makes data work more reliable, more maintainable, and far
+easier to extend over time.
 
 ## Installation
 
@@ -267,7 +267,7 @@ For example, if we use the above network to query the following
 variables:
 
 ``` r
-xafty_network |> nascent(mtcars = c("hp"), engine = "type")
+xafty_network |> nascent(mtcars = "hp", engine = "type")
 ```
 
 **The resulting pipeline can be represented as follows:**
@@ -282,37 +282,30 @@ pipeline from a xafty network</figcaption>
 ➜ Pipelines are no longer assembled manually. You simply query the data
 you need and let the system do the orchestration.
 
-Finally, to add the original plot to the network, we now need to use
-“objects”:
-
-``` r
-# This is how you would add the plot as a finished data product to the network:
-xafty_network$mtcars$add_object("mtcars_plot", 
-                                plot_mtcars(mtcars = query(engine = "type", mtcars = "power_to_weight")))
-```
-
-To retrieve an object from a network, we query the network as follows:
-
-``` r
-# To query an object from the network, we must write the object's name in squared brackets
-xafty_network |> nascent(mtcars = "[mtcars_plot]")
-```
-
-This assembles our original pipeline, we have already seen in step 2
-
-<figure>
-<img src="man/figures/Functional_Pipeline.png"
-alt="Diagram illustrating the same pipeline introduced in step 2" />
-<figcaption aria-hidden="true">Diagram illustrating the same pipeline
-introduced in step 2</figcaption>
-</figure>
-
-This highlights another key advantage:
-
-➜ In network pipelines, intermediate steps are just as accessible as the
-final data product. This makes it easy to “branch off” from these
+➜ In network pipelines, intermediate steps are just as accessible as
+final data products. This makes it easy to “branch off” from these
 intermediate steps and reuse them, rather than starting from a blank
 slate, as is common in many data analytics projects.
+
+Finally, to add the original plot to the network, we now use “objects”:
+
+``` r
+# The add_object function allows us to register a function with any return value to our network
+xafty_network$mtcars$add_object("mtcars_plot", 
+                                plot_mtcars(mtcars = query(engine = "type", 
+                                                           mtcars = "power_to_weight")))
+```
+
+And this is how we retrieve the object again from our network:
+
+``` r
+# Write the object's name in squared brackets
+xafty_network |> nascent(mtcars = "[mtcars_plot]")
+# As of now, only a single object per query might be retrieved from the network
+```
+
+This finally allows us to fully represent the functional pipeline from
+step 2 as a network pipeline.
 
 ## Additional Features
 
