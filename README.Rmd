@@ -50,8 +50,8 @@ xafty solves this by treating every transformation as a reusable node in a share
 ```
 
 ## Basic Concept
+![Diagram illustrating the evolution from a single processing step to a chained and branched network pipeline](man/figures/Mental_Model_Pipelines.png)
 
-![Diagram illustrating the evolution from a single processing step to a chained and branched network pipeline.](man/figures/Mental_Model_Pipelines.png)
 
 Let's understand the idea behind xafty by going step by step from a simple script to a network pipeline.
 
@@ -62,6 +62,7 @@ Let's understand the idea behind xafty by going step by step from a simple scrip
 ### Step 1: Stateful Pipeline
 
 ![Diagram illustrating a stateful pipeline, as a "single purpose" block](man/figures/Stateful_Pipeline.png)
+
 
 Probably everyone starting off with data analytics has written a data pipeline that looked similar to the following:
 
@@ -95,6 +96,7 @@ This is a good start. It gets to the point, fast and comprehensible. But as your
 
 ![Diagram illustrating a functional pipeline as a modularized and linear structure, where each step is cleanly seperated](man/figures/Functional_Pipeline.png)
 
+
 We can address many of the shortcomings of such a stateful script, by writing everything as a function:
 
 ``` r
@@ -117,7 +119,7 @@ get_engine_details <- function() {
 }
 
 join_engine_details <- function(mtcars, engine) {
-  joined <- merge(mtcars, engine, all.x = TRUE, sort = FALSE)
+  joined <- merge(mtcars, engine, by = "vs", all.x = TRUE, sort = FALSE)
   joined
 }
 
@@ -150,6 +152,7 @@ This is already a major improvement. The modular structure makes the pipeline co
 ### Step 3: Network Pipeline
 
 ![Diagram illustrating a network pipeline, where each step is a node connected according to its dependencies](man/figures/Network_Pipeline.png)
+
 
 Moving from a functional pipeline to a network pipeline is the final step in making our code fully declarative, flexible, and scalable. 
 
@@ -195,6 +198,7 @@ In xafty, each function from step 2 becomes a node in the network. Instead of pa
 In order to retrieve data from the network, we simply tell `xafty::nascent()` which variables we want. 
 
 xafty then 
+
 1. walks the graph, 
 2. resolves the required nodes in topological order, 
 3. and returns a single data.frame containing precisely what you asked for.
@@ -207,6 +211,7 @@ xafty_network |> nascent(mtcars = "hp", engine = "type")
 **The resulting pipeline can be represented as follows:**
 
 ![Diagram illustrating the "collapsed" pipeline from a xafty network](man/figures/Example_Sub_Pipeline.png)
+
 
 ➜ Pipelines are no longer assembled manually. You simply query the data you need and let the system do the orchestration.
 

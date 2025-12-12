@@ -64,10 +64,10 @@ easier to extend over time.
 
 <figure>
 <img src="man/figures/Mental_Model_Pipelines.png"
-alt="Diagram illustrating the evolution from a single processing step to a chained and branched network pipeline." />
+alt="Diagram illustrating the evolution from a single processing step to a chained and branched network pipeline" />
 <figcaption aria-hidden="true">Diagram illustrating the evolution from a
 single processing step to a chained and branched network
-pipeline.</figcaption>
+pipeline</figcaption>
 </figure>
 
 Let’s understand the idea behind xafty by going step by step from a
@@ -158,7 +158,7 @@ get_engine_details <- function() {
 }
 
 join_engine_details <- function(mtcars, engine) {
-  joined <- merge(mtcars, engine, all.x = TRUE, sort = FALSE)
+  joined <- merge(mtcars, engine, by = "vs", all.x = TRUE, sort = FALSE)
   joined
 }
 
@@ -259,9 +259,12 @@ declare which input variables are needed.
 In order to retrieve data from the network, we simply tell
 `xafty::nascent()` which variables we want.
 
-xafty then 1. walks the graph, 2. resolves the required nodes in
-topological order, 3. and returns a single data.frame containing
-precisely what you asked for.
+xafty then
+
+1.  walks the graph,
+2.  resolves the required nodes in topological order,
+3.  and returns a single data.frame containing precisely what you asked
+    for.
 
 For example, if we use the above network to query the following
 variables:
