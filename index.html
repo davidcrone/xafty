@@ -92,8 +92,8 @@
 <div class="section level2">
 <h2 id="basic-concept">Basic Concept<a class="anchor" aria-label="anchor" href="#basic-concept"></a>
 </h2>
-<figure><img src="reference/figures/Mental_Model_Pipelines.png" alt="Diagram illustrating the evolution from a single processing step to a chained and branched network pipeline."><figcaption aria-hidden="true">
-Diagram illustrating the evolution from a single processing step to a chained and branched network pipeline.
+<figure><img src="reference/figures/Mental_Model_Pipelines.png" alt="Diagram illustrating the evolution from a single processing step to a chained and branched network pipeline"><figcaption aria-hidden="true">
+Diagram illustrating the evolution from a single processing step to a chained and branched network pipeline
 </figcaption></figure><p>Let’s understand the idea behind xafty by going step by step from a simple script to a network pipeline.</p>
 <ul>
 <li><a href="#step-1-stateful-pipeline">Step 1: Stateful Pipeline</a></li>
@@ -160,7 +160,7 @@ Diagram illustrating a functional pipeline as a modularized and linear structure
 <span><span class="op">}</span></span>
 <span></span>
 <span><span class="va">join_engine_details</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">mtcars</span>, <span class="va">engine</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">joined</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/merge.html" class="external-link">merge</a></span><span class="op">(</span><span class="va">mtcars</span>, <span class="va">engine</span>, all.x <span class="op">=</span> <span class="cn">TRUE</span>, sort <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span>  <span class="va">joined</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/merge.html" class="external-link">merge</a></span><span class="op">(</span><span class="va">mtcars</span>, <span class="va">engine</span>, by <span class="op">=</span> <span class="st">"vs"</span>, all.x <span class="op">=</span> <span class="cn">TRUE</span>, sort <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span>  <span class="va">joined</span></span>
 <span><span class="op">}</span></span>
 <span></span>
@@ -234,7 +234,12 @@ Diagram illustrating a network pipeline, where each step is a node connected acc
 <span>                         mtcars <span class="op">=</span> <span class="st">"power_to_weight"</span><span class="op">)</span></span></code></pre></div>
 <p>In xafty, each function from step 2 becomes a node in the network. Instead of passing data to each function, we use <code><a href="reference/query.html">xafty::query()</a></code> to declare which input variables are needed.</p>
 <p>In order to retrieve data from the network, we simply tell <code><a href="reference/nascent.html">xafty::nascent()</a></code> which variables we want.</p>
-<p>xafty then 1. walks the graph, 2. resolves the required nodes in topological order, 3. and returns a single data.frame containing precisely what you asked for.</p>
+<p>xafty then</p>
+<ol style="list-style-type: decimal">
+<li>walks the graph,</li>
+<li>resolves the required nodes in topological order,</li>
+<li>and returns a single data.frame containing precisely what you asked for.</li>
+</ol>
 <p>For example, if we use the above network to query the following variables:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">xafty_network</span> <span class="op">|&gt;</span> <span class="fu"><a href="reference/nascent.html">nascent</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="st">"hp"</span>, engine <span class="op">=</span> <span class="st">"type"</span><span class="op">)</span></span></code></pre></div>

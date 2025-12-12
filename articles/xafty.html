@@ -70,10 +70,13 @@ request.</p>
 <p>This article gives you an intro to building network-pipelines. If
 you’ve already put together pipelines in R using base R or dplyr, you’ve
 got everything you need to start building them with xafty.</p>
+<div class="section level2">
+<h2 id="setup">Setup<a class="anchor" aria-label="anchor" href="#setup"></a>
+</h2>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/davidcrone/xafty" class="external-link">xafty</a></span><span class="op">)</span></span></code></pre></div>
-<p>To create a network object, we call the <code><a href="../reference/init_network.html">init_network()</a></code>
-function.</p>
+<p>To create a network object, we call
+<code><a href="../reference/init_network.html">xafty::init_network()</a></code>.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">network</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/init_network.html">init_network</a></span><span class="op">(</span><span class="st">"intro_network"</span><span class="op">)</span></span></code></pre></div>
 <p>Each network object must have at least one project in order to start
@@ -84,8 +87,266 @@ building the network pipeline.</p>
 <p>Projects are multi-purpose structures which are used to hold and
 organize your nodes, as well as encapsulate logic and settings how nodes
 should be treated within their respective projects.</p>
-<p>This is all the setup we need, to start building our network.</p>
-  </main>
+<p>This is all the setup we need to start building our network. From
+here, the process is just like creating any other pipeline: we need data
+and the transformation steps that operate on it.</p>
+</div>
+<div class="section level2">
+<h2 id="building-a-network-pipeline">Building a Network Pipeline<a class="anchor" aria-label="anchor" href="#building-a-network-pipeline"></a>
+</h2>
+<p>Let’s add the mtcars dataset to our network.</p>
+<p>To do that, we write a function that returns the data.frame:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">get_mtcars</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"mtcars"</span>, envir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/environment.html" class="external-link">environment</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="va">mtcars</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">get_mtcars</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;                    mpg cyl disp  hp drat    wt  qsec vs am gear carb</span></span>
+<span><span class="co">#&gt; Mazda RX4         21.0   6  160 110 3.90 2.620 16.46  0  1    4    4</span></span>
+<span><span class="co">#&gt; Mazda RX4 Wag     21.0   6  160 110 3.90 2.875 17.02  0  1    4    4</span></span>
+<span><span class="co">#&gt; Datsun 710        22.8   4  108  93 3.85 2.320 18.61  1  1    4    1</span></span>
+<span><span class="co">#&gt; Hornet 4 Drive    21.4   6  258 110 3.08 3.215 19.44  1  0    3    1</span></span>
+<span><span class="co">#&gt; Hornet Sportabout 18.7   8  360 175 3.15 3.440 17.02  0  0    3    2</span></span>
+<span><span class="co">#&gt; Valiant           18.1   6  225 105 2.76 3.460 20.22  1  0    3    1</span></span></code></pre></div>
+<p>To start building a network pipeline, we register the function into
+the <code>mtcars</code> project:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">network</span><span class="op">$</span><span class="va">mtcars</span><span class="op">$</span><span class="fu">get</span><span class="op">(</span><span class="fu">get_mtcars</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>Since the function <code>get_mtcars</code> has no dependencies, it is
+automatically set as the root node of the project.
+<strong>Note:</strong> currently, xafty expects a project to have only
+one or no root node.</p>
+<p>We can inspect the project by printing it to the console and query
+the network for our desired variables:</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Inspecting the network</span></span>
+<span><span class="va">network</span></span>
+<span><span class="co">#&gt; Number of projects in network 'intro_network': 1</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Project: mtcars</span></span>
+<span><span class="co">#&gt; Variables: drat, vs, hp, am, disp, cyl, carb, mpg, qsec, wt, gear</span></span>
+<span></span>
+<span><span class="co"># Wildcard selection returns all variables of a project</span></span>
+<span><span class="va">mtcars</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/nascent.html">nascent</a></span><span class="op">(</span><span class="va">network</span>, <span class="fu"><a href="../reference/query.html">query</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="st">"*"</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Querying variables by name will only return the desired variables</span></span>
+<span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/nascent.html">nascent</a></span><span class="op">(</span><span class="va">network</span>, <span class="fu"><a href="../reference/query.html">query</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"carb"</span>, <span class="st">"gear"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">data</span><span class="op">)</span></span>
+<span><span class="co">#&gt;                   carb gear</span></span>
+<span><span class="co">#&gt; Mazda RX4            4    4</span></span>
+<span><span class="co">#&gt; Mazda RX4 Wag        4    4</span></span>
+<span><span class="co">#&gt; Datsun 710           1    4</span></span>
+<span><span class="co">#&gt; Hornet 4 Drive       1    3</span></span>
+<span><span class="co">#&gt; Hornet Sportabout    2    3</span></span>
+<span><span class="co">#&gt; Valiant              1    3</span></span></code></pre></div>
+<div class="section level3">
+<h3 id="adding-a-node">Adding a Node<a class="anchor" aria-label="anchor" href="#adding-a-node"></a>
+</h3>
+<p>To let our network grow, we simply query the data we need from the
+network, write a step as a function that transforms the data, and
+register the function again into the network:</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span></span>
+<span><span class="co"># 1. retrieve data from the network</span></span>
+<span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/nascent.html">nascent</a></span><span class="op">(</span><span class="va">network</span>, <span class="fu"><a href="../reference/query.html">query</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"hp"</span>, <span class="st">"wt"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># 2. write the transformation step</span></span>
+<span><span class="va">add_power_to_weight</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">data</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">data</span><span class="op">$</span><span class="va">power_to_weight</span> <span class="op">&lt;-</span> <span class="va">data</span><span class="op">$</span><span class="va">hp</span> <span class="op">/</span> <span class="va">data</span><span class="op">$</span><span class="va">wt</span></span>
+<span>  <span class="va">data</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="co"># 3. register the step to the network</span></span>
+<span><span class="va">network</span><span class="op">$</span><span class="va">mtcars</span><span class="op">$</span><span class="fu">add</span><span class="op">(</span><span class="fu">add_power_to_weight</span><span class="op">(</span>data <span class="op">=</span> <span class="fu"><a href="../reference/query.html">query</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"hp"</span>, <span class="st">"wt"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>When registering a transformation step in the network, we do not pass
+data directly to the function. Instead, we declare the required inputs
+using <code><a href="../reference/query.html">xafty::query</a></code>. Internally, this query is resolved by
+<code><a href="../reference/nascent.html">xafty::nascent()</a></code> to obtain the actual data and evaluate the
+function’s return value, so the network can determine which variables it
+contributes.</p>
+<p>To avoid recalculating the entire data pipeline, you can register the
+function by explicitly stating which variables it adds to the network
+using the parameter <code>vars</code>:</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">network</span><span class="op">$</span><span class="va">mtcars</span><span class="op">$</span><span class="fu">add</span><span class="op">(</span>fun <span class="op">=</span> <span class="fu">add_power_to_weight</span><span class="op">(</span>data <span class="op">=</span> <span class="fu"><a href="../reference/query.html">query</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"hp"</span>, <span class="st">"wt"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>, </span>
+<span>                   vars <span class="op">=</span> <span class="st">"power_to_weight"</span>, update <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="co"># Note: Setting update = TRUE prevents the network from asking</span></span>
+<span><span class="co"># whether an already registered function should be updated.</span></span></code></pre></div>
+<p>Each transformation step (e.g. the function
+<code>add_power_to_weight</code>) in a xafty network is written as a
+<strong>“pass-through”</strong> function. Such a function must satisfy
+the following requirements:</p>
+<ul>
+<li>It must refer to variables by name, as column positions cannot be
+guaranteed. (If your function depends on a specific data structure
+rather than just variable names, you should use <code>objects</code>
+instead.)</li>
+<li>It must leave the input <code>data.frame</code> unchanged and return
+the entire <code>data.frame</code> with the added transformation (as
+embodied by <code><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">dplyr::mutate</a></code>).</li>
+</ul>
+<p>These are necessary conditions that make network pipelines possible
+and connect to a larger vision:</p>
+<p>In a network pipeline, each node represents a self-contained
+transformation that encapsulates knowledge about how to derive specific
+outputs from given inputs. Rather than being a temporary, task-specific
+function, a node defines a reusable mapping between data states, forming
+a building block in the network’s directed acyclic graph. As new
+patterns in the data emerge and domain knowledge continues to grow,
+nodes will be refined and updated. I envision network pipelines as a
+continuously evolving data structures that captures and preserves all
+the domain knowledge a data analyst can express in code.</p>
+</div>
+<div class="section level3">
+<h3 id="adding-a-join">Adding a Join<a class="anchor" aria-label="anchor" href="#adding-a-join"></a>
+</h3>
+<p>To join two data sources, we first need to create a second project
+with another root node:</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">network</span><span class="op">$</span><span class="fu">add_project</span><span class="op">(</span><span class="st">"engine"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">get_engine_details</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">engine</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>    type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">as.factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Straight"</span>, <span class="st">"V-Shape"</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>    vs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">0</span><span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
+<span>  <span class="va">engine</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="va">network</span><span class="op">$</span><span class="va">engine</span><span class="op">$</span><span class="fu">get</span><span class="op">(</span><span class="fu">get_engine_details</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>The join is then added to the network as another transformation step.
+We tell the network that we wish to register a join by passing two
+separate query-calls to the function:</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">join_engine_details</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">mtcars</span>, <span class="va">engine</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">joined</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/merge.html" class="external-link">merge</a></span><span class="op">(</span><span class="va">mtcars</span>, <span class="va">engine</span>, by <span class="op">=</span> <span class="st">"vs"</span>, all.x <span class="op">=</span> <span class="cn">TRUE</span>, sort <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span>  <span class="va">joined</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="va">network</span><span class="op">$</span><span class="va">engine</span><span class="op">$</span><span class="fu">join</span><span class="op">(</span><span class="fu">join_engine_details</span><span class="op">(</span>mtcars <span class="op">=</span> <span class="fu"><a href="../reference/query.html">query</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="st">"vs"</span><span class="op">)</span>,</span>
+<span>                                        engine <span class="op">=</span> <span class="fu"><a href="../reference/query.html">query</a></span><span class="op">(</span>engine <span class="op">=</span> <span class="st">"vs"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>At the moment, joins are treated as symmetrical operations. As a
+result, the network supports only one join definition for each pair of
+projects. Moreover, the network assumes that the join is performed
+between the projects that appear first in the corresponding
+<code><a href="../reference/query.html">xafty::query()</a></code> call.</p>
+<p>To declare that a function depends on a join, register it using a
+single <code><a href="../reference/query.html">xafty::query()</a></code> call that includes at least two
+different projects with root nodes:</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">add_combined_label</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">data</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">data</span><span class="op">$</span><span class="va">combined_label</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span></span>
+<span>     <span class="va">data</span><span class="op">$</span><span class="va">type</span>, </span>
+<span>     <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">data</span><span class="op">$</span><span class="va">am</span> <span class="op">==</span> <span class="fl">0</span>, <span class="st">"Auto"</span>, <span class="st">"Manual"</span><span class="op">)</span>,</span>
+<span>      sep <span class="op">=</span> <span class="st">"_"</span></span>
+<span>  <span class="op">)</span></span>
+<span>  <span class="va">data</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="va">network</span><span class="op">$</span><span class="va">mtcars</span><span class="op">$</span><span class="fu">add</span><span class="op">(</span><span class="fu">add_combined_label</span><span class="op">(</span>data <span class="op">=</span> <span class="fu"><a href="../reference/query.html">query</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="st">"am"</span>, engine <span class="op">=</span> <span class="st">"type"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="grouped-operations">Grouped Operations<a class="anchor" aria-label="anchor" href="#grouped-operations"></a>
+</h3>
+<p>In many workflows, we temporarily group data so that downstream
+transformations can operate with group-level context. In a typical dplyr
+pipeline, this is as simple as calling group_by(), performing the
+transformation, and then calling ungroup().</p>
+<p>In a xafty network pipeline, however, grouping must be declared
+explicitly. Because nodes are independent and assembled dynamically,
+grouping cannot be embedded inline within each function. Instead, xafty
+lets you define grouped execution contexts at the project level using
+<strong>entry</strong> and <strong>exit</strong> hooks.</p>
+<p>A project can automatically group data when a node is entered and
+ungroup it when the node finishes, allowing transformation functions to
+assume grouped input without containing grouping logic themselves.</p>
+<p>We start by defining three pass-through functions:</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span>, warn.conflicts <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">group_by_gear</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">data</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">data</span>, <span class="va">gear</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="va">ungroup_data</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">data</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">ungroup</a></span><span class="op">(</span><span class="va">data</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="va">add_mean_hp_per_gear</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">data</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span><span class="va">data</span>, mean_hp_per_gear <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">hp</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">}</span></span></code></pre></div>
+<p>Next, we create a new project that we will use to attach the context
+to:</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">network</span><span class="op">$</span><span class="fu">add_project</span><span class="op">(</span><span class="st">"per_gear"</span><span class="op">)</span></span></code></pre></div>
+<p>We tell the project to apply grouping whenever data enters a
+node:</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">network</span><span class="op">$</span><span class="va">per_gear</span><span class="op">$</span><span class="fu">on_entry</span><span class="op">(</span><span class="fu">group_by_gear</span><span class="op">(</span>data <span class="op">=</span> <span class="fu"><a href="../reference/query.html">query</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="st">"gear"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>And to remove grouping once a node completes its computation:</p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">network</span><span class="op">$</span><span class="va">per_gear</span><span class="op">$</span><span class="fu">on_exit</span><span class="op">(</span><span class="fu">ungroup_data</span><span class="op">(</span>data <span class="op">=</span> <span class="st">"{.data}"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>Now, all nodes registered in <code>per_gear</code> will inherit this
+grouping behavior when they run.</p>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">network</span><span class="op">$</span><span class="va">per_gear</span><span class="op">$</span><span class="fu">add</span><span class="op">(</span><span class="fu">add_mean_hp_per_gear</span><span class="op">(</span>data <span class="op">=</span> <span class="fu"><a href="../reference/query.html">query</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="st">"hp"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/nascent.html">nascent</a></span><span class="op">(</span><span class="va">network</span>, <span class="fu"><a href="../reference/query.html">query</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"gear"</span><span class="op">)</span>, per_gear <span class="op">=</span> <span class="st">"mean_hp_per_gear"</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">data</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 2</span></span></span>
+<span><span class="co">#&gt;    gear mean_hp_per_gear</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>     4             89.5</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>     4             89.5</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>     4             89.5</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>     3            176. </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>     3            176. </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span>     3            176.</span></span></code></pre></div>
+<p>A project may have multiple <code>on_entry()</code> or
+<code>on_exit()</code> functions. All entry and exit hooks are applied
+in the order they were registered. This allows us to layer
+context-setting operations, such as grouping, arranging, or reshaping,
+without embedding them directly into individual transformation
+functions.</p>
+</div>
+<div class="section level3">
+<h3 id="inspecting-pipelines">Inspecting Pipelines<a class="anchor" aria-label="anchor" href="#inspecting-pipelines"></a>
+</h3>
+<p>As your network grows, it becomes increasingly important to
+understand how xafty assembles and executes your pipeline. Since nodes
+are combined dynamically based on the variables you request, xafty
+provides tools to inspect the resulting execution plan before running
+it.</p>
+<p>The function <code><a href="../reference/build_dag.html">build_dag()</a></code> constructs the directed acyclic
+graph for a given query and returns a list-object that describes the
+full pipeline:</p>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span>  <span class="va">dag</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/build_dag.html">build_dag</a></span><span class="op">(</span><span class="fu"><a href="../reference/query.html">query</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"gear"</span><span class="op">)</span>, per_gear <span class="op">=</span> <span class="st">"mean_hp_per_gear"</span>, engine <span class="op">=</span> <span class="st">"type"</span><span class="op">)</span>, network <span class="op">=</span> <span class="va">network</span><span class="op">)</span></span>
+<span>  <span class="va">dag</span><span class="op">$</span><span class="va">execution_order</span></span>
+<span><span class="co">#&gt; [1] "mtcars.get_mtcars"             "engine.get_engine_details"    </span></span>
+<span><span class="co">#&gt; [3] "engine.join_engine_details"    "per_gear.group_by_gear"       </span></span>
+<span><span class="co">#&gt; [5] "per_gear.add_mean_hp_per_gear" "per_gear.ungroup_data"</span></span></code></pre></div>
+</div>
+</div>
+<div class="section level2">
+<h2 id="objects">Objects<a class="anchor" aria-label="anchor" href="#objects"></a>
+</h2>
+<p>Explaining objects</p>
+</div>
+<div class="section level2">
+<h2 id="states">States<a class="anchor" aria-label="anchor" href="#states"></a>
+</h2>
+<p>Programming with network pipelines</p>
+<div class="section level3">
+<h3 id="defining-a-join-path">Defining a Join Path<a class="anchor" aria-label="anchor" href="#defining-a-join-path"></a>
+</h3>
+</div>
+</div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside>
 </div>
 
 
