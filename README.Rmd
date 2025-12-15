@@ -27,6 +27,8 @@ Turn your R data pipelines into a scalable and collaborative network graph.
 
 **xafty** turns your data pipeline into a dependency graph instead of a linear script. Each step becomes a reusable node that declares what it needs and what it provides. xafty resolves the execution order for you, enables reuse across projects, and hides complexity behind clean layers of abstraction.
 
+➜ [Get Started with xafty](https://davidcrone.github.io/xafty/articles/xafty.html)
+
 ## Key Advantages
 
 - **High flexibility with no overhead:** Since each node is just a function from data.frame → data.frame, you don’t have to adopt a new data model or rewrite existing logic. Existing code drops directly into the network with minimal changes.

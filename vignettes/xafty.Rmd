@@ -33,7 +33,7 @@ network <- init_network("intro_network")
 ```
 Each network object must have at least one project in order to start building the network pipeline. 
 
-A project can be added as following:
+A project can be added as follows:
 
 ``` {r}
 network$add_project("mtcars")
@@ -171,7 +171,7 @@ network$mtcars$add(add_combined_label(data = query(mtcars = "am", engine = "type
 
 In many workflows, we temporarily group data so that downstream transformations can operate with group-level context. In a typical dplyr pipeline, this is as simple as calling group_by(), performing the transformation, and then calling ungroup().
 
-In a xafty network pipeline, however, grouping must be declared explicitly. Because nodes are independent and assembled dynamically, grouping cannot be embedded inline within each function. Instead, xafty lets you define grouped execution contexts at the project level using **entry** and **exit** hooks.
+In a xafty network pipeline, however, grouping must be attached as contexts to a project. Because nodes are independent and assembled dynamically, grouping cannot be embedded inline within each function. Instead, xafty lets you define grouped execution contexts at the project level using **entry** and **exit** hooks.
 
 A project can automatically group data when a node is entered and ungroup it when the node finishes, allowing transformation functions to assume grouped input without containing grouping logic themselves.
 
@@ -210,13 +210,14 @@ And to remove grouping once a node completes its computation:
 ``` {r}
 network$per_gear$on_exit(ungroup_data(data = "{.data}"))
 ```
+Setting the parameter to `{.data}`, will pass the entire data.frame to the parameter. Currently, this works only with entry and exit nodes. 
 
 Now, all nodes registered in `per_gear` will inherit this grouping behavior when they run.
 
 ``` {r}
 network$per_gear$add(add_mean_hp_per_gear(data = query(mtcars = "hp")))
 
-data <- nascent(network, query(mtcars = c("gear"), per_gear = "mean_hp_per_gear"))
+data <- nascent(network, query(mtcars = "gear", per_gear = "mean_hp_per_gear"))
 
 head(data)
 ```
@@ -230,16 +231,123 @@ As your network grows, it becomes increasingly important to understand how xafty
 The function `build_dag()` constructs the directed acyclic graph for a given query and returns a list-object that describes the full pipeline:
 
 ``` {r}
-  dag <- build_dag(query(mtcars = c("gear"), per_gear = "mean_hp_per_gear", engine = "type"), network = network)
+  dag <- build_dag(query(mtcars = c("gear"), per_gear = "mean_hp_per_gear", engine = "type"), 
+                   network = network)
+```
+
+For example, the element `dag$execution_order` shows the exact order of the assembled pipeline.
+
+``` {r}
   dag$execution_order
 ```
 
 # Objects
 
-Explaining objects
+Objects represent the final consumers of data in a xafty network. Rather than producing new variables, an object returns an arbitrary R value, such as a plot, a model, or a summary table, that is intended to be used directly in a data product.
+
+To add an object to the network, we register it within a project using `add_object()`. Unlike transformation nodes, objects are identified by a name rather than by the variables they produce.
+
+Below, we add a boxplot as an object to our network:
+
+``` {r}
+  library(ggplot2)
+
+  network$add_project("objects")
+
+  plot_mtcars <- function(data) {
+    ggplot(data, aes(x = type, y = power_to_weight)) + geom_boxplot()
+  }
+  
+  network$objects$add_object(name = "plot_mtcars", 
+                             plot_mtcars(data = query(engine = "type", 
+                                                      mtcars = "power_to_weight")))
+```
+
+When registering an object, we explicitly assign it a name ("plot_mtcars" in this case). This name is used to reference the object in subsequent queries, instead of referring to variable names.
+
+To retrieve an object from the network, we query its name using square brackets:
+
+``` r
+nascent(network, query(objects = "[plot_mtcars]"))
+
+```
+While objects are typically thought of as the final step in a pipeline, they can also serve as dependencies for later steps. This allows us to build more complex outputs by composing simpler ones.
+
+For example, we can define a second object that adds a reference line to the existing plot:
+
+``` {r}
+
+add_abline <- function(data, plot, colour = "red") {
+  plot + geom_hline(yintercept =  mean(data$power_to_weight), colour = colour)
+}
+
+network$objects$add_object("plot_line", add_abline(data = query(mtcars = "power_to_weight"), 
+                                                   plot = query(objects = "[plot_mtcars]")))
+```
+
+The underlying idea is that data analysts act as "network owners", defining and composing objects that encapsulate reusable logic and results. These objects can then be reused by other analysts as root nodes in their own networks, allowing them to build increasingly complex structures without having to manage dependencies explicitly.
 
 # States
 
-Programming with network pipelines
+States provide a mechanism for parameterizing network execution at query time. They allow you to expose configurable values, such as styling options, thresholds, or model parameters, without hard-coding them into transformation functions or objects.
+
+States are defined on the network using `add_state()` and may optionally specify a default value (If no default value is set, the network will use `7
+NULL` as a default):
+
+``` {r}
+network$add_state("line_colour", default = "red")
+```
+
+Once defined, a state can be referenced inside a function by using its name wrapped in curly braces:
+
+``` {r}
+
+network$objects$add_object("plot_line", add_abline(data = query(mtcars = "power_to_weight"), 
+                                                   plot = query(objects = "[plot_mtcars]"), 
+                                                   colour = "{line_colour}"), update = TRUE)
+
+```
+
+To assign a concrete value to a state for a specific execution, use `xafty::with_state()` when constructing the query:
+
+``` {r}
+
+query_plot <- query(objects = "[plot_line]") |> 
+              with_state(line_colour = "blue")
+
+blue_line_plot <- nascent(network, query_plot)
+
+```
+
+States turn an otherwise rigid network into a flexible execution framework. They enable the same network structure to produce different outputs without modification, providing a high-level and controlled way to adapt results to a specific use case.
 
 ## Defining a Join Path
+
+xafty constructs join paths using a greedy best-first-search algorithm. This approach works well as long as the join relationships in the network are unambiguous. As a network grows and additional projects and joins are added, however, the automatically selected join path may no longer match the intended data flow.
+
+To explicitly control how joins are resolved, you can attach a predefined join path to a query using `xafty::add_join_path()`:
+
+``` {r}
+
+query_join <- query(mtcars = "power_to_weight", engine = "type") |> 
+              add_join_path(path = c("mtcars", "engine"))
+
+head(nascent(network, query_join))
+
+```
+
+More formally, multiple join paths can be defined for a single query:
+
+``` {r}
+
+qry <- query(projectA = "col1", projectB = "col2", projectC = "col3")
+query_join <- add_join_path(qry, path1 = c("projectA", "projectB"), path2 = c("projectA", "projectC"))
+```
+
+This configuration results in two joins being applied: `projectA` is joined with `projectB`, and `projectA` is joined with `projectC`. Explicit join paths provide a reliable way to control join behavior in complex networks and help prevent unintended join resolutions as the network evolves.
+
+# Wrap-Up
+
+This article introduced the core ideas behind xafty and showed how data pipelines can be modeled as explicit, inspectable networks of transformations. By separating data dependencies, execution logic, and query intent, xafty makes pipelines easier to extend, reason about, and reuse as they grow.
+
+xafty is still in its experimental form, and feedback from you use is essential. If you have ideas, questions, or suggestions, or if you are experimenting with xafty in your own projects, [I would love to hear from you](mailto:davidjvcrone@gmail.com). Your input will help shape the next steps of the framework.

@@ -23,6 +23,9 @@ needs and what it provides. xafty resolves the execution order for you,
 enables reuse across projects, and hides complexity behind clean layers
 of abstraction.
 
+➜ [Get Started with
+xafty](https://davidcrone.github.io/xafty/articles/xafty.html)
+
 ## Key Advantages
 
 - **High flexibility with no overhead:** Since each node is just a
