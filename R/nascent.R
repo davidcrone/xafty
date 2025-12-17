@@ -279,39 +279,25 @@ resolve_wrappers <- function(network, dag_sm) {
   if(all(!has_wrappers)) return(dag_sm)
   projects_w_wrappers <- projects[has_wrappers]
   for (project in projects_w_wrappers) {
-    resolve_on_entry(project = project, network = network, dag_sm = dag_sm)
+    dag <- dag_sm$get_codes()
+    resolve_on_entry(project = project, network = network, dag_sm = dag_sm, dag = dag)
     resolve_on_exit(project = project, network = network, dag_sm = dag_sm)
   }
   dag_sm
 }
 
-resolve_on_entry <- function(project, network, dag_sm) {
+resolve_on_entry <- function(project, network, dag_sm, dag) {
   func_names <- network[[project]]$wrappers$on_entry
   if(is.null(func_names)) return(NULL)
-  codes <- dag_sm$get_codes()
   links <- lapply(func_names, \(func_name) network[[project]]$ruleset[[func_name]])
-  on_entry_codes <- vapply(links, build_fun_code, FUN.VALUE = character(1))
   for (i in seq_along(links)) {
     link <- links[[i]]
-    on_entry_node <- build_dependency_codes(link, network = network, dag_sm = dag_sm)
-    on_entry_code <- names(on_entry_node)
-    dependend_codes <- append(codes[grepl(paste0("^", project, "."), names(codes))], on_entry_node)
-    project_codes <- unique(get_all_non_project_codes(project = project, codes = dependend_codes))
-    project_codes <- filter_targets_without_prefix(project = project, targets = project_codes, dag = codes)
-    deps <- clean_wrapper_deps(project = project, on_entry_code = on_entry_code, on_entry_codes = on_entry_codes, project_codes = project_codes)
+    node <- build_on_entry_node(link = link, network = network, dag = dag)
     # Following only needs to be done when an argument of the wrapper has {.data}"
-    deps_funcs <- names(dependend_codes)
-    all_links <- dag_sm$get_links()
-    dep_links <- lapply(deps_funcs, \(code) all_links[[code]])
-    dep_queries <- get_dependend_queries(dep_links)
-    link$args <- sapply(link$args, \(arg) {
-      if(!is.character(arg)) return(arg)
-      if(all(arg == "{.data}")) {
-        do.call(merge_queries, dep_queries)
-      }
-    }, simplify = FALSE, USE.NAMES = TRUE)
-    fun_node <- setNames(list(deps), on_entry_code)
-    dag_sm$set_nodes(link = link, code = fun_node)
+    if(any(has_.data(link))) {
+      link <- build_.data_link(link = link, node = node, dag_sm = dag_sm)
+    }
+    dag_sm$set_nodes(link = link, code = node)
   }
   on_entry_query_list <- do.call(merge_queries, get_dependend_queries(links))
   dependencies(query_list = on_entry_query_list, state_list = NULL, network = network, dag_sm = dag_sm)
@@ -390,14 +376,4 @@ resolve_on_exit <- function(project, network, dag_sm) {
   on_exit_query_list <- do.call(merge_queries, get_dependend_queries(links))
   dag_sm <- dependencies(query_list = on_exit_query_list, state_list = NULL, network = network, dag_sm = dag_sm)
   dag_sm
-}
-
-# The function removes the wrapper codes that have been added during build_dependencie_codes since they are
-# not needed as dependencies upon themselves
-clean_wrapper_deps <- function(project, on_entry_code, on_entry_codes, project_codes) {
-  prefix <- paste0(project, ".")
-  from <- which(on_entry_codes == on_entry_code)
-  to <- length(on_entry_codes)
-  remove_codes <- on_entry_codes[seq(from = from, to)]
-  project_codes[!project_codes %in% remove_codes]
 }

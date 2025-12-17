@@ -291,8 +291,7 @@ The underlying idea is that data analysts act as "network owners", defining and 
 
 States provide a mechanism for parameterizing network execution at query time. They allow you to expose configurable values, such as styling options, thresholds, or model parameters, without hard-coding them into transformation functions or objects.
 
-States are defined on the network using `add_state()` and may optionally specify a default value (If no default value is set, the network will use `7
-NULL` as a default):
+States are defined on the network using `add_state()` and may optionally specify a default value (If no default value is set, the network will use `NULL` as a default):
 
 ``` {r}
 network$add_state("line_colour", default = "red")

@@ -273,7 +273,7 @@ test_that("On entry is correctly interweaved into the dag and evaluates properly
     data$score <- data$score + 100
     data
   }
-  test_network$occupations$on_entry(increase_score(), "increase_score")
+  test_network$occupations$on_entry(increase_score(data = "{.data}"), "increase_score")
   test_data <- nascent(test_network, customer_data = "name", occupations= "category")
   expected_data <- structure(list(name = c("Alice", "Bob", "Charlie", "Diana", "Eve"),
                                   category = c("High", "High", "High", "High", "High")),
@@ -421,7 +421,7 @@ test_that("fucntion in context depending on another function of the same context
   expect_identical(test_data, expect_data)
 })
 
-test_that("foreign function dependend on function with context and needs by a function also in context is correctly ignored by on_entry as dependency", {
+test_that("foreign function dependend on function with context and needed by a function also in context is correctly ignored by on_entry as dependency", {
   reorder_cars_by_color2 <- reorder_cars_by_color
   add_tries_data_license2 <- function(data) {
     data$Tries2 <- data$Tries + 1

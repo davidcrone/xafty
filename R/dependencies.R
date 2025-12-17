@@ -202,6 +202,15 @@ get_dependend_queries <- function(links) {
   flatten_list(remove_empty_lists(lapply(links, get_queries, which = "xafty_query")))
 }
 
+get_suplied_queries <- function(links) {
+  is_query_link <- vapply(links, is_query_link, FUN.VALUE = logical(1))
+  links <- links[is_query_link]
+  projects <- vapply(links, \(link) link$project, FUN.VALUE = character(1))
+  li_variables <- lapply(links, \(link) link$variables)
+  names(li_variables) <- projects
+  query(li_variables)
+}
+
 get_provided_queries <- function(project, links) {
   variables <- do.call(c, lapply(links, \(link) if(inherits(link, "query_link")) link$variables))
   named_project_list <- setNames(list(variables), project)

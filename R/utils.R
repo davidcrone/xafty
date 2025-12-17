@@ -102,15 +102,16 @@ build_dependency_codes <- function(link, network, dag_sm) {
     return(root_node)
   }
   # This splits queries from object queries which need a different prefix
-  function_codes <- unique(do.call(c, lapply(queries, get_scoped_function_order, network = network)))
-  wrapper_codes <- on_entry_codes(link = link, network = network) #c(, on_exit_codes(link = link, network = network))
+  function_codes <- unique(unlist(lapply(queries, get_scoped_function_order, network = network)))
+  wrapper_codes <- build_on_entry_dependencies(link = link, network = network, fun_code = fun_code)
   # TODO: link link$joins$projects may need re computation with project_needs_join when a variable name has been interpolated
   #  -> This would also make a differentiation necessary between a link that has been "tampered" with and one who was not
   join_codes <- character(length(link$joins$projects))
   for (i in seq_along(link$joins$projects)) {
     projects <- link$joins$projects[[i]]
     join_id <- paste0("join.", paste0(sort(projects), collapse = "."))
-    # This is later used to resolve the join
+    # This is later used to resolve the join, but it would be nice to do this outside of the function in order to
+    # make it without side-effects
     dag_sm$set_join(id = join_id, projects = projects)
     join_codes[i] <- join_id
   }
@@ -119,11 +120,34 @@ build_dependency_codes <- function(link, network, dag_sm) {
   node
 }
 
-on_entry_codes <- function(link, network) {
+build_on_entry_dependencies <- function(link, network, fun_code) {
   project <- link$project
   on_entry_funcs <- network[[project]]$wrappers$on_entry
-  if(is.null(on_entry_funcs)) return(NULL)
-  paste0(project, ".", on_entry_funcs)
+  if(is.null(on_entry_funcs)) return(character(0))
+  on_entry_codes <- paste0(project, ".", on_entry_funcs)
+  # If the fun_code is itself is a wrapper function, it should only get on_entry codes as dependencies
+  # that were registered earlier
+  if(fun_code %in% on_entry_codes) {
+    pos <- which(fun_code == on_entry_codes) - 1
+    if(pos == 0) return(character(0)) else on_entry_codes <- on_entry_codes[1:pos]
+  }
+  on_entry_codes
+}
+
+# The function builds the dependencies for on_entry nodes
+build_on_entry_node <- function(link, network, dag) {
+  project <- link$project
+  on_entry_node <- build_dependency_codes(link, network = network, dag_sm = dag_sm)
+  on_entry_code <- names(on_entry_node)
+  project_dag <- dag[grepl(paste0("^", project, "."), names(dag))]
+  # Adds foreign project nodes that wrapper nodes depend on; unique is necessary since the package toposort cannot work with
+  # duplicated dependencies in a single node
+  foreign_deps <- unique(get_all_non_project_codes(project = project, codes = project_dag))
+  # removes foreign nodes that depend on wrapper nodes, avoids cycles
+  wrapper_node_deps <- filter_targets_without_prefix(project = project, targets = foreign_deps, dag = dag)
+  deps <- unique(c(on_entry_node[[on_entry_code]], wrapper_node_deps))
+  node <- setNames(list(deps), on_entry_code)
+  node
 }
 
 on_exit_codes <- function(link, network) {
@@ -444,4 +468,28 @@ remove_context_queries <- function(query_list) {
   keep <- !vapply(query_list, \(e) inherits(e, "context_query"), logical(1))
   query_list <- query_list[keep]
   query_list
+}
+
+# Checks whether a link argument has {.data}, this is used when the argument simply needs the data without a certain
+# variable
+has_.data <- function(link) {
+  args <- link$args
+  is_character <- vapply(args, \(arg) is.character(arg), FUN.VALUE = logical(1), USE.NAMES = FALSE)
+  char_args <- args[is_character]
+  vapply(char_args, \(arg) arg == "{.data}", FUN.VALUE = logical(1))
+}
+
+build_.data_link <- function(link, node, dag_sm) {
+  dep_codes <- unlist(node, use.names = FALSE)
+  deps_funcs <- dep_codes[!grepl("^join.", dep_codes)]
+  all_links <- dag_sm$get_links()
+  dep_links <- lapply(deps_funcs, \(code) all_links[[code]])
+  dep_queries <- get_suplied_queries(links = dep_links)
+  link$args <- sapply(link$args, \(arg) {
+    if(!is.character(arg)) return(arg)
+    if(all(arg == "{.data}")) {
+      merge_queries(dep_queries)
+    }
+  }, simplify = FALSE, USE.NAMES = TRUE)
+  link
 }
