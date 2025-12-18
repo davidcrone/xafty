@@ -38,7 +38,7 @@ build_query_dag <- function(globals, network) {
   execution_order <- resolve_function_stack(dag_sm = dag_sm, network = network)
   dag <- list(
     links = dag_sm$get_links(),
-    dag = dag_sm$get_codes(),
+    dag = dag_sm$get_codes()[execution_order],
     query = dag_sm$get_query(),
     start_query = globals$internal,
     order_query = globals$order,
@@ -279,16 +279,16 @@ resolve_wrappers <- function(network, dag_sm) {
   if(all(!has_wrappers)) return(dag_sm)
   projects_w_wrappers <- projects[has_wrappers]
   for (project in projects_w_wrappers) {
-    dag <- dag_sm$get_codes()
-    resolve_on_entry(project = project, network = network, dag_sm = dag_sm, dag = dag)
     resolve_on_exit(project = project, network = network, dag_sm = dag_sm)
+    resolve_on_entry(project = project, network = network, dag_sm = dag_sm)
   }
   dag_sm
 }
 
-resolve_on_entry <- function(project, network, dag_sm, dag) {
+resolve_on_entry <- function(project, network, dag_sm) {
   func_names <- network[[project]]$wrappers$on_entry
   if(is.null(func_names)) return(NULL)
+  dag <- dag_sm$get_codes()
   links <- lapply(func_names, \(func_name) network[[project]]$ruleset[[func_name]])
   for (i in seq_along(links)) {
     link <- links[[i]]
@@ -346,32 +346,14 @@ resolve_on_exit <- function(project, network, dag_sm) {
   func_names <- network[[project]]$wrappers$on_exit
   if(is.null(func_names)) return(dag_sm)
   links <- lapply(func_names, \(func_name) network[[project]]$ruleset[[func_name]])
-  on_exit_codes <- vapply(links, build_fun_code, FUN.VALUE = character(1))
+  dag <- dag_sm$get_codes()
   for (i in seq_along(links)) {
     link <- links[[i]]
-    on_exit_node <- build_dependency_codes(link, network = network, dag_sm = dag_sm)
-    on_exit_code <- names(on_exit_node)
-    #TODO: Needs also to correctly build dependencies if several on_exit functions are present
-    on_exit_deps <- on_exit_node[[on_exit_code]]
-    codes <- dag_sm$get_codes()
-    name_codes <- names(codes)
-    dep_codes <- c(name_codes[grepl(paste0("^", project, "."), name_codes)])
-    total_deps <- unique(c(dep_codes, on_exit_deps))
-    fun_node <- setNames(list(total_deps), on_exit_code)
-    # TODO only needs to be done if "{.data}" is present in args
-    all_links <- dag_sm$get_links()
-    dep_links <- lapply(dep_codes, \(code) all_links[[code]])
-    dep_queries <- get_dependend_queries(links = dep_links)
-    merged_queries <- do.call(merge_queries, dep_queries)
-    pro_queries <- get_provided_queries(project = project, links = dep_links)
-    merged_queries <- merge_queries(merged_queries, pro_queries)
-    link$args <- sapply(link$args, \(arg) {
-      if(!is.character(arg)) return(arg)
-      if(all(arg == "{.data}")) {
-        merged_queries
-      }
-    }, simplify = FALSE, USE.NAMES = TRUE)
-    dag_sm$set_nodes(link = link, code = fun_node)
+    node <- build_on_exit_node(link = link, network = network, dag = dag)
+    if(any(has_.data(link))) {
+      link <- build_.data_link(link = link, node = node, dag_sm = dag_sm)
+    }
+    dag_sm$set_nodes(link = link, code = node)
   }
   on_exit_query_list <- do.call(merge_queries, get_dependend_queries(links))
   dag_sm <- dependencies(query_list = on_exit_query_list, state_list = NULL, network = network, dag_sm = dag_sm)

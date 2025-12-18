@@ -150,8 +150,25 @@ build_on_entry_node <- function(link, network, dag) {
   node
 }
 
+build_on_exit_node <- function(link, network, dag) {
+  project <- link$project
+  on_exit_node <- build_dependency_codes(link, network = network, dag_sm = dag_sm)
+  on_exit_code <- names(on_exit_node)
+  deps_project <- names(dag)[grepl(paste0("^", project, "."), names(dag))]
+
+  # Adding on exit functions registered earlier from wrapper project as dependencies
+  on_exit_codes <- paste0(project, ".", network[[project]]$wrappers$on_exit)
+  pos <- which(on_exit_code == on_exit_codes) - 1
+  if(pos == 0) exit_deps <- character(0) else exit_deps <- on_exit_codes[1:pos]
+
+  deps <- unique(c(on_exit_node[[on_exit_code]], deps_project, exit_deps))
+  node <- setNames(list(deps), on_exit_code)
+  node
+}
+
 on_exit_codes <- function(link, network) {
   arg_queries <- get_queries(link)
+
   li_projects <- lapply(arg_queries, \(query_list) get_projects(query_list))
   projects <- unique(unlist(li_projects))
   li_on_exit_codes <- list()

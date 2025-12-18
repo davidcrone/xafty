@@ -317,12 +317,27 @@ test_that("On entry is correctly interpolated into the dag and evaluates properl
     data
   }
   test_network$occupations$on_entry(name = "increase_score", fun = increase_score())
-  test_network$occupations$on_exit(name = "decrease_score", fun = decrease_score())
+  test_network$occupations$on_exit(name = "decrease_score", fun = decrease_score(query(customer_data = "score")))
   test_data <- nascent(test_network, customer_data = c("name", "score"), occupations= "category")
   expected_data <- structure(list(name = c("Alice", "Bob", "Charlie", "Diana", "Eve"),
   score = c(85, 92, 78, 90, 88),
   category = c("High", "High", "High", "High", "High")), row.names = c(NA, -5L), class = "data.frame")
   expect_identical(test_data, expected_data)
+})
+
+test_that("Both on entry and on exit get data passed to them using {.data}", {
+  test_network <- init_network(name = "test_network", projects = c("customer_data", "occupations"))
+  test_network$customer_data$get(get_sample_data())
+  test_network$occupations$add(add_score_category(data = query(customer_data = "score")))
+  increase_score <- function(data = "{.data}") {
+    data
+  }
+  decrease_score <- function(data = "{.data}") {
+    data
+  }
+  test_network$occupations$on_entry(name = "increase_score", fun = increase_score())
+  test_network$occupations$on_exit(name = "decrease_score", fun = decrease_score())
+  expect_no_error(nascent(test_network, customer_data = c("name", "score"), occupations= "category"))
 })
 
 test_that("On entry is correctly interpolated into the dag and evaluates properly", {
@@ -338,7 +353,7 @@ test_that("On entry is correctly interpolated into the dag and evaluates properl
     data
   }
   test_network$occupations$on_entry(name = "increase_score", fun = increase_score())
-  test_network$occupations$on_exit(name = "decrease_score", fun = decrease_score())
+  test_network$occupations$on_exit(name = "decrease_score", fun = decrease_score(query(customer_data = "score")))
   test_network$add_project("final_pass")
   add_has_passed <- function(data = query(occupations = "category")) {
     data$has_passed <- ifelse(data$category == "High", TRUE, FALSE)
