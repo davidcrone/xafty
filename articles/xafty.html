@@ -396,7 +396,7 @@ styling options, thresholds, or model parameters, without hard-coding
 them into transformation functions or objects.</p>
 <p>States are defined on the network using <code>add_state()</code> and
 may optionally specify a default value (If no default value is set, the
-network will use <code>7 NULL</code> as a default):</p>
+network will use <code>NULL</code> as a default):</p>
 <div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">network</span><span class="op">$</span><span class="fu">add_state</span><span class="op">(</span><span class="st">"line_colour"</span>, default <span class="op">=</span> <span class="st">"red"</span><span class="op">)</span></span></code></pre></div>
 <p>Once defined, a state can be referenced inside a function by using

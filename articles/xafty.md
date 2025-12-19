@@ -403,7 +403,7 @@ transformation functions or objects.
 
 States are defined on the network using `add_state()` and may optionally
 specify a default value (If no default value is set, the network will
-use `7 NULL` as a default):
+use `NULL` as a default):
 
 ``` r
 network$add_state("line_colour", default = "red")
