@@ -93,22 +93,22 @@ create_add_context <- function(project, network, func_type = NULL) {
   add_context
 }
 
-compose_link_function <- function(project, network) {
+compose_link_function <- function(project, network, func_type) {
   force(project)
   force(network)
   link <- function(fun, name = NULL, vars = NULL, update = FALSE, ...) {
     .dots <- list(...)
     quosure <- rlang::enquo(fun)
     register(quosure = quosure, link_type = "query", network = network, project = project,
-             vars = vars, name = name, update = update, ... = .dots)
+             vars = vars, name = name, update = update, func_type = func_type, ... = .dots)
   }
   link
 }
 
 bundle_link_functions <- function(project, network) {
-  get_fun <- compose_link_function(project = project, network = network)
-  add_fun <- compose_link_function(project = project, network = network)
-  join_fun <- compose_link_function(project = project, network = network)
+  get_fun <- compose_link_function(project = project, network = network, func_type = "get")
+  add_fun <- compose_link_function(project = project, network = network, func_type = "add")
+  join_fun <- compose_link_function(project = project, network = network, func_type = "join")
   object_fun <- create_add_object(project = project, network = network, func_type = "object")
   on_entry_fun <- create_add_context(project = project, network = network, func_type = "entry")
   on_exit_fun <- create_add_context(project = project, network = network, func_type = "exit")

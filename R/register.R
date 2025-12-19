@@ -130,11 +130,11 @@ get_function_package <- function(func_name) {
 
 create_link <- function(quosure, project, link_type, network, ...) {
   .dots <- list(...)
-  link <- create_base_link(quosure = quosure, project = project, link_type = link_type)
+  link <- create_base_link(quosure = quosure, project = project)
   if (link_type == "query") {
     link <- link_add_variables(link = link, variable_names = .dots[["vars"]], network = network)
   } else if (link_type == "context") {
-    link <- link_add_context(link = link, name = .dots[["name"]])
+    link <- link_add_context(link = link, name = .dots[["name"]], func_type = .dots[["func_type"]])
   } else if (link_type == "object") {
     link <- link_add_object(link = link, name = .dots[["name"]])
   }
@@ -142,7 +142,7 @@ create_link <- function(quosure, project, link_type, network, ...) {
   link
 }
 
-create_base_link <- function(quosure, project, link_type = link_type) {
+create_base_link <- function(quosure, project) {
   fun_exp <- rlang::get_expr(quosure)
   fun_env <- rlang::get_env(quosure)
   list_args <- unpack_args(exp = fun_exp, env = fun_env)
@@ -157,7 +157,8 @@ create_base_link <- function(quosure, project, link_type = link_type) {
   link
 }
 
-link_add_context <- function(link, name) {
+link_add_context <- function(link, name, func_type) {
+  # TODO: Need to warn the user when they create a polluted context
   if(!is.null(name)) {
     if(!is_valid_variable_name(match = name)) stop(paste0("Context name '", name,"' is not a valid variable name"))
     link$name <- name

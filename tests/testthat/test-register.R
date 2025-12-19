@@ -215,7 +215,16 @@ test_that("Registering a on_entry with the same name twice, does not create a du
   expect_equal(test_network$customer_data$wrappers$on_exit, "reorder_cars_by_color")
 })
 
-
+test_that("Adding a polluted on_exit context node informs the user with a warning", {
+  skip("Need to find a good way to test for pollution when registering an on exit function")
+  pass_through2 <- pass_through
+  test_network <- init_network("test_network", projects = c("customer_data", "polluted"))
+  test_network$customer_data$get(get_sample_data())
+  test_network$polluted$on_entry(pass_through(data = "{.data}"))
+  test_network$polluted$add(add_score_category(data = query(customer_data = "score")))
+  test_network$customer_data$add(add_score_category(data = query(customer_data = "score", polluted = "category")), vars = "category")
+  expect_warning(test_network$polluted$on_exit(pass_through2(data = query(customer_data  = "category"))))
+})
 
 # test_that("Registering context creates the correct entry in ruleset and network", {
 #   test_network <- init_network(name = "test_network", projects = "intelligence")
