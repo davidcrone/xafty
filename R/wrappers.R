@@ -5,14 +5,14 @@ clean_wrapper <- function(project, order, dag, contexts, network) {
   exit_funcs <- network[[project]]$wrappers$on_exit
   # Early exit when no wrapper functions are available
   if (length(entry_funcs) == 0 && length(exit_funcs) == 0) return(order)
-  suffix <- paste0(project, ".")
-  is_project <- which(startsWith(order, suffix))
+  prefix <- paste0(project, ".")
+  is_project <- which(startsWith(order, prefix))
 
   start_pos <- min(is_project)
   end_pos <- max(is_project)
   projects_extract <- order[start_pos:end_pos]
 
-  is_project_sub <- startsWith(projects_extract, suffix)
+  is_project_sub <- startsWith(projects_extract, prefix)
   # Early exit when all projects have no foreign project between variable and wrapper functions
   if(all(is_project_sub)) return(order)
   entry_nodes <- if (!is.null(entry_funcs)) paste0(project, ".", entry_funcs) else character(0)
@@ -20,8 +20,12 @@ clean_wrapper <- function(project, order, dag, contexts, network) {
 
 
   # Handle on exit nodes which may depend on a foreign function
-  dependend_foreign <- get_upstream_dependencies(project = project, dag = dag[projects_extract], targets = exit_nodes, stop_at = character(0))
 
+  li_classified <- classify_foreign_dependencies(project = project,
+                                                 dag = dag[projects_extract],
+                                                 targets = exit_nodes,
+                                                 contexts = NULL,
+                                                 stop_at = character(0))
   # Remove all on entry and on exit functions in order to begin rebuilding context from a clean slate
   extract <- projects_extract[!projects_extract %in% c(entry_nodes, exit_nodes)]
 
@@ -29,22 +33,26 @@ clean_wrapper <- function(project, order, dag, contexts, network) {
   start <- if (start_pos > 1) order[1:(start_pos - 1)] else character(0)
   end   <- if (end_pos < length(order)) order[(end_pos + 1):length(order)] else character(0)
 
-  if(length(dependend_foreign) > 0) {
-    is_polluted_context <- any(startsWith(dependend_foreign, suffix))
-    # remove depndency from extract and move to before context
-    if(!is_polluted_context) {
-      extract <- extract[!extract %in% dependend_foreign]
-      start <- c(start, dependend_foreign)
-    } else {
-      # TODO: foreigns need to remain in the context and might be temporary cloaked with the prefix 'project.' to keep them at place
+  extract <- extract[!extract %in% li_classified$before]
+  start <- c(start, li_classified$before)
+
+  # Cloaking dependend function that pollute the context which need to remain in the context since they depend on one of the on_exit functions
+  cloak <- li_classified$pollution
+  if(length(cloak) > 0) {
+    original <- li_classified$pollution
+    cloak <- paste0(prefix, original)
+    for (i in seq_along(original)) {
+      extract[extract == original[i]] <- cloak[i]
     }
   }
+
   # Package order into building blocks for easy resolving of wrappers
   packages <- package_wrapper(project = project, extract = extract)
 
   if(length(packages$packages) == 0) {
     order <- c(start, packages$start, packages$end, end)
-    return(rebuild_context(project = project, order = order, on_entry = entry_nodes, on_exit = exit_nodes))
+    rebuild <- rebuild_context(project = project, order = order, on_entry = entry_nodes, on_exit = exit_nodes)
+    return(uncloak(order = rebuild, cloak = cloak, original = original))
   }
   for (i in seq_along(packages$packages)) {
     package <- packages$packages[[i]]
@@ -238,39 +246,92 @@ rebuild_context <- function(project, order, on_entry, on_exit) {
   rebuilt_context
 }
 
-## Handle dependencies on 'on_exit'
+# The function returns the polluding nodes into their orignal form
+uncloak <- function(order, cloak, original) {
+  if(length(cloak) == 0) return(order)
+  for (i in seq_along(cloak)) {
+    order[order == cloak[i]] <- original[i]
+  }
+  order
+}
 
-get_upstream_dependencies <- function(project, dag, targets, stop_at = character(0)) {
-  if (length(targets) == 0) return(character(0))
-  visited <- character(0)
-  suffix <- paste0(project, ".")
-  # convert NULL dag edges to character(0) safely
+# Here we classify the foreign dependencies of on exit functions, which need to be treated differently from
+# other foreign nodes since a foreign function does not
+classify_foreign_dependencies <- function(project, dag, targets, contexts = NULL, stop_at = character(0)) {
+  prefix <- paste0(project, ".")
+  dag <- append(dag, contexts)
+  relevant <- names(dag)
+
+  is_domestic <- function(x) startsWith(x, prefix)
+
   get_deps <- function(node) {
     if (is.null(dag[[node]])) character(0) else dag[[node]]
   }
 
-  relevant <- names(dag)
-  stack <- unlist(lapply(targets, \(target) { deps <- get_deps(target); deps[!startsWith(deps, suffix) & deps %in% relevant] }))
+  # --------
+  # Step 1: upstream traversal from targets
+  # --------
+  upstream <- character(0)
+  stack <- unique(unlist(lapply(targets, get_deps)))
+  stack <- stack[stack %in% relevant]
 
   while (length(stack) > 0) {
     node <- stack[[1]]
     stack <- stack[-1]
 
-    # Skip if we already visited this node
-    if (node %in% visited) next
-    visited <- c(visited, node)
+    if (node %in% upstream) next
+    upstream <- c(upstream, node)
 
-    # If node is in stop_at, do not explore its dependencies (but still include node if discovered)
     if (node %in% stop_at) next
 
     deps <- get_deps(node)
-    if (length(deps) > 0) {
-      # push deps to stack (only those not yet visited and relevant to the extracted upstream pipeline)
+    new_deps <- deps[!deps %in% upstream & deps %in% relevant]
+    stack <- c(new_deps, stack)
+  }
+
+  # keep only foreign nodes that are upstream of targets
+  foreign_upstream <- upstream[!is_domestic(upstream)]
+
+  # --------
+  # Step 2: classify foreign nodes
+  # --------
+  before <- character(0)
+  pollution <- character(0)
+
+  for (f in foreign_upstream) {
+    visited <- character(0)
+    stack <- get_deps(f)
+    stack <- stack[stack %in% relevant]
+    polluted <- FALSE
+
+    while (length(stack) > 0) {
+      node <- stack[[1]]
+      stack <- stack[-1]
+
+      if (node %in% visited) next
+      visited <- c(visited, node)
+
+      if (is_domestic(node)) {
+        polluted <- TRUE
+        break
+      }
+
+      if (node %in% stop_at) next
+
+      deps <- get_deps(node)
       new_deps <- deps[!deps %in% visited & deps %in% relevant]
-      if (length(new_deps) > 0) stack <- c(new_deps, stack)
+      stack <- c(new_deps, stack)
+    }
+
+    if (polluted) {
+      pollution <- c(pollution, f)
+    } else {
+      before <- c(before, f)
     }
   }
-  # visited contains targets + their upstream nodes in discovery order.
-  result <- unique(visited)
-  result
+
+  list(
+    before = unique(before),
+    pollution = unique(pollution)
+  )
 }

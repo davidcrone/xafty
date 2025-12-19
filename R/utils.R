@@ -104,7 +104,7 @@ build_dependency_codes <- function(link, network, dag_sm) {
   # This splits queries from object queries which need a different prefix
   function_codes <- unique(unlist(lapply(queries, get_scoped_function_order, network = network)))
   wrapper_codes <- build_on_entry_dependencies(link = link, network = network, fun_code = fun_code)
-  # TODO: link link$joins$projects may need re computation with project_needs_join when a variable name has been interpolated
+  # TODO: link link$joins$projects may need re computation with function: 'project_needs_join' when a variable name has been interpolated
   #  -> This would also make a differentiation necessary between a link that has been "tampered" with and one who was not
   join_codes <- character(length(link$joins$projects))
   for (i in seq_along(link$joins$projects)) {
@@ -139,7 +139,7 @@ build_on_entry_node <- function(link, network, dag) {
   project <- link$project
   on_entry_node <- build_dependency_codes(link, network = network, dag_sm = dag_sm)
   on_entry_code <- names(on_entry_node)
-  project_dag <- dag[grepl(paste0("^", project, "."), names(dag))]
+  project_dag <- dag[grepl(paste0("^", project, "\\."), names(dag))]
   # Adds foreign project nodes that wrapper nodes depend on; unique is necessary since the package toposort cannot work with
   # duplicated dependencies in a single node
   foreign_deps <- unique(get_all_non_project_codes(project = project, codes = project_dag))
@@ -154,7 +154,7 @@ build_on_exit_node <- function(link, network, dag) {
   project <- link$project
   on_exit_node <- build_dependency_codes(link, network = network, dag_sm = dag_sm)
   on_exit_code <- names(on_exit_node)
-  deps_project <- names(dag)[grepl(paste0("^", project, "."), names(dag))]
+  deps_project <- names(dag)[grepl(paste0("^", project, "\\."), names(dag))]
 
   # Adding on exit functions registered earlier from wrapper project as dependencies
   on_exit_codes <- paste0(project, ".", network[[project]]$wrappers$on_exit)

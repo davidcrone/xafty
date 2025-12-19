@@ -450,3 +450,22 @@ test_that("clean_all_wrappers resolves a nested group, that is 'cross-nested'", 
   order_test <- clean_all_wrappers(projects = names(network), order = order, dag = dag, network = network)
   expect_identical(order_test, exp_order)
 })
+
+test_that("clean_all_wrappers resolves a polluted context by cloaking the polluted node'", {
+  dag <- list(
+    projectA.start = character(0),
+    projectB.group = c("projectA.start"),
+    projectB.add_x = "projectB.group",
+    projectC.add_y = c("projectA.start", "projectB.add_x"),
+    projectB.add_z = c("projectB.group", "projectC.add_y"),
+    projectB.ungroup = c("projectB.add_x", "projectC.add_y")
+  )
+  network <- list(
+    projectA = list(wrappers = list(on_entry = NULL, on_exit = NULL)),
+    projectB = list(wrappers = list(on_entry = c("group"), on_exit = "ungroup"))
+  )
+  order <- c("projectA.start", "projectB.group", "projectB.add_x", "projectC.add_y", "projectB.add_z", "projectB.ungroup")
+  exp_order <- c("projectA.start",  "projectB.group", "projectB.add_x", "projectC.add_y", "projectB.add_z", "projectB.ungroup")
+  order_test <- clean_all_wrappers(projects = names(network), order = order, dag = dag, network = network)
+  expect_identical(order_test, exp_order)
+})

@@ -1,3 +1,7 @@
+pass_through <- function(data) {
+  data
+}
+
 test_get_car_data <- function(conn) {
   if(conn) {
     data <- data.frame(
