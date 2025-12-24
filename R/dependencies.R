@@ -174,6 +174,10 @@ remove_empty_lists <- function(li) {
   li[vapply(li, \(l) length(l) > 0, FUN.VALUE = logical(1))]
 }
 
+has_empty_list <- function(li) {
+  any(vapply(li, \(l) length(l) == 0, FUN.VALUE = logical(1)))
+}
+
 set_nodes <- function(links, network, dag_sm) {
   links_vec <- vapply(links, \(link) is_query_link(link) || is_context_link(link), FUN.VALUE = logical(1))
   links <- links[links_vec]

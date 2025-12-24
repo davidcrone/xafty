@@ -118,6 +118,7 @@ add_to_state_query <- function(name, what, state_query) {
 
 temper_query <- function(query_list, state_list = NULL, network) {
   class_input <- class(query_list)
+  query_list <- fill_raw_query(query_list = query_list, network = network)
   query_list <- resolve_star_select(query_list = query_list, network_env = network)
   query_list <- interpolate_state_in_query(query_list = query_list, state_list = state_list, network_env = network)
   class(query_list) <- class_input
@@ -154,7 +155,13 @@ get_projects <- function(query) {
 }
 
 dots_to_query <- function(network, ...)  {
-  query_raw <- list(...)
+  query_raw <- tryCatch(
+    list(...),
+    error = \(e) {
+      syms <- rlang::ensyms(...)
+      lapply(syms, \(sym) rlang::as_string(sym))
+    })
+
   # When only the network is provided, the user gets the following error
   # However only providing the network could also be used as a shorthand to query all projects with all columns within the network
   if(length(query_raw) == 0) {
@@ -260,20 +267,36 @@ interpolate_state_in_query <- function(query_list, state_list, network_env) {
 }
 
 fill_raw_query <- function(query_list, network) {
-  projects <- network$settings$projects$print_order$project
-  sapply(query_list, \(query) {
-    if(inherits(query, "raw_query") | inherits(query,"raw_context_query")) {
-      variable_raw <- query$select
+  is_raw_query <- vapply(query_list, \(query) inherits(query, "raw_query"), logical(1))
+  if(!any(is_raw_query)) return(query_list)
+  is_project <- vapply(names(network), \(name) inherits(network[[name]], "xafty_project"), FUN.VALUE = logical(1))
+  projects <- names(network)[is_project]
+  query_list <- sapply(query_list, \(query) {
+    if(inherits(query, "raw_query")) {
+      variables <- query$select
+      # Case 1: Querying an entire project by name
+      if(length(variables) == 1 && any(variables %in% projects)) {
+        query$from <-  variables
+        query$select <- names(network[[variables]]$variables)
+        all_variables <- names(network[[variables]]$variables)
+        links <- lapply(list(query), get_links, network = network)[[1]]
+        selection <- all_variables[vapply(links, check_link_type, FUN.VALUE = character(1)) == "query_link"]
+        query$select <- selection
+        class(query) <- c("list", "xafty_query")
+        return(query)
+      }
+      # Case 2: Querying single variables
       for (project in projects) {
-        variables <- names(network[[project]]$variables)
-        has_variable <- any(variable_raw %in% variables)
+        all_variables <- names(network[[project]]$variables)
+        has_variable <- any(variables %in% all_variables)
         if(has_variable) {
           query$from <-  project
           class(query) <- c("list", "xafty_query")
-          break
         }
       }
     }
     query
   }, simplify = FALSE, USE.NAMES = TRUE)
+  class(query_list) <- c("list", "xafty_query_list")
+  query_list
 }

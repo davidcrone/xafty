@@ -252,7 +252,6 @@ unpack_query <- function(args) {
 }
 
 validate_network_integrity <- function(link, network) {
-  # TODO Needs also to work with a state_query (query bundled with state)
   queries <- get_queries(link, temper = TRUE, network = network)
   if(length(queries) <= 0) return(invisible(TRUE))
   flat_queries <- flatten_list(queries)

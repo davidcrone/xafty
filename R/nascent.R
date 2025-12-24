@@ -292,7 +292,7 @@ resolve_on_entry <- function(project, network, dag_sm) {
   links <- lapply(func_names, \(func_name) network[[project]]$ruleset[[func_name]])
   for (i in seq_along(links)) {
     link <- links[[i]]
-    node <- build_on_entry_node(link = link, network = network, dag = dag)
+    node <- build_on_entry_node(link = link, network = network, dag = dag, dag_sm = dag_sm)
     # Following only needs to be done when an argument of the wrapper has {.data}"
     if(any(has_.data(link))) {
       link <- build_.data_link(link = link, node = node, dag_sm = dag_sm)
@@ -349,7 +349,7 @@ resolve_on_exit <- function(project, network, dag_sm) {
   dag <- dag_sm$get_codes()
   for (i in seq_along(links)) {
     link <- links[[i]]
-    node <- build_on_exit_node(link = link, network = network, dag = dag)
+    node <- build_on_exit_node(link = link, network = network, dag = dag, dag_sm = dag_sm)
     if(any(has_.data(link))) {
       link <- build_.data_link(link = link, node = node, dag_sm = dag_sm)
     }

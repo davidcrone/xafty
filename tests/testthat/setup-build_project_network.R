@@ -141,4 +141,4 @@ join_through_mean_intelligence <- function(data1 = query(occupations = "{column_
 }
 test_network$add_state(name = "column_name", default = "id")
 
-test_network$occupations$add(join_through_mean_intelligence())
+test_network$occupations$join(join_through_mean_intelligence())

@@ -135,7 +135,7 @@ build_on_entry_dependencies <- function(link, network, fun_code) {
 }
 
 # The function builds the dependencies for on_entry nodes
-build_on_entry_node <- function(link, network, dag) {
+build_on_entry_node <- function(link, network, dag, dag_sm) {
   project <- link$project
   on_entry_node <- build_dependency_codes(link, network = network, dag_sm = dag_sm)
   on_entry_code <- names(on_entry_node)
@@ -150,7 +150,7 @@ build_on_entry_node <- function(link, network, dag) {
   node
 }
 
-build_on_exit_node <- function(link, network, dag) {
+build_on_exit_node <- function(link, network, dag, dag_sm) {
   project <- link$project
   on_exit_node <- build_dependency_codes(link, network = network, dag_sm = dag_sm)
   on_exit_code <- names(on_exit_node)
@@ -461,11 +461,12 @@ project_needs_join <- function(project, query_list, network) {
   # which means the link's project must not be joined
   if(!project %in% deps_projects) return(FALSE)
   links_ <- links[[project]]
-  query_list <- flatten_list(remove_empty_lists(lapply(links_, get_queries,
-                                                       which = "xafty_query", temper = TRUE, network = network)))
+  query_list_ <- lapply(links_, get_queries,
+         which = "xafty_query", temper = TRUE, network = network)
+  # Root node reached?
+  if(has_empty_list(query_list_)) return(TRUE)
+  query_list <- flatten_list(remove_empty_lists(query_list_))
   query_list <- do.call(merge_queries, query_list)
-  # query is depended on a root node for that project and therefore needs to be joined
-  if(length(query_list) == 0) return(TRUE)
   project_needs_join(project = project, query_list = query_list, network = network)
 }
 

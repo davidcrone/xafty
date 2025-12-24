@@ -157,5 +157,14 @@ test_that("A raw query is correctly filled with a project", {
   tets_variables <- vapply(test_query, \(query) query$select, character(1), USE.NAMES = FALSE)
   expect_identical(tets_projects, c("customer_data", "customer_data", "intelligence", "map"))
   expect_identical(tets_variables, c("mean_nickname", "id", "intelligence_plus_mean", "id"))
+  expect_s3_class(test_query, "xafty_query_list")
+})
+
+test_that("Querying a entire porject by name fills the raw query with the project's variables", {
+  raw_query_list <- query("customer_data")
+  test_query <- fill_raw_query(query_list = raw_query_list, network = test_network)
+  exp <- names(test_network$customer_data$variables)
+  expect_in(test_query[[1]]$select, exp)
+  expect_in(test_query[[1]]$from, "customer_data")
 })
 
