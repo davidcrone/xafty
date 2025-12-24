@@ -87,11 +87,15 @@ network
 #> Project: mtcars
 #> Variables: drat, vs, hp, am, disp, cyl, carb, mpg, qsec, wt, gear
 
-# Wildcard selection returns all variables of a project
-mtcars <- nascent(network, query(mtcars = "*"))
+# Querying a project by its name, will return all variables from that project
+mtcars <- nascent(network, query("mtcars"))
 
-# Querying variables by name will only return the desired variables
+# Querying variables will only return the declared variables
 data <- nascent(network, query(mtcars = c("carb", "gear")))
+
+# Querying can also be done via unquoted symbols
+data <- nascent(network, carb, gear)
+
 head(data)
 #>                   carb gear
 #> Mazda RX4            4    4
