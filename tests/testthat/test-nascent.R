@@ -475,17 +475,9 @@ test_that("Star (*) select only retrieves queries and not objects or contexts", 
   expect_identical(test_data, expect_data)
 })
 
-#### NOTE: Implementing a "free-form" context is more difficult than expected. Making efficient execution is akin to building a efficient SQL-Query
-# test_that("Nascent a simple context works seamlessly in nascent", {
-#   test_network <- init_network(name = "test_network", projects = "intelligence")
-#   test_network$intelligence$get(intelligence_date())
-#   filter_active_customers <- function(data) {
-#     data[data$intelligence > 100, , drop = FALSE]
-#   }
-#   test_network$intelligence$add_context("active_customers", filter_active_customers(data = query(intelligence = "intelligence")))
-#   qry <- query(intelligence = "intelligence") |>
-#     where(intelligence = "active_customers")
-#  test_data <- nascent(test_network, qry)
-#  expected_data <- structure(list(intelligence = c(120, 130)), row.names = c(1L, 4L), class = "data.frame")
-#  expect_identical(test_data, expected_data)
-# })
+test_that("Simple where filter can be nascented", {
+  qry <- query(customer_data = "name") |> where(id == 1)
+  data <- nascent(test_network, qry)
+  expect_identical(data, data.frame(name = "Alice"))
+})
+

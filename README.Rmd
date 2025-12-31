@@ -43,7 +43,7 @@ Turn your R data pipelines into a scalable and collaborative network graph.
 
 Most data pipelines are built as one-off scripts: hard to reuse, fragile to change, and difficult for teams to collaborate on. As projects grow, this leads to duplicated logic, inconsistent results, and a constant need to rebuild work that already exists.
 
-xafty solves this by treating every transformation as a reusable node in a shared dependency graph. Instead of rewriting the same steps for every new project, teams compose pipelines from existing, validated building blocks. This makes data work more reliable, more maintainable, and far easier to extend over time.
+xafty treats analytics as a distributed knowledge system rather than a data processing system. It allows organizations to accumulate and recombine analytical knowledge incrementally, without central coordination or pipeline redesign.
 
 ## Installation
 

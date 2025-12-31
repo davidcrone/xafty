@@ -98,19 +98,6 @@ add_join_path <- function(query_list, ...) {
   state_query
 }
 
-where <- function(query_list, ...) {
-  .li_states <- list(...)
-  query_raw <- query(.li_states)
-  context_query <- sapply(query_raw, \(query) {class(query) <- c("list", "context_query"); query}, simplify = FALSE, USE.NAMES = TRUE)
-  if(inherits(query_list, "xafty_query")) {
-    query_list <- append(query_list$query, context_query)
-  } else {
-    query_list <- append(query_list, context_query)
-  }
-  class(query_list) <- c("list", "xafty_query_list")
-  query_list
-}
-
 add_to_state_query <- function(name, what, state_query) {
   state_query[[name]] <- what
   state_query
@@ -186,13 +173,15 @@ dots_to_query <- function(network, ...)  {
   } else {
     stop("Could not parse passed query")
   }
-  query_order <- temper_query(query_list = query_list, state_list = state_list, network = network)
-  query_internal <- merge_queries(query_order)
+  query_tempered <- temper_query(query_list = query_list, state_list = state_list, network = network)
+  query_order <- remove_where_query(query_tempered)
+  query_internal <- merge_queries(remove_where_expr(query_tempered))
   list(
     internal = query_internal,
     order = query_order,
     states = state_list,
-    join_path = join_path
+    join_path = join_path,
+    where = get_where(query_tempered)
   )
 }
 
@@ -282,7 +271,9 @@ fill_raw_query <- function(query_list, network) {
         links <- lapply(list(query), get_links, network = network)[[1]]
         selection <- all_variables[vapply(links, check_link_type, FUN.VALUE = character(1)) == "query_link"]
         query$select <- selection
-        class(query) <- c("list", "xafty_query")
+        query_classes <- class(query)
+        query_classes[query_classes == "raw_query"] <- "xafty_query"
+        class(query) <- query_classes
         return(query)
       }
       # Case 2: Querying single variables
@@ -291,7 +282,9 @@ fill_raw_query <- function(query_list, network) {
         has_variable <- any(variables %in% all_variables)
         if(has_variable) {
           query$from <-  project
-          class(query) <- c("list", "xafty_query")
+          query_classes <- class(query)
+          query_classes[query_classes == "raw_query"] <- "xafty_query"
+          class(query) <- query_classes
         }
       }
     }

@@ -120,14 +120,6 @@ test_that("interpolate_state_in_query correctly fills the select variable with t
   expect_identical(query_test, query_expected)
 })
 
-test_that("a context component is added to the where part in the query", {
-  test_query <- query(intelligence = "intelligence") |>
-    where(intelligence = "active_customers")
-  expect_equal(test_query[[2]]$select, "active_customers")
-  expect_equal(test_query[[2]]$from, "intelligence")
-  expect_s3_class(test_query[[2]], class = c("context_query"))
-})
-
 test_that("characters with no name are created as a raw query", {
   test_query <- query("test")
   expected_query <- query(unevaluated = "test")
@@ -167,4 +159,5 @@ test_that("Querying a entire porject by name fills the raw query with the projec
   expect_in(test_query[[1]]$select, exp)
   expect_in(test_query[[1]]$from, "customer_data")
 })
+
 

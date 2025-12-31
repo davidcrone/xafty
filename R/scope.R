@@ -41,6 +41,7 @@ scope <- function(data, link, mask) {
 unscope <- function(data, link, arg_name, mask) {
   colnames_data <- colnames(data)
   query_list <- link$args[[arg_name]]
+
   for (query in query_list) {
     selection <- query$select
     project <- query$from

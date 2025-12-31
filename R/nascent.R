@@ -40,9 +40,10 @@ build_query_dag <- function(globals, network) {
     links = dag_sm$get_links(),
     dag = dag_sm$get_codes()[execution_order],
     query = dag_sm$get_query(),
+    execution_order = execution_order,
     start_query = globals$internal,
     order_query = globals$order,
-    execution_order = execution_order,
+    where_query = globals$where,
     join_path = dag_sm$get_join_path(),
     masked_columns = dag_sm$get_mask(),
     network_states = dag_sm$get_network_state(),
@@ -242,7 +243,9 @@ evaluate_dag <- function(dag) {
     execute_stack(link = link, mask = mask, data_sm = data_sm, default_states = default_states)
   }
   data_key <- get_data_key(data_sm = data_sm, dag = dag)
-  data <- return_unscoped_data(data = data_sm$get_data_by_key(data_key), query = dag$order_query, dag = dag)
+  data <- data_sm$get_data_by_key(data_key)
+  data <- apply_where_filter(data = data, dag = dag)
+  data <- return_unscoped_data(data = data, query = dag$order_query, dag = dag)
   data
 }
 
