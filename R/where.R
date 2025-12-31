@@ -1,4 +1,9 @@
 
+#' Filter a Network Pipeline
+#' @param query_list A xafty query obtained via [`xafty::query`]
+#' @param ... Filter conditions, e.g. `col1 >= 1```
+#' @returns A xafty query with a where filter applied
+#' @export
 where <- function(query_list, ...) {
   expr <- rlang::expr(...)
   where_select <- all.vars(expr)
@@ -8,15 +13,17 @@ where <- function(query_list, ...) {
   )
   raw_query <- lapply(raw_query, \(query) {class(query) <- c("list", "raw_query", "where_query"); query})
   class(where_query) <- c("list", "where_expr")
-
   if(inherits(query_list, "xafty_query")) {
+    query_list_classes <- class(query_list$query)
     query_list$query <- append(query_list$query, raw_query)
     query_list$query[[length(query_list$query) + 1]] <- where_query
+    class(query_list$query) <- query_list_classes
   } else {
+    query_list_classes <- class(query_list)
     query_list <- append(query_list, raw_query)
     query_list[[length(query_list) + 1]] <- where_query
+    class(query_list) <- query_list_classes
   }
-  class(query_list) <- c("list", "xafty_query_list")
   query_list
 }
 

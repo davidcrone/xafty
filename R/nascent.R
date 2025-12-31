@@ -217,6 +217,12 @@ execute_stack <- function(link, mask, data_sm, default_states) {
   data_sm$set_data(data = data, key = new_key)
 }
 
+#' Evaluate a Network Pipeline
+#' @description
+#' Evaluate the pipeline created via [xafty::build_dag]
+#' @param dag List-Object created by [xafty::build_dag]
+#' @returns A data.frame
+#' @export
 evaluate_dag <- function(dag) {
   data_sm <- data_sm()
   if(inherits(dag, "object_dag")) {

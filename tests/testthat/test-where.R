@@ -8,6 +8,15 @@ test_that("where correctly disects an expression", {
   expect_s3_class(query_test, "raw_query")
 })
 
+test_that("objects are correctly left as objects", {
+  query_list <- query(test = "[col1]") |> where(test >= 1)
+  query_test <- query_list[[2]]
+  expr_test <- query_list[[3]]
+  expect_identical(query_test$select, "test")
+  expect_identical(expr_test$expr, quote(test >= 1))
+  expect_s3_class(query_list, "xafty_object_query")
+})
+
 
 test_that("where correctly disects an expression", {
   query_list <- query(test = "col1") |> where(score >= 10)
@@ -35,3 +44,4 @@ test_that("where correctly disects an expression with two variables", {
   expect_s3_class(query_test2, c("where_query"))
   expect_identical(expr_test$expr, quote(score >= 10 & intelligence_plus_mean == 10))
 })
+
