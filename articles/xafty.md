@@ -310,6 +310,33 @@ allows us to layer context-setting operations, such as grouping,
 arranging, or reshaping, without embedding them directly into individual
 transformation functions.
 
+### Filtering
+
+xafty handles filters through the
+[`xafty::where`](https://davidcrone.github.io/xafty/reference/where.md)
+function:
+
+``` r
+qry <- query(per_gear = "mean_hp_per_gear", engine = "type") |> 
+  xafty::where(type == "Straight")
+
+data <- nascent(network, qry)
+
+head(data)
+#> # A tibble: 6 × 2
+#>   mean_hp_per_gear type    
+#>              <dbl> <fct>   
+#> 1            176.  Straight
+#> 2            176.  Straight
+#> 3             89.5 Straight
+#> 4             89.5 Straight
+#> 5             89.5 Straight
+#> 6             89.5 Straight
+```
+
+Currently, the filter is applied at the end of the execution and is not
+pushed back.
+
 ### Inspecting Pipelines
 
 As your network grows, it becomes increasingly important to understand

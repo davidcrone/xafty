@@ -328,8 +328,9 @@ features still need to be implemented:
 - **Support for lossy transformations** (e.g.,
   `dplyr::group_by() / summarise()`), integrated seamlessly into a
   network structure
-- **A flexible filtering mechanism** using a `where()` clause, providing
-  fine-grained control over when filtering is applied
+- **A flexible filtering mechanism** using a
+  [`where()`](https://davidcrone.github.io/xafty/reference/where.md)
+  clause, providing fine-grained control over when filtering is applied
 - **Developer tooling**, such as visualizations and printable summaries
   of network components, to make building with xafty easier
 - **Robust testing and bug fixing** to ensure reliability at scale

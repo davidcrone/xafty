@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">xafty</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -320,6 +320,30 @@ without embedding them directly into individual transformation
 functions.</p>
 </div>
 <div class="section level3">
+<h3 id="filtering">Filtering<a class="anchor" aria-label="anchor" href="#filtering"></a>
+</h3>
+<p>xafty handles filters through the <code><a href="../reference/where.html">xafty::where</a></code>
+function:</p>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">qry</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/query.html">query</a></span><span class="op">(</span>per_gear <span class="op">=</span> <span class="st">"mean_hp_per_gear"</span>, engine <span class="op">=</span> <span class="st">"type"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">xafty</span><span class="fu">::</span><span class="fu"><a href="../reference/where.html">where</a></span><span class="op">(</span><span class="va">type</span> <span class="op">==</span> <span class="st">"Straight"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/nascent.html">nascent</a></span><span class="op">(</span><span class="va">network</span>, <span class="va">qry</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">data</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 2</span></span></span>
+<span><span class="co">#&gt;   mean_hp_per_gear type    </span></span>
+<span><span class="co">#&gt;              <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span>   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>            176.  Straight</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>            176.  Straight</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>             89.5 Straight</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>             89.5 Straight</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>             89.5 Straight</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span>             89.5 Straight</span></span></code></pre></div>
+<p>Currently, the filter is applied at the end of the execution and is
+not pushed back.</p>
+</div>
+<div class="section level3">
 <h3 id="inspecting-pipelines">Inspecting Pipelines<a class="anchor" aria-label="anchor" href="#inspecting-pipelines"></a>
 </h3>
 <p>As your network grows, it becomes increasingly important to
@@ -330,12 +354,12 @@ it.</p>
 <p>The function <code><a href="../reference/build_dag.html">build_dag()</a></code> constructs the directed acyclic
 graph for a given query and returns a list-object that describes the
 full pipeline:</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span>  <span class="va">dag</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/build_dag.html">build_dag</a></span><span class="op">(</span><span class="fu"><a href="../reference/query.html">query</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"gear"</span><span class="op">)</span>, per_gear <span class="op">=</span> <span class="st">"mean_hp_per_gear"</span>, engine <span class="op">=</span> <span class="st">"type"</span><span class="op">)</span>, </span>
 <span>                   network <span class="op">=</span> <span class="va">network</span><span class="op">)</span></span></code></pre></div>
 <p>For example, the element <code>dag$execution_order</code> shows the
 exact order of the assembled pipeline.</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span>  <span class="va">dag</span><span class="op">$</span><span class="va">execution_order</span></span>
 <span><span class="co">#&gt; [1] "mtcars.get_mtcars"             "engine.get_engine_details"    </span></span>
 <span><span class="co">#&gt; [3] "engine.join_engine_details"    "per_gear.group_by_gear"       </span></span>
@@ -353,7 +377,7 @@ be used directly in a data product.</p>
 using <code>add_object()</code>. Unlike transformation nodes, objects
 are identified by a name rather than by the variables they produce.</p>
 <p>Below, we add a boxplot as an object to our network:</p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span>  <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
 <span></span>
 <span>  <span class="va">network</span><span class="op">$</span><span class="fu">add_project</span><span class="op">(</span><span class="st">"objects"</span><span class="op">)</span></span>
@@ -370,14 +394,14 @@ are identified by a name rather than by the variables they produce.</p>
 in subsequent queries, instead of referring to variable names.</p>
 <p>To retrieve an object from the network, we query its name using
 square brackets:</p>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/nascent.html">nascent</a></span><span class="op">(</span><span class="va">network</span>, <span class="fu"><a href="../reference/query.html">query</a></span><span class="op">(</span>objects <span class="op">=</span> <span class="st">"[plot_mtcars]"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>While objects are typically thought of as the final step in a
 pipeline, they can also serve as dependencies for later steps. This
 allows us to build more complex outputs by composing simpler ones.</p>
 <p>For example, we can define a second object that adds a reference line
 to the existing plot:</p>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="va">add_abline</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">data</span>, <span class="va">plot</span>, <span class="va">colour</span> <span class="op">=</span> <span class="st">"red"</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">plot</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">geom_hline</a></span><span class="op">(</span>yintercept <span class="op">=</span>  <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">data</span><span class="op">$</span><span class="va">power_to_weight</span><span class="op">)</span>, colour <span class="op">=</span> <span class="va">colour</span><span class="op">)</span></span>
@@ -401,18 +425,18 @@ them into transformation functions or objects.</p>
 <p>States are defined on the network using <code>add_state()</code> and
 may optionally specify a default value (If no default value is set, the
 network will use <code>NULL</code> as a default):</p>
-<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">network</span><span class="op">$</span><span class="fu">add_state</span><span class="op">(</span><span class="st">"line_colour"</span>, default <span class="op">=</span> <span class="st">"red"</span><span class="op">)</span></span></code></pre></div>
 <p>Once defined, a state can be referenced inside a function by using
 its name wrapped in curly braces:</p>
-<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="va">network</span><span class="op">$</span><span class="va">objects</span><span class="op">$</span><span class="fu">add_object</span><span class="op">(</span><span class="st">"plot_line"</span>, <span class="fu">add_abline</span><span class="op">(</span>data <span class="op">=</span> <span class="fu"><a href="../reference/query.html">query</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="st">"power_to_weight"</span><span class="op">)</span>, </span>
 <span>                                                   plot <span class="op">=</span> <span class="fu"><a href="../reference/query.html">query</a></span><span class="op">(</span>objects <span class="op">=</span> <span class="st">"[plot_mtcars]"</span><span class="op">)</span>, </span>
 <span>                                                   colour <span class="op">=</span> <span class="st">"{line_colour}"</span><span class="op">)</span>, update <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p>To assign a concrete value to a state for a specific execution, use
 <code><a href="../reference/with_state.html">xafty::with_state()</a></code> when constructing the query:</p>
-<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="va">query_plot</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/query.html">query</a></span><span class="op">(</span>objects <span class="op">=</span> <span class="st">"[plot_line]"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>              <span class="fu"><a href="../reference/with_state.html">with_state</a></span><span class="op">(</span>line_colour <span class="op">=</span> <span class="st">"blue"</span><span class="op">)</span></span>
@@ -433,7 +457,7 @@ no longer match the intended data flow.</p>
 <p>To explicitly control how joins are resolved, you can attach a
 predefined join path to a query using
 <code><a href="../reference/add_join_path.html">xafty::add_join_path()</a></code>:</p>
-<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="va">query_join</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/query.html">query</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="st">"power_to_weight"</span>, engine <span class="op">=</span> <span class="st">"type"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>              <span class="fu"><a href="../reference/add_join_path.html">add_join_path</a></span><span class="op">(</span>path <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"mtcars"</span>, <span class="st">"engine"</span><span class="op">)</span><span class="op">)</span></span>
@@ -448,7 +472,7 @@ predefined join path to a query using
 <span><span class="co">#&gt; 6        47.61905 V-Shape</span></span></code></pre></div>
 <p>More formally, multiple join paths can be defined for a single
 query:</p>
-<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="va">qry</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/query.html">query</a></span><span class="op">(</span>projectA <span class="op">=</span> <span class="st">"col1"</span>, projectB <span class="op">=</span> <span class="st">"col2"</span>, projectC <span class="op">=</span> <span class="st">"col3"</span><span class="op">)</span></span>
 <span><span class="va">query_join</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/add_join_path.html">add_join_path</a></span><span class="op">(</span><span class="va">qry</span>, path1 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"projectA"</span>, <span class="st">"projectB"</span><span class="op">)</span>, path2 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"projectA"</span>, <span class="st">"projectC"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>

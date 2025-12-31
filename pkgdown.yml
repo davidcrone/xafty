@@ -3,7 +3,7 @@ pkgdown: 2.2.0
 pkgdown_sha: ~
 articles:
   xafty: xafty.html
-last_built: 2025-12-24T11:39Z
+last_built: 2025-12-31T13:52Z
 urls:
   reference: https://davidcrone.github.io/xafty/reference
   article: https://davidcrone.github.io/xafty/articles
