@@ -4,10 +4,10 @@
 \alias{build_dag}
 \title{Build an 'Evaluable' Data Pipeline Object}
 \usage{
-build_dag(..., network, frame = "main")
+build_dag(query, network, frame = "main")
 }
 \arguments{
-\item{...}{A xafty query list object}
+\item{query}{A xafty query list object}
 
 \item{network}{A xafty network}
 
