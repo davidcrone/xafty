@@ -1,7 +1,7 @@
 Package: xafty
 Type: Package
 Title: Build Scalable Data Pipelines
-Version: 0.3.0
+Version: 0.3.1
 Author: person(given = "David", family = "Crone", email = "davidjvcrone@gmail.com")
 Maintainer: David Crone <davidjvcrone@gmail.com>
 Description: xafty lets you build data pipelines as a directed acyclic graph (DAG), 
