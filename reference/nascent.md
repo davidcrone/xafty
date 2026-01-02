@@ -5,15 +5,15 @@ Retrieve Data from a xafty network
 ## Usage
 
 ``` r
-nascent(network, ...)
+nascent(query, network)
 ```
 
 ## Arguments
 
+- query:
+
+  List.
+
 - network:
 
   A xafty network
-
-- ...:
-
-  List.

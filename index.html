@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">xafty</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -82,7 +82,7 @@
 <h2 id="why-it-matters">Why It Matters<a class="anchor" aria-label="anchor" href="#why-it-matters"></a>
 </h2>
 <p>Most data pipelines are built as one-off scripts: hard to reuse, fragile to change, and difficult for teams to collaborate on. As projects grow, this leads to duplicated logic, inconsistent results, and a constant need to rebuild work that already exists.</p>
-<p>xafty solves this by treating every transformation as a reusable node in a shared dependency graph. Instead of rewriting the same steps for every new project, teams compose pipelines from existing, validated building blocks. This makes data work more reliable, more maintainable, and far easier to extend over time.</p>
+<p>xafty treats analytics as a distributed knowledge system rather than a data processing system. It allows organizations to accumulate and recombine analytical knowledge incrementally, without central coordination or pipeline redesign.</p>
 </div>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
@@ -230,9 +230,10 @@ Diagram illustrating a network pipeline, where each step is a node connected acc
 <span><span class="va">xafty_network</span></span>
 <span></span>
 <span><span class="co"># Pull data as needed from the network in the desired column order</span></span>
-<span><span class="va">xafty_network</span> <span class="op">|&gt;</span> <span class="fu"><a href="reference/nascent.html">nascent</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"hp"</span>, <span class="st">"wt"</span>, <span class="st">"vs"</span><span class="op">)</span>, </span>
-<span>                         engine <span class="op">=</span> <span class="st">"type"</span>, </span>
-<span>                         mtcars <span class="op">=</span> <span class="st">"power_to_weight"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="reference/query.html">query</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"hp"</span>, <span class="st">"wt"</span>, <span class="st">"vs"</span><span class="op">)</span>, </span>
+<span>      engine <span class="op">=</span> <span class="st">"type"</span>, </span>
+<span>      mtcars <span class="op">=</span> <span class="st">"power_to_weight"</span><span class="op">)</span> <span class="op">|&gt;</span>  </span>
+<span>      <span class="fu"><a href="reference/nascent.html">nascent</a></span><span class="op">(</span><span class="va">xafty_network</span><span class="op">)</span></span></code></pre></div>
 <p>In xafty, each function from step 2 becomes a node in the network. Instead of passing data to each function, we use <code><a href="reference/query.html">xafty::query()</a></code> to declare which input variables are needed.</p>
 <p>In order to retrieve data from the network, we simply tell <code><a href="reference/nascent.html">xafty::nascent()</a></code> which variables we want.</p>
 <p>xafty then</p>
@@ -243,7 +244,7 @@ Diagram illustrating a network pipeline, where each step is a node connected acc
 </ol>
 <p>For example, if we use the above network to query the following variables:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">xafty_network</span> <span class="op">|&gt;</span> <span class="fu"><a href="reference/nascent.html">nascent</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="st">"hp"</span>, engine <span class="op">=</span> <span class="st">"type"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="reference/query.html">query</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="st">"hp"</span>, engine <span class="op">=</span> <span class="st">"type"</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="reference/nascent.html">nascent</a></span><span class="op">(</span><span class="va">xafty_network</span><span class="op">)</span></span></code></pre></div>
 <p><strong>The resulting pipeline can be represented as follows:</strong></p>
 <figure><img src="reference/figures/Example_Sub_Pipeline.png" alt="Diagram illustrating the “collapsed” pipeline from a xafty network"><figcaption aria-hidden="true">
 Diagram illustrating the “collapsed” pipeline from a xafty network
@@ -258,7 +259,7 @@ Diagram illustrating the “collapsed” pipeline from a xafty network
 <p>And this is how we retrieve the object again from our network:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Write the object's name in squared brackets</span></span>
-<span><span class="va">xafty_network</span> <span class="op">|&gt;</span> <span class="fu"><a href="reference/nascent.html">nascent</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="st">"[mtcars_plot]"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/query.html">query</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="st">"[mtcars_plot]"</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="reference/nascent.html">nascent</a></span><span class="op">(</span><span class="va">xafty_network</span><span class="op">)</span></span>
 <span><span class="co"># As of now, only a single object per query might be retrieved from the network</span></span></code></pre></div>
 <p>This finally allows us to fully represent the functional pipeline from step 2 as a network pipeline.</p>
 </div>
@@ -286,7 +287,8 @@ Diagram illustrating the “collapsed” pipeline from a xafty network
 <li>
 <strong>Support for lossy transformations</strong> (e.g., <code>dplyr::group_by() / summarise()</code>), integrated seamlessly into a network structure</li>
 <li>
-<strong>A flexible filtering mechanism</strong> using a <code><a href="reference/where.html">where()</a></code> clause, providing fine-grained control over when filtering is applied</li>
+<strong>Added in 0.3.0:</strong> <del><strong>A flexible filtering mechanism</strong> using a <code><a href="reference/where.html">where()</a></code> clause, providing SQL-style filtering</del>
+</li>
 <li>
 <strong>Developer tooling</strong>, such as visualizations and printable summaries of network components, to make building with xafty easier</li>
 <li>

@@ -88,13 +88,13 @@ network
 #> Variables: drat, vs, hp, am, disp, cyl, carb, mpg, qsec, wt, gear
 
 # Querying a project by its name, will return all variables from that project
-mtcars <- nascent(network, query("mtcars"))
+mtcars <- query("mtcars") |> nascent(network)
 
 # Querying variables will only return the declared variables
-data <- nascent(network, query(mtcars = c("carb", "gear")))
+data <- query(mtcars = c("carb", "gear")) |> nascent(network)
 
 # Querying can also be done via unquoted symbols
-data <- nascent(network, carb, gear)
+data <- query(carb, gear) |> nascent(network)
 
 head(data)
 #>                   carb gear
@@ -115,7 +115,7 @@ register the function again into the network:
 ``` r
 
 # 1. retrieve data from the network
-data <- nascent(network, query(mtcars = c("hp", "wt")))
+data <- query(mtcars = c("hp", "wt")) |> nascent(network)
 
 # 2. write the transformation step
 add_power_to_weight <- function(data) {
@@ -290,7 +290,8 @@ behavior when they run.
 ``` r
 network$per_gear$add(add_mean_hp_per_gear(data = query(mtcars = "hp")))
 
-data <- nascent(network, query(mtcars = "gear", per_gear = "mean_hp_per_gear"))
+data <- query(mtcars = "gear", per_gear = "mean_hp_per_gear") |> 
+  nascent(network)
 
 head(data)
 #> # A tibble: 6 × 2
@@ -317,10 +318,9 @@ xafty handles filters through the
 function:
 
 ``` r
-qry <- query(per_gear = "mean_hp_per_gear", engine = "type") |> 
-  xafty::where(type == "Straight")
-
-data <- nascent(network, qry)
+data <- query(per_gear = "mean_hp_per_gear", engine = "type") |> 
+  xafty::where(type == "Straight") |> 
+  nascent(network)
 
 head(data)
 #> # A tibble: 6 × 2
@@ -350,8 +350,8 @@ constructs the directed acyclic graph for a given query and returns a
 list-object that describes the full pipeline:
 
 ``` r
-  dag <- build_dag(query(mtcars = c("gear"), per_gear = "mean_hp_per_gear", engine = "type"), 
-                   network = network)
+  dag <- query(mtcars = c("gear"), per_gear = "mean_hp_per_gear", engine = "type") |> 
+          build_dag(network)
 ```
 
 For example, the element `dag$execution_order` shows the exact order of
@@ -399,7 +399,7 @@ To retrieve an object from the network, we query its name using square
 brackets:
 
 ``` r
-nascent(network, query(objects = "[plot_mtcars]"))
+query(objects = "[plot_mtcars]") |> nascent(network)
 ```
 
 While objects are typically thought of as the final step in a pipeline,
@@ -456,10 +456,9 @@ when constructing the query:
 
 ``` r
 
-query_plot <- query(objects = "[plot_line]") |> 
-              with_state(line_colour = "blue")
-
-blue_line_plot <- nascent(network, query_plot)
+blue_line_plot <- query(objects = "[plot_line]") |> 
+  with_state(line_colour = "blue") |> 
+  nascent(network)  
 ```
 
 States turn an otherwise rigid network into a flexible execution
@@ -481,10 +480,11 @@ predefined join path to a query using
 
 ``` r
 
-query_join <- query(mtcars = "power_to_weight", engine = "type") |> 
-              add_join_path(path = c("mtcars", "engine"))
+data <- query(mtcars = "power_to_weight", engine = "type") |> 
+  add_join_path(path = c("mtcars", "engine")) |> 
+  nascent(network)
 
-head(nascent(network, query_join))
+head(data)
 #>   power_to_weight    type
 #> 1        41.98473 V-Shape
 #> 2        38.26087 V-Shape

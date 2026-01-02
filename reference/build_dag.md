@@ -9,12 +9,12 @@ evaluated with function: evaluate_dag
 ## Usage
 
 ``` r
-build_dag(..., network, frame = "main")
+build_dag(query, network, frame = "main")
 ```
 
 ## Arguments
 
-- ...:
+- query:
 
   A xafty query list object
 
