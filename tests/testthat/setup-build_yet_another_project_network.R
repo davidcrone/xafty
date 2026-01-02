@@ -104,7 +104,7 @@ main_network$main$join(join_main1(main = query(main = "id"), join1 = query(side1
 main_network$main$join(join_main2(main = query(main = "id"), join2 = query(side2 = "id")))
 main_network$main$join(join_main3(main = query(main = "id"), join3 = query(side3 = "id")))
 
-data_tornado <- main_network |> nascent(query(side1 = "col1", side2 = "col2", side3 = "col3"))
+data_tornado <- query(side1 = "col1", side2 = "col2", side3 = "col3") |> nascent(main_network)
 
 # Build simple wrapper
 

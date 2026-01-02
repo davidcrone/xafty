@@ -66,7 +66,7 @@ test_that("register add also works with xafty link instead of passing data into 
   xafty_link <- query(customer_data = c("score", "name"))
   test_state_1$customer_data$add(add_score_category(data = xafty_link))
   xafty_test_pull <- query(customer_data = c("name", "category"))
-  data_test <- test_state_1 |> nascent(xafty_test_pull)
+  data_test <- xafty_test_pull |> nascent(test_state_1)
   data_expected <- structure(row.names = c(NA, -5L), class = "data.frame",
     list(
     name = c("Alice", "Bob", "Charlie", "Diana", "Eve"),
@@ -85,7 +85,7 @@ test_that("A unjoined project's variable can be nascented from the network even 
   test_state_1$occupation$get(get_additional_info())
   test_state_1$customer_data$join(join_datasets(main_data = query(customer_data = "id"), extra_data = query(occupation = "id")))
   test_state_1$value_sheet$add(new_column_from_both_projects(query(occupation = "department", customer_data = "name")))
-  table_test <- test_state_1 |> nascent(value_sheet = "nickname")
+  table_test <- query(value_sheet = "nickname") |> nascent(test_state_1)
   table_expected <- structure(list(nickname = c("HRAlice", "ITBob", "FinanceCharlie",
                        "MarketingDiana", "SalesEve")), row.names = c(NA, -5L), class = "data.frame")
   expect_identical(table_test, table_expected)
@@ -102,7 +102,7 @@ test_that("A unjoined variable can be nascented from the network alongside tradi
   test_state_1$customer_data$join(join_datasets(main_data = query(customer_data = "id"), extra_data = query(occupation = "id")))
   test_state_1$value_sheet$add(new_column_from_both_projects(query(occupation = "department", customer_data = "name")))
   test_state_1$value_sheet$add(add_column_to_intelligence(data = query(occupation = "department", customer_data = "id", value_sheet = "nickname")))
-  table_test <- test_state_1 |> nascent(occupation = "department", value_sheet = "new_column")
+  table_test <- query(occupation = "department", value_sheet = "new_column") |> nascent(test_state_1)
   table_expected <- structure(list(
     department = c("HR", "IT", "Finance", "Marketing", "Sales"),
     new_column = c("HR1", "IT2", "Finance3", "Marketing4", "Sales5")), row.names = c(NA, -5L), class = "data.frame")

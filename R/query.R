@@ -6,7 +6,13 @@
 #' query(project_name1 = c("col1", "col2"), project_name2 = c("colA"))
 #' @export
 query <- function(...) {
-  .list_dots <- list(...)
+  .list_dots <- tryCatch(
+    list(...),
+    error = \(e) {
+      syms <- rlang::ensyms(...)
+      lapply(syms, \(sym) rlang::as_string(sym))
+    })
+
   li_query_raw <- list()
   for (i in seq_along(.list_dots)) {
     li_sub <- .list_dots[i]
@@ -142,12 +148,7 @@ get_projects <- function(query) {
 }
 
 dots_to_query <- function(network, ...)  {
-  query_raw <- tryCatch(
-    list(...),
-    error = \(e) {
-      syms <- rlang::ensyms(...)
-      lapply(syms, \(sym) rlang::as_string(sym))
-    })
+  query_raw <- list(...)
 
   # When only the network is provided, the user gets the following error
   # However only providing the network could also be used as a shorthand to query all projects with all columns within the network

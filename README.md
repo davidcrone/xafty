@@ -51,11 +51,10 @@ to change, and difficult for teams to collaborate on. As projects grow,
 this leads to duplicated logic, inconsistent results, and a constant
 need to rebuild work that already exists.
 
-xafty solves this by treating every transformation as a reusable node in
-a shared dependency graph. Instead of rewriting the same steps for every
-new project, teams compose pipelines from existing, validated building
-blocks. This makes data work more reliable, more maintainable, and far
-easier to extend over time.
+xafty treats analytics as a distributed knowledge system rather than a
+data processing system. It allows organizations to accumulate and
+recombine analytical knowledge incrementally, without central
+coordination or pipeline redesign.
 
 ## Installation
 
@@ -250,9 +249,10 @@ xafty_network$mtcars$join(join_engine_details(mtcars = query(mtcars = "vs"),
 xafty_network
 
 # Pull data as needed from the network in the desired column order
-xafty_network |> nascent(mtcars = c("hp", "wt", "vs"), 
-                         engine = "type", 
-                         mtcars = "power_to_weight")
+query(mtcars = c("hp", "wt", "vs"), 
+      engine = "type", 
+      mtcars = "power_to_weight") |>  
+      nascent(xafty_network)
 ```
 
 In xafty, each function from step 2 becomes a node in the network.
@@ -273,7 +273,7 @@ For example, if we use the above network to query the following
 variables:
 
 ``` r
-xafty_network |> nascent(mtcars = "hp", engine = "type")
+query(mtcars = "hp", engine = "type") |> nascent(xafty_network)
 ```
 
 **The resulting pipeline can be represented as follows:**
@@ -306,7 +306,7 @@ And this is how we retrieve the object again from our network:
 
 ``` r
 # Write the object's name in squared brackets
-xafty_network |> nascent(mtcars = "[mtcars_plot]")
+query(mtcars = "[mtcars_plot]") |> nascent(xafty_network)
 # As of now, only a single object per query might be retrieved from the network
 ```
 
@@ -343,8 +343,8 @@ features still need to be implemented:
 - **Support for lossy transformations** (e.g.,
   `dplyr::group_by() / summarise()`), integrated seamlessly into a
   network structure
-- **A flexible filtering mechanism** using a `where()` clause, providing
-  fine-grained control over when filtering is applied
+- **Added in 0.3.0:** ~~**A flexible filtering mechanism** using a
+  `where()` clause, providing SQL-style filtering~~
 - **Developer tooling**, such as visualizations and printable summaries
   of network components, to make building with xafty easier
 - **Robust testing and bug fixing** to ensure reliability at scale

@@ -1,11 +1,11 @@
 
 #' Retrieve Data from a xafty network
+#' @param query List.
 #' @param network A xafty network
-#' @param ... List.
 #' @export
-nascent <- function(network, ...) {
+nascent <- function(query, network) {
   stopifnot(inherits(network, "xafty_network"))
-  dag <- build_dag(network = network, ... = ...)
+  dag <- build_dag(query = query, network = network)
   data <- evaluate_dag(dag = dag)
   data
 }
@@ -15,13 +15,13 @@ nascent <- function(network, ...) {
 #' When querying an object, the xafty algorithm recursively iterates through the network and obtains all functions
 #' necessary. Before evaluating all functions, the xafty algorithm creates a dag-object which contains the full
 #' information about dependencies. The object can then be evaluated with function: evaluate_dag
-#' @param ... A xafty query list object
+#' @param query A xafty query list object
 #' @param network A xafty network
 #' @param frame Used for debugging
 #' @returns A list
 #' @export
-build_dag <- function(..., network, frame = "main") {
-  globals <- dots_to_query(network = network, ... = ...)
+build_dag <- function(query, network, frame = "main") {
+  globals <- dots_to_query(network = network, ... = query)
   if (inherits(globals$internal, "xafty_object_query")) {
     dag <- build_object_dag(globals = globals, network = network)
   } else {

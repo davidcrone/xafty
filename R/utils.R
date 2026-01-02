@@ -51,7 +51,7 @@ eval_args <- function(link, network) {
 
 evaluate_arg <- function(arg, xo, network) {
   if(xo %in% c("xafty_object", "xafty_query")) {
-    nascent(network, arg)
+    nascent(arg, network)
   } else if (xo == "xafty_state") {
     get_default_state(name = arg, network_env = network)
   } else {

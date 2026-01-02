@@ -190,9 +190,8 @@ xafty_network$mtcars$join(join_engine_details(mtcars = query(mtcars = "vs"),
 xafty_network
 
 # Pull data as needed from the network in the desired column order
-xafty_network |> nascent(mtcars = c("hp", "wt", "vs"), 
-                         engine = "type", 
-                         mtcars = "power_to_weight")
+query(mtcars = c("hp", "wt", "vs"), engine = "type", mtcars = "power_to_weight") |>  
+  nascent(xafty_network)
 
 ```
 In xafty, each function from step 2 becomes a node in the network. Instead of passing data to each function, we use `xafty::query()` to declare which input variables are needed. 
@@ -208,7 +207,7 @@ xafty then
 For example, if we use the above network to query the following variables:
 
 ``` r
-xafty_network |> nascent(mtcars = "hp", engine = "type")
+query(mtcars = "hp", engine = "type") |> nascent(xafty_network)
 ```
 **The resulting pipeline can be represented as follows:**
 
@@ -231,7 +230,7 @@ And this is how we retrieve the object again from our network:
 
 ``` r
 # Write the object's name in squared brackets
-xafty_network |> nascent(mtcars = "[mtcars_plot]")
+query(mtcars = "[mtcars_plot]") |> nascent(xafty_network)
 # As of now, only a single object per query might be retrieved from the network
 ```
 
@@ -255,7 +254,7 @@ Network-based pipelines open the door to many extensions and integrations. Below
 Version 1.0 aims to make xafty a practical solution for ~95% of everyday data-pipeline workflows. To reach that milestone, several essential features still need to be implemented:
 
 - **Support for lossy transformations** (e.g., `dplyr::group_by() / summarise()`), integrated seamlessly into a network structure
-- **A flexible filtering mechanism** using a `where()` clause, providing fine-grained control over when filtering is applied
+- **Added in 0.3.0:** ~~**A flexible filtering mechanism** using a `where()` clause, providing SQL-style filtering~~ 
 - **Developer tooling**, such as visualizations and printable summaries of network components, to make building with xafty easier
 - **Robust testing and bug fixing** to ensure reliability at scale
 
