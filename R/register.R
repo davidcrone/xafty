@@ -60,8 +60,8 @@ add_to_ruleset <- function(link, project, network,...) {
   function_name <- link$fun_name
   .dots <- list(...)
   func_type <- .dots[["func_type"]]
-  if(is.null(func_type)) func_type <- decide_link_func_type(link)
-  if(func_type== "join") {
+  if(func_type == "link") func_type <- decide_link_func_type(link)
+  if(func_type == "join") {
     projects <- unique(c(project, get_lead_projects( link)))
   } else {
     projects <- project

@@ -38,7 +38,7 @@ create_add_project <- function(network_env) {
   add_project <- function(name, ...) {
     validate_project_name(name = name, network = network_env)
     .network_env <- add_new_project(project = name, network_env = network_env,
-                                    func_types = c("get", "add", "join", "on_entry", "on_exit", "add_object"))
+                                    func_types = c("link", "on_entry", "on_exit", "add_object"))
     .network_env <- set_project_print_order(projects = name, network = .network_env)
     invisible(.network_env)
   }
@@ -106,17 +106,13 @@ compose_link_function <- function(project, network, func_type) {
 }
 
 bundle_link_functions <- function(project, network) {
-  get_fun <- compose_link_function(project = project, network = network, func_type = "get")
-  add_fun <- compose_link_function(project = project, network = network, func_type = "add")
-  join_fun <- compose_link_function(project = project, network = network, func_type = "join")
+  link_fun <- compose_link_function(project = project, network = network, func_type = "link")
   object_fun <- create_add_object(project = project, network = network, func_type = "object")
   on_entry_fun <- create_add_context(project = project, network = network, func_type = "entry")
   on_exit_fun <- create_add_context(project = project, network = network, func_type = "exit")
   list(
     "on_entry" = on_entry_fun,
-    "get" = get_fun,
-    "add" = add_fun,
-    "join" = join_fun,
+    "link" = link_fun,
     "add_object" = object_fun,
     "on_exit" = on_exit_fun
   )
@@ -150,7 +146,7 @@ merge_networks <- function(name, ...) {
     network_env <- passed_networks[[i]]
     for (project in vec_projects) {
       link_funs <- bundle_link_functions(project = project, network = new_network_env)
-      link_names <- c("get", "add", "join", "add_object")
+      link_names <- c("link", "add_object")
       project_env <- network_env[[project]]
       rm(list = link_names, envir = project_env)
       for (lp in link_names) {

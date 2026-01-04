@@ -173,17 +173,17 @@ xafty_network <- init_network("example_network", projects = c("mtcars", "engine"
 ## Register the functions in project "mtcars" ##
 
 # The function `get_mtcars()` is registered as a root node in the project "mtcars".
-xafty_network$mtcars$get(get_mtcars())
+xafty_network$mtcars$link(get_mtcars())
 
 # Instead of passing data to `add_power_to_weight`, we register a dependency using query()
-xafty_network$mtcars$add(add_power_to_weight(mtcars = query(mtcars = c("hp", "wt"))))
+xafty_network$mtcars$link(add_power_to_weight(mtcars = query(mtcars = c("hp", "wt"))))
 
 ## Register the function `get_engine_details()` in project "engine" ##
-xafty_network$engine$get(get_engine_details())
+xafty_network$engine$link(get_engine_details())
 
 # Finally, we register the join between the two projects, 
 # by passing two separate queries to the respective parameters
-xafty_network$mtcars$join(join_engine_details(mtcars = query(mtcars = "vs"),
+xafty_network$mtcars$link(join_engine_details(mtcars = query(mtcars = "vs"),
                                               engine = query(engine = "vs")))
 
 # Inspect the network
@@ -207,7 +207,7 @@ xafty then
 For example, if we use the above network to query the following variables:
 
 ``` r
-query(mtcars = "hp", engine = "type") |> nascent(xafty_network)
+query(hp, type) |> nascent(xafty_network)
 ```
 **The resulting pipeline can be represented as follows:**
 

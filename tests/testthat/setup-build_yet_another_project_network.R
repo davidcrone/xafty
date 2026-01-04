@@ -41,13 +41,13 @@ test_join_car_id <- function(data_left, data_right) {
 xafty_network <- init_network("xafty_network")
 xafty_network$add_project("test1")
 
-xafty_network$test1$get(test_get_car_data(conn = TRUE))
-xafty_network$test1$add(test_add_car_color(data = query(test1 = c("Has_Drivers_License", "Name", "Car"))))
+xafty_network$test1$link(test_get_car_data(conn = TRUE))
+xafty_network$test1$link(test_add_car_color(data = query(test1 = c("Has_Drivers_License", "Name", "Car"))))
 
 xafty_network$add_project("test2")
-xafty_network$test2$get(test_get_car_color_id())
+xafty_network$test2$link(test_get_car_color_id())
 
-xafty_network$test1$join(fun = test_join_car_id(data_right = query(test2 = "Car_Color"), data_left = query(test1 = "Car_Color")))
+xafty_network$test1$link(fun = test_join_car_id(data_right = query(test2 = "Car_Color"), data_left = query(test1 = "Car_Color")))
 
 # setup tornado
 
@@ -94,15 +94,15 @@ main_network$add_project("side2")
 main_network$add_project("side3")
 
 # register all get functions
-main_network$main$get(get_main_tornado())
-main_network$side1$get(get_join_1())
-main_network$side2$get(get_join_2())
-main_network$side3$get(get_join_3())
+main_network$main$link(get_main_tornado())
+main_network$side1$link(get_join_1())
+main_network$side2$link(get_join_2())
+main_network$side3$link(get_join_3())
 
 # join all side projects with main
-main_network$main$join(join_main1(main = query(main = "id"), join1 = query(side1 = "id")))
-main_network$main$join(join_main2(main = query(main = "id"), join2 = query(side2 = "id")))
-main_network$main$join(join_main3(main = query(main = "id"), join3 = query(side3 = "id")))
+main_network$main$link(join_main1(main = query(main = "id"), join1 = query(side1 = "id")))
+main_network$main$link(join_main2(main = query(main = "id"), join2 = query(side2 = "id")))
+main_network$main$link(join_main3(main = query(main = "id"), join3 = query(side3 = "id")))
 
 data_tornado <- query(side1 = "col1", side2 = "col2", side3 = "col3") |> nascent(main_network)
 
