@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">xafty</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -213,27 +213,25 @@ Diagram illustrating a network pipeline, where each step is a node connected acc
 <span><span class="co">## Register the functions in project "mtcars" ##</span></span>
 <span></span>
 <span><span class="co"># The function `get_mtcars()` is registered as a root node in the project "mtcars".</span></span>
-<span><span class="va">xafty_network</span><span class="op">$</span><span class="va">mtcars</span><span class="op">$</span><span class="fu">get</span><span class="op">(</span><span class="fu">get_mtcars</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">xafty_network</span><span class="op">$</span><span class="va">mtcars</span><span class="op">$</span><span class="fu">link</span><span class="op">(</span><span class="fu">get_mtcars</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Instead of passing data to `add_power_to_weight`, we register a dependency using query()</span></span>
-<span><span class="va">xafty_network</span><span class="op">$</span><span class="va">mtcars</span><span class="op">$</span><span class="fu">add</span><span class="op">(</span><span class="fu">add_power_to_weight</span><span class="op">(</span>mtcars <span class="op">=</span> <span class="fu"><a href="reference/query.html">query</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"hp"</span>, <span class="st">"wt"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">xafty_network</span><span class="op">$</span><span class="va">mtcars</span><span class="op">$</span><span class="fu">link</span><span class="op">(</span><span class="fu">add_power_to_weight</span><span class="op">(</span>mtcars <span class="op">=</span> <span class="fu"><a href="reference/query.html">query</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"hp"</span>, <span class="st">"wt"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co">## Register the function `get_engine_details()` in project "engine" ##</span></span>
-<span><span class="va">xafty_network</span><span class="op">$</span><span class="va">engine</span><span class="op">$</span><span class="fu">get</span><span class="op">(</span><span class="fu">get_engine_details</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">xafty_network</span><span class="op">$</span><span class="va">engine</span><span class="op">$</span><span class="fu">link</span><span class="op">(</span><span class="fu">get_engine_details</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Finally, we register the join between the two projects, </span></span>
 <span><span class="co"># by passing two separate queries to the respective parameters</span></span>
-<span><span class="va">xafty_network</span><span class="op">$</span><span class="va">mtcars</span><span class="op">$</span><span class="fu">join</span><span class="op">(</span><span class="fu">join_engine_details</span><span class="op">(</span>mtcars <span class="op">=</span> <span class="fu"><a href="reference/query.html">query</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="st">"vs"</span><span class="op">)</span>,</span>
+<span><span class="va">xafty_network</span><span class="op">$</span><span class="va">mtcars</span><span class="op">$</span><span class="fu">link</span><span class="op">(</span><span class="fu">join_engine_details</span><span class="op">(</span>mtcars <span class="op">=</span> <span class="fu"><a href="reference/query.html">query</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="st">"vs"</span><span class="op">)</span>,</span>
 <span>                                              engine <span class="op">=</span> <span class="fu"><a href="reference/query.html">query</a></span><span class="op">(</span>engine <span class="op">=</span> <span class="st">"vs"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Inspect the network</span></span>
 <span><span class="va">xafty_network</span></span>
 <span></span>
 <span><span class="co"># Pull data as needed from the network in the desired column order</span></span>
-<span><span class="fu"><a href="reference/query.html">query</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"hp"</span>, <span class="st">"wt"</span>, <span class="st">"vs"</span><span class="op">)</span>, </span>
-<span>      engine <span class="op">=</span> <span class="st">"type"</span>, </span>
-<span>      mtcars <span class="op">=</span> <span class="st">"power_to_weight"</span><span class="op">)</span> <span class="op">|&gt;</span>  </span>
-<span>      <span class="fu"><a href="reference/nascent.html">nascent</a></span><span class="op">(</span><span class="va">xafty_network</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="reference/query.html">query</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"hp"</span>, <span class="st">"wt"</span>, <span class="st">"vs"</span><span class="op">)</span>, engine <span class="op">=</span> <span class="st">"type"</span>, mtcars <span class="op">=</span> <span class="st">"power_to_weight"</span><span class="op">)</span> <span class="op">|&gt;</span>  </span>
+<span>  <span class="fu"><a href="reference/nascent.html">nascent</a></span><span class="op">(</span><span class="va">xafty_network</span><span class="op">)</span></span></code></pre></div>
 <p>In xafty, each function from step 2 becomes a node in the network. Instead of passing data to each function, we use <code><a href="reference/query.html">xafty::query()</a></code> to declare which input variables are needed.</p>
 <p>In order to retrieve data from the network, we simply tell <code><a href="reference/nascent.html">xafty::nascent()</a></code> which variables we want.</p>
 <p>xafty then</p>

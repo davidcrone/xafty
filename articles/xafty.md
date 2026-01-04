@@ -69,7 +69,7 @@ To start building a network pipeline, we register the function into the
 `mtcars` project:
 
 ``` r
-network$mtcars$get(get_mtcars())
+network$mtcars$link(get_mtcars())
 ```
 
 Since the function `get_mtcars` has no dependencies, it is automatically
@@ -124,7 +124,7 @@ add_power_to_weight <- function(data) {
 }
 
 # 3. register the step to the network
-network$mtcars$add(add_power_to_weight(data = query(mtcars = c("hp", "wt"))))
+network$mtcars$link(add_power_to_weight(data = query(mtcars = c("hp", "wt"))))
 ```
 
 When registering a transformation step in the network, we do not pass
@@ -141,7 +141,7 @@ function by explicitly stating which variables it adds to the network
 using the parameter `vars`:
 
 ``` r
-network$mtcars$add(fun = add_power_to_weight(data = query(mtcars = c("hp", "wt"))), 
+network$mtcars$link(fun = add_power_to_weight(data = query(mtcars = c("hp", "wt"))), 
                    vars = "power_to_weight", update = TRUE)
 # Note: Setting update = TRUE prevents the network from asking
 # whether an already registered function should be updated.
@@ -187,7 +187,7 @@ get_engine_details <- function() {
   engine
 }
 
-network$engine$get(get_engine_details())
+network$engine$link(get_engine_details())
 ```
 
 The join is then added to the network as another transformation step. We
@@ -200,7 +200,7 @@ join_engine_details <- function(mtcars, engine) {
   joined
 }
 
-network$engine$join(join_engine_details(mtcars = query(mtcars = "vs"),
+network$engine$link(join_engine_details(mtcars = query(mtcars = "vs"),
                                         engine = query(engine = "vs")))
 ```
 
@@ -225,7 +225,7 @@ add_combined_label <- function(data) {
   data
 }
 
-network$mtcars$add(add_combined_label(data = query(mtcars = "am", engine = "type")))
+network$mtcars$link(add_combined_label(data = query(mtcars = "am", engine = "type")))
 ```
 
 ### Grouped Operations
@@ -288,7 +288,7 @@ Now, all nodes registered in `per_gear` will inherit this grouping
 behavior when they run.
 
 ``` r
-network$per_gear$add(add_mean_hp_per_gear(data = query(mtcars = "hp")))
+network$per_gear$link(add_mean_hp_per_gear(data = query(mtcars = "hp")))
 
 data <- query(mtcars = "gear", per_gear = "mean_hp_per_gear") |> 
   nascent(network)

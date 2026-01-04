@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">xafty</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -113,7 +113,7 @@ and the transformation steps that operate on it.</p>
 <p>To start building a network pipeline, we register the function into
 the <code>mtcars</code> project:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">network</span><span class="op">$</span><span class="va">mtcars</span><span class="op">$</span><span class="fu">get</span><span class="op">(</span><span class="fu">get_mtcars</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">network</span><span class="op">$</span><span class="va">mtcars</span><span class="op">$</span><span class="fu">link</span><span class="op">(</span><span class="fu">get_mtcars</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>Since the function <code>get_mtcars</code> has no dependencies, it is
 automatically set as the root node of the project.
 <strong>Note:</strong> currently, xafty expects a project to have only
@@ -163,7 +163,7 @@ register the function again into the network:</p>
 <span><span class="op">}</span></span>
 <span></span>
 <span><span class="co"># 3. register the step to the network</span></span>
-<span><span class="va">network</span><span class="op">$</span><span class="va">mtcars</span><span class="op">$</span><span class="fu">add</span><span class="op">(</span><span class="fu">add_power_to_weight</span><span class="op">(</span>data <span class="op">=</span> <span class="fu"><a href="../reference/query.html">query</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"hp"</span>, <span class="st">"wt"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">network</span><span class="op">$</span><span class="va">mtcars</span><span class="op">$</span><span class="fu">link</span><span class="op">(</span><span class="fu">add_power_to_weight</span><span class="op">(</span>data <span class="op">=</span> <span class="fu"><a href="../reference/query.html">query</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"hp"</span>, <span class="st">"wt"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>When registering a transformation step in the network, we do not pass
 data directly to the function. Instead, we declare the required inputs
 using <code><a href="../reference/query.html">xafty::query</a></code>. Internally, this query is resolved by
@@ -174,7 +174,7 @@ contributes.</p>
 function by explicitly stating which variables it adds to the network
 using the parameter <code>vars</code>:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">network</span><span class="op">$</span><span class="va">mtcars</span><span class="op">$</span><span class="fu">add</span><span class="op">(</span>fun <span class="op">=</span> <span class="fu">add_power_to_weight</span><span class="op">(</span>data <span class="op">=</span> <span class="fu"><a href="../reference/query.html">query</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"hp"</span>, <span class="st">"wt"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>, </span>
+<code class="sourceCode R"><span><span class="va">network</span><span class="op">$</span><span class="va">mtcars</span><span class="op">$</span><span class="fu">link</span><span class="op">(</span>fun <span class="op">=</span> <span class="fu">add_power_to_weight</span><span class="op">(</span>data <span class="op">=</span> <span class="fu"><a href="../reference/query.html">query</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"hp"</span>, <span class="st">"wt"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>, </span>
 <span>                   vars <span class="op">=</span> <span class="st">"power_to_weight"</span>, update <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="co"># Note: Setting update = TRUE prevents the network from asking</span></span>
 <span><span class="co"># whether an already registered function should be updated.</span></span></code></pre></div>
@@ -219,7 +219,7 @@ with another root node:</p>
 <span>  <span class="va">engine</span></span>
 <span><span class="op">}</span></span>
 <span></span>
-<span><span class="va">network</span><span class="op">$</span><span class="va">engine</span><span class="op">$</span><span class="fu">get</span><span class="op">(</span><span class="fu">get_engine_details</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">network</span><span class="op">$</span><span class="va">engine</span><span class="op">$</span><span class="fu">link</span><span class="op">(</span><span class="fu">get_engine_details</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>The join is then added to the network as another transformation step.
 We tell the network that we wish to register a join by passing two
 separate query-calls to the function:</p>
@@ -229,7 +229,7 @@ separate query-calls to the function:</p>
 <span>  <span class="va">joined</span></span>
 <span><span class="op">}</span></span>
 <span></span>
-<span><span class="va">network</span><span class="op">$</span><span class="va">engine</span><span class="op">$</span><span class="fu">join</span><span class="op">(</span><span class="fu">join_engine_details</span><span class="op">(</span>mtcars <span class="op">=</span> <span class="fu"><a href="../reference/query.html">query</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="st">"vs"</span><span class="op">)</span>,</span>
+<span><span class="va">network</span><span class="op">$</span><span class="va">engine</span><span class="op">$</span><span class="fu">link</span><span class="op">(</span><span class="fu">join_engine_details</span><span class="op">(</span>mtcars <span class="op">=</span> <span class="fu"><a href="../reference/query.html">query</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="st">"vs"</span><span class="op">)</span>,</span>
 <span>                                        engine <span class="op">=</span> <span class="fu"><a href="../reference/query.html">query</a></span><span class="op">(</span>engine <span class="op">=</span> <span class="st">"vs"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>At the moment, joins are treated as symmetrical operations. As a
 result, the network supports only one join definition for each pair of
@@ -249,7 +249,7 @@ different projects with root nodes:</p>
 <span>  <span class="va">data</span></span>
 <span><span class="op">}</span></span>
 <span></span>
-<span><span class="va">network</span><span class="op">$</span><span class="va">mtcars</span><span class="op">$</span><span class="fu">add</span><span class="op">(</span><span class="fu">add_combined_label</span><span class="op">(</span>data <span class="op">=</span> <span class="fu"><a href="../reference/query.html">query</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="st">"am"</span>, engine <span class="op">=</span> <span class="st">"type"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">network</span><span class="op">$</span><span class="va">mtcars</span><span class="op">$</span><span class="fu">link</span><span class="op">(</span><span class="fu">add_combined_label</span><span class="op">(</span>data <span class="op">=</span> <span class="fu"><a href="../reference/query.html">query</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="st">"am"</span>, engine <span class="op">=</span> <span class="st">"type"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="grouped-operations">Grouped Operations<a class="anchor" aria-label="anchor" href="#grouped-operations"></a>
@@ -298,7 +298,7 @@ exit nodes.</p>
 <p>Now, all nodes registered in <code>per_gear</code> will inherit this
 grouping behavior when they run.</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">network</span><span class="op">$</span><span class="va">per_gear</span><span class="op">$</span><span class="fu">add</span><span class="op">(</span><span class="fu">add_mean_hp_per_gear</span><span class="op">(</span>data <span class="op">=</span> <span class="fu"><a href="../reference/query.html">query</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="st">"hp"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">network</span><span class="op">$</span><span class="va">per_gear</span><span class="op">$</span><span class="fu">link</span><span class="op">(</span><span class="fu">add_mean_hp_per_gear</span><span class="op">(</span>data <span class="op">=</span> <span class="fu"><a href="../reference/query.html">query</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="st">"hp"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/query.html">query</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="st">"gear"</span>, per_gear <span class="op">=</span> <span class="st">"mean_hp_per_gear"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="../reference/nascent.html">nascent</a></span><span class="op">(</span><span class="va">network</span><span class="op">)</span></span>
