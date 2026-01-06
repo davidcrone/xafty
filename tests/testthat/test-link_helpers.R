@@ -4,6 +4,7 @@ test_that("get_xafty_objects_vec returns an empty vector when no args are presen
   test_vec <- get_xafty_objects_vec(test_link)
   expected_vec <- character(0)
   expect_identical(test_vec, expected_vec)
+  expect_identical(test_link$type, "get")
 })
 
 test_that("get_xafty_objects_vec returns 'xafty_query' when a xafty_query is passed as an argument", {
@@ -11,6 +12,7 @@ test_that("get_xafty_objects_vec returns 'xafty_query' when a xafty_query is pas
   test_vec <- get_xafty_objects_vec(test_link)
   expected_vec <- c(data = "xafty_query")
   expect_identical(test_vec, expected_vec)
+  expect_identical(test_link$type, "add")
 })
 
 test_that("get_xafty_objects_vec returns 'xafty_query' of length 2 when a xafty_query is passed in two arguments", {
@@ -18,6 +20,7 @@ test_that("get_xafty_objects_vec returns 'xafty_query' of length 2 when a xafty_
   test_vec <- get_xafty_objects_vec(test_link)
   expected_vec <- c(main_data = "xafty_query", extra_data = "xafty_query")
   expect_identical(test_vec, expected_vec)
+  expect_identical(test_link$type, "join")
 })
 
 test_that("get_xafty_objects_vec returns 'none_xafty_object' when neither a query nor a state was passed into the arg", {
@@ -41,7 +44,7 @@ test_that("get_queries returns an empty list when no queries are present in args
   expect_identical(test_query, expected_query)
 })
 
-test_that("get_queries returns an empty list of all argumentsa are non_xafty_objects", {
+test_that("get_queries returns an empty list if all arguments are non_xafty_objects", {
   test_link <- test_create_link(join_datasets(main_data = FALSE, extra_data = NULL), vars = character(0))
   test_query <- get_queries(test_link)
   expected_query <- list()

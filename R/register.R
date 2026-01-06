@@ -12,8 +12,32 @@
 register <- function(quosure, project, network, link_type, ...) {
   link <- create_link(quosure = quosure, project = project, link_type = link_type, network = network, ... = ...)
   validate_network_integrity(link = link, network = network)
+  add_to_settings(link = link, network = network, ... = ...)
   add_to_ruleset(link = link, project = project, network = network, ... = ...)
   add_to_network(link = link, project = project, network = network, ... = ...)
+  invisible(network)
+}
+
+add_to_settings <- function(link, network, ... = ...) {
+  .dots <- list(...)
+  df_projects <- network$settings$projects$print_order
+  type <- link$type
+  # Root Node registered
+  if(type == "get") {
+    project <- link$project
+    node <- link$fun_name
+    root_node <- df_projects$root[df_projects$project == project]
+    if(is.na(root_node)) {
+      df_projects$root[df_projects$project == project] <- node
+    } else if (root_node != node) {
+      update <- isTRUE(.dots[["update"]])
+      if(!update) {
+        warning(paste0("Project '",  project, "' already has a root node. Replacing current root node: '", root_node, "' with new root node: '", node, "'."))
+      }
+      df_projects$root[df_projects$project == project] <- node
+    }
+  }
+  network$settings$projects$print_order <- df_projects
   invisible(network)
 }
 
@@ -21,6 +45,7 @@ add_to_network <- function(link, project, network, ...) {
   .dots <- list(...)
   project_env <- network[[project]]
   fun_name <- link$fun_name
+  project <- link$project
 
   if (inherits(link, "query_link")) {
     variables <- link$variables
@@ -34,20 +59,17 @@ add_to_network <- function(link, project, network, ...) {
     variables <- link$name
   }
 
-  if(!is.null(.dots[["func_type"]])) {
-    project <- link$project
-    if(.dots[["func_type"]] == "entry") {
-      current_entries <- network[[project]]$wrappers$on_entry
-      if(!link$fun_name %in% current_entries) {
-        new_entries <- c(current_entries, link$fun_name)
-        network[[project]]$wrappers$on_entry <- new_entries
-      }
-    } else if (.dots[["func_type"]] == "exit") {
-      current_exits <- network[[project]]$wrappers$on_exit
-      if(!link$fun_name %in% current_exits) {
-        new_exits <- c(current_exits, link$fun_name)
-        network[[project]]$wrappers$on_exit <- new_exits
-      }
+  if(link$type == "entry") {
+    current_entries <- network[[project]]$wrappers$on_entry
+    if(!link$fun_name %in% current_entries) {
+      new_entries <- c(current_entries, link$fun_name)
+      network[[project]]$wrappers$on_entry <- new_entries
+    }
+  } else if (link$type == "exit") {
+    current_exits <- network[[project]]$wrappers$on_exit
+    if(!link$fun_name %in% current_exits) {
+      new_exits <- c(current_exits, link$fun_name)
+      network[[project]]$wrappers$on_exit <- new_exits
     }
   }
   for (variable in variables) {
@@ -56,13 +78,11 @@ add_to_network <- function(link, project, network, ...) {
   invisible(network)
 }
 
-add_to_ruleset <- function(link, project, network,...) {
+add_to_ruleset <- function(link, project, network, ...) {
   function_name <- link$fun_name
   .dots <- list(...)
-  func_type <- .dots[["func_type"]]
-  if(func_type == "link") func_type <- decide_link_func_type(link)
-  if(func_type == "join") {
-    projects <- unique(c(project, get_lead_projects( link)))
+  if(link$type == "join") {
+    projects <- unique(c(project, get_lead_projects(link)))
   } else {
     projects <- project
   }
@@ -130,19 +150,19 @@ get_function_package <- function(func_name) {
 
 create_link <- function(quosure, project, link_type, network, ...) {
   .dots <- list(...)
-  link <- create_base_link(quosure = quosure, project = project)
+  link <- create_base_link(quosure = quosure, project = project, link_type = link_type)
   if (link_type == "query") {
     link <- link_add_variables(link = link, variable_names = .dots[["vars"]], network = network)
   } else if (link_type == "context") {
     link <- link_add_context(link = link, name = .dots[["name"]], func_type = .dots[["func_type"]])
   } else if (link_type == "object") {
-    link <- link_add_object(link = link, name = .dots[["name"]])
+    link <- link_add_object(link = link, name = .dots[["name"]], func_type = .dots[["func_type"]])
   }
   link <- link_add_joins(link = link, network = network)
   link
 }
 
-create_base_link <- function(quosure, project) {
+create_base_link <- function(quosure, project, link_type = NULL) {
   fun_exp <- rlang::get_expr(quosure)
   fun_env <- rlang::get_env(quosure)
   list_args <- unpack_args(exp = fun_exp, env = fun_env)
@@ -154,6 +174,7 @@ create_base_link <- function(quosure, project) {
   )
   link <- append(list_args, list_info)
   class(link) <- c("list", "link")
+  link$type <- determine_link_type(args = list_args$args, link_type = link_type)
   link
 }
 
@@ -165,11 +186,12 @@ link_add_context <- function(link, name, func_type) {
   } else {
     link$name <- link$fun_name
   }
+  link$type <- func_type
   class(link) <- c("list", "link", "context_link")
   link
 }
 
-link_add_object <- function(link, name = NULL) {
+link_add_object <- function(link, name = NULL, func_type) {
   if(!is.null(name)) {
     is_squared_already <- is_squared_variable(name)
     if(!is_squared_already) obj_name <- paste0("[", name, "]")
@@ -178,6 +200,7 @@ link_add_object <- function(link, name = NULL) {
   } else {
     link$name <- NULL
   }
+  link$type <- func_type
   class(link) <- c("list", "link", "object_link")
   link
 }
@@ -281,15 +304,24 @@ validate_query <- function(name, project, network) {
   invisible(TRUE)
 }
 
-decide_link_func_type <- function(link) {
-  is_query_list <- vapply(link$args, \(arg) inherits(arg, "xafty_query_list"), FUN.VALUE = logical(1))
-  n_queries <- sum(is_query_list)
-  if (n_queries == 0) {
-    link_func_type <- "get"
-  } else if (n_queries == 1) {
-    link_func_type <- "add"
+determine_link_type <- function(args, link_type) {
+  if(is.null(link_type)) return(NULL)
+  if(link_type == "query") {
+    if(length(args) == 0) {
+      n_queries <- 0
+    } else {
+      is_query_list <- vapply(args, \(arg) inherits(arg, "xafty_query_list"), FUN.VALUE = logical(1))
+      n_queries <- sum(is_query_list)
+    }
+    if (n_queries == 0) {
+      link_func_type <- "get"
+    } else if (n_queries == 1) {
+      link_func_type <- "add"
+    } else {
+      link_func_type <- "join"
+    }
   } else {
-    link_func_type <- "join"
+    link_func_type <- NULL
   }
   link_func_type
 }

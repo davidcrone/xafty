@@ -23,7 +23,7 @@ test_that("Register builds a add node in the network environment correctly", {
   project_env <- init_network(name = "project_env")
   project_env$add_project("test")
   project_env$test$link(test_get_function(arg1 = list(1, 2), arg2 = TRUE, comment = "clear", 1:3))
-  project_env$test$link(test_add_function(arg1 = test_get_function()))
+  project_env$test$link(test_add_function(arg1 = test_get_function()), update = TRUE)
   expect_equal(names(project_env$test$variables), c("a", "b", "c"))
   expect_equal(project_env$test$variables$c, "test_add_function")
 })
@@ -47,7 +47,7 @@ test_that("Register builds a join node in the network environment correctly", {
   project_env <- init_network(name = "project_env")
   project_env$add_project("test")
   project_env$test$link(test_get_function(arg1 = list(1, 2), arg2 = TRUE, comment = "clear", 1:3), vars = c("a", "b"))
-  project_env$test$link(test_add_function(arg1 = test_get_function()))
+  project_env$test$link(test_add_function(arg1 = test_get_function()), update = TRUE)
 
   project_env$add_project("test2")
   project_env$test2$link(test2_get_function())

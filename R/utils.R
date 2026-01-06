@@ -8,7 +8,11 @@ print.xafty_network <- function(x, ...) {
   network_name <- x$settings$network_name
   values_in_x <- names(x)
   projects <- x$settings$projects$print_order$project
-  cat(paste0("Number of projects in network '", network_name, "': ", length(projects), "\n"))
+  cat("---\n")
+  cat("\U1F4CA", network_name, "\n")
+  cat("\n")
+  cat("\U1F4C1 ", "Projects (", length(projects), "):\n", sep = "")
+
   if(length(projects) > 0) {
     cat("\n")
   } else {

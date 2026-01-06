@@ -6,8 +6,9 @@ settings <- function(network_name) {
       state = list(
         global_default = NULL
       ),
+      # Data.Frame must have zero rows upon creation
       projects = list(
-        print_order = data.frame(project = character(), order = integer())
+        print_order = data.frame(project = character(0), order = integer(0), root = character(0))
       )
     )
 }
@@ -69,11 +70,21 @@ set_project_print_order <- function(projects, order = NULL, network) {
       df_project_order$order[df_project_order$project == project] <- ord
     } else {
       if(!project %in% names(network)) stop(paste0("Project '", project, "' is not present in network '", network$settings$network_name, "'."))
-      df_single <- data.frame(project = project, order = ord)
+      # Add newly created project to print order df
+      df_single <- create_single_order_df(df_projects = df_project_order, project = project, order = ord)
       df_project_order <- rbind(df_project_order, df_single)
     }
   }
   df_project_order_ordered <- df_project_order[order(df_project_order$order), ]
   network$settings$projects$print_order <- df_project_order_ordered
   invisible(network)
+}
+
+create_single_order_df <- function(df_projects, project, order) {
+  coln <- colnames(df_projects)
+  mtrx <- as.data.frame(matrix(ncol = length(coln)))
+  colnames(mtrx) <- coln
+  mtrx$project <- project
+  mtrx$order <- order
+  mtrx
 }
