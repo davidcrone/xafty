@@ -150,7 +150,7 @@ get_function_package <- function(func_name) {
 
 create_link <- function(quosure, project, link_type, network, ...) {
   .dots <- list(...)
-  link <- create_base_link(quosure = quosure, project = project, link_type = link_type)
+  link <- create_base_link(quosure = quosure, project = project, network = network, link_type = link_type)
   if (link_type == "query") {
     link <- link_add_variables(link = link, variable_names = .dots[["vars"]], network = network)
   } else if (link_type == "context") {
@@ -162,7 +162,7 @@ create_link <- function(quosure, project, link_type, network, ...) {
   link
 }
 
-create_base_link <- function(quosure, project, link_type = NULL) {
+create_base_link <- function(quosure, project, network, link_type = NULL) {
   fun_exp <- rlang::get_expr(quosure)
   fun_env <- rlang::get_env(quosure)
   list_args <- unpack_args(exp = fun_exp, env = fun_env)
@@ -213,6 +213,7 @@ link_add_variables <- function(link, variable_names = NULL, network) {
     link$variables <- get_added_variables(link = link, network = network)
   }
   class(link) <- c("list", "link", "query_link")
+  link$layer <- determine_layer(link = link, network = network)
   link
 }
 
@@ -324,4 +325,25 @@ determine_link_type <- function(args, link_type) {
     link_func_type <- NULL
   }
   link_func_type
+}
+
+determine_layer <- function(link, network) {
+  type <- link$type
+  if(type == "get") return(0)
+  if(type == "add") {
+    project <- link$project
+    xafty_vec <- vapply(link$args, find_xafty_objects, FUN.VALUE = character(1))
+    arg_name <- names(xafty_vec)[xafty_vec == "xafty_query"]
+    states_list <- sapply(network$states, \(state) state$default, simplify = FALSE, USE.NAMES = TRUE)
+    qry <- interpolate_state_in_query(merge_queries(link$args[[arg_name]]), state_list = states_list, network_env = network)
+    is_project <- get_projects(qry) %in% project
+    if(!any(is_project)) return(1) # impure non root
+    ruleset <- network[[project]]$ruleset
+    sub_qry <- qry[[which(is_project)]]
+    funcs <- unique(vapply(sub_qry$select, \(sel) network[[project]]$variables[[sel]], FUN.VALUE = character(1)))
+    layer <- max(vapply(funcs, \(fun) ruleset[[fun]]$layer, FUN.VALUE = numeric(1))) + 1
+  } else if (type == "join") {
+    layer <- NULL
+  }
+  layer
 }

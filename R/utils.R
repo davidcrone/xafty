@@ -11,41 +11,76 @@ print.xafty_network <- function(x, ...) {
   cat("---\n")
   cat("\U1F4CA", network_name, "\n")
   cat("\n")
-  cat("\U1F4C1 ", "Projects (", length(projects), "):\n", sep = "")
+  cat("\U1F332 ", "Projects (", length(projects), "):\n", sep = "")
 
   if(length(projects) > 0) {
+    cat("  │")
     cat("\n")
   } else {
     cat("\U1F4A1 ", "\033[3mHint: Add a project to your network like this: network$add_project(\"my_project_name\")\033[0m\n", sep = "")
   }
+
   for(i in seq_along(projects)) {
     project <- projects[i]
-    variable_names <- names(x[[project]]$variables)
-    joined_projects <- names(x[[project]]$joined_projects)
-    variables_classified <- vapply(variable_names, \(name) get_variable_link_type(name = name, project = project, network = x), FUN.VALUE = character(1))
-    variables <- variable_names[variables_classified == "query_link"]
-    context <- variable_names[variables_classified == "context_link"]
-    objects <- variable_names[variables_classified == "object_link"]
-
-    cat(paste0("Project: ", project, "\n"))
-    if(length(variables) > 0) {
-      variables_print <- paste0(variables, collapse = ", ")
-      cat(paste0("Variables: ", variables_print, "\n"))
-    }
-    if(length(context) > 0) {
-      context_print <- paste0(context, collapse = ", ")
-      cat(paste0("Context: ", context_print, "\n"))
-    }
-    if(length(objects) > 0) {
-      objects_print <- paste0(paste0("[", objects, "]"), collapse = ", ")
-      cat(paste0("Objects: ", objects_print, "\n"))
-    }
-    if(length(joined_projects) > 0) {
-      joins_print <- paste0(joined_projects, collapse = ", ")
-      cat(paste0("Joins: ", joins_print, "\n"))
-    }
-    if(i < length(projects)) cat("\n")
+    print_project(project = project, network = x)
+    # context <- variable_names[variables_classified == "context_link"]
+    # objects <- variable_names[variables_classified == "object_link"]
+    # if(length(context) > 0) {
+    #   context_print <- paste0(context, collapse = ", ")
+    #   cat(paste0("Context: ", context_print, "\n"))
+    # }
+    # if(length(objects) > 0) {
+    #   objects_print <- paste0(paste0("[", objects, "]"), collapse = ", ")
+    #   cat(paste0("Objects: ", objects_print, "\n"))
+    # }
+    # if(length(joined_projects) > 0) {
+    #   joins_print <- paste0(joined_projects, collapse = ", ")
+    #   cat(paste0("Joins: ", joins_print, "\n"))
   }
+  print_joins(project, network = x)
+}
+
+print_project <- function(project, network) {
+  df_print <- network$settings$projects$print_order
+  project_env <- network[[project]]
+  ruleset <- project_env$ruleset
+  contents <- names(project_env$variables)
+  variables_classified <- vapply(contents, \(name) get_variable_link_type(name = name, project = project, network = network), FUN.VALUE = character(1))
+  variables <- contents[variables_classified == "query_link"]
+
+  is_last_project <- which(df_print$project == project) == nrow(df_print)
+
+  if(!is_last_project) {
+      downwards <- "  |"
+      project_close <- "├─"
+  } else {
+    downwards <- "   "
+    project_close <- "└─"
+  }
+  if(length(variables) > 0) {
+    cat("  ", project_close, "\U1F4C1 ", "\033[1m", project, "\033[0m\n", sep = "")
+    classified_contents <- vapply(variables, \(name) ruleset[[project_env$variables[[name]]]]$layer, FUN.VALUE = numeric(1))
+    max_layer <- max(classified_contents)
+    layer_vec <- sort(unique(classified_contents))
+    for (layer in layer_vec) {
+      layer_variables <- paste0(sort(names(classified_contents)[classified_contents == layer]), collapse = ", ")
+      is_max <- layer == max_layer
+      if(!is_max) layer_close <- "├─" else layer_close <- "└─"
+      if(layer > 0) {
+        cat(downwards , "     ", layer_close, " \U1F6E0 Layer ", paste0(layer ,": "), layer_variables, "\n", sep = "")
+      } else {
+        cat(downwards , "   ", layer_close, "\U1F331 Root:", layer_variables, "\n")
+      }
+    }
+  } else {
+    cat("  ", project_close, "\U1F4C1 ", "\033[1m", project, "\033[0m", " \033[3m(empty)\033[0m\n", sep = "")
+
+  }
+  cat(downwards, "\n")
+}
+
+print_joins <- function(project, network) {
+  cat("\U1F517 ", "Joins:\n", sep = "")
 }
 
 eval_args <- function(link, network) {

@@ -271,7 +271,7 @@ For example, if we use the above network to query the following
 variables:
 
 ``` r
-query(mtcars = "hp", engine = "type") |> nascent(xafty_network)
+query(hp, type) |> nascent(xafty_network)
 ```
 
 **The resulting pipeline can be represented as follows:**
