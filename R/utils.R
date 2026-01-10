@@ -14,7 +14,7 @@ print.xafty_network <- function(x, ...) {
   cat("\U1F332 ", "Projects (", length(projects), "):\n", sep = "")
 
   if(length(projects) > 0) {
-    cat("  │")
+    cat("   │")
     cat("\n")
   } else {
     cat("\U1F4A1 ", "\033[3mHint: Add a project to your network like this: network$add_project(\"my_project_name\")\033[0m\n", sep = "")
@@ -23,21 +23,11 @@ print.xafty_network <- function(x, ...) {
   for(i in seq_along(projects)) {
     project <- projects[i]
     print_project(project = project, network = x)
-    # context <- variable_names[variables_classified == "context_link"]
-    # objects <- variable_names[variables_classified == "object_link"]
-    # if(length(context) > 0) {
-    #   context_print <- paste0(context, collapse = ", ")
-    #   cat(paste0("Context: ", context_print, "\n"))
-    # }
-    # if(length(objects) > 0) {
-    #   objects_print <- paste0(paste0("[", objects, "]"), collapse = ", ")
-    #   cat(paste0("Objects: ", objects_print, "\n"))
-    # }
-    # if(length(joined_projects) > 0) {
-    #   joins_print <- paste0(joined_projects, collapse = ", ")
-    #   cat(paste0("Joins: ", joins_print, "\n"))
   }
-  print_joins(project, network = x)
+
+  if(length(projects) > 1) {
+    print_joins(projects, network = x)
+  }
 }
 
 print_project <- function(project, network) {
@@ -51,11 +41,11 @@ print_project <- function(project, network) {
   is_last_project <- which(df_print$project == project) == nrow(df_print)
 
   if(!is_last_project) {
-      downwards <- "  |"
-      project_close <- "├─"
+      downwards <- "   |"
+      project_close <- " ├─"
   } else {
-    downwards <- "   "
-    project_close <- "└─"
+    downwards <- "    "
+    project_close <- " └─"
   }
   if(length(variables) > 0) {
     cat("  ", project_close, "\U1F4C1 ", "\033[1m", project, "\033[0m\n", sep = "")
@@ -67,9 +57,9 @@ print_project <- function(project, network) {
       is_max <- layer == max_layer
       if(!is_max) layer_close <- "├─" else layer_close <- "└─"
       if(layer > 0) {
-        cat(downwards , "     ", layer_close, " \U1F6E0 Layer ", paste0(layer ,": "), layer_variables, "\n", sep = "")
+        cat(downwards , "    ", layer_close, " \U1F6E0 Layer ", paste0(layer ,": "), layer_variables, "\n", sep = "")
       } else {
-        cat(downwards , "   ", layer_close, "\U1F331 Root:", layer_variables, "\n")
+        cat(downwards , "  ", layer_close, "\U1F331 Root:", layer_variables, "\n")
       }
     }
   } else {
@@ -79,10 +69,35 @@ print_project <- function(project, network) {
   cat(downwards, "\n")
 }
 
-print_joins <- function(project, network) {
-  cat("\U1F517 ", "Joins:\n", sep = "")
+print_joins <- function(projects, network) {
+  li_joins_project <- sapply(projects, \(project) names(network[[project]]$joined_projects))
+  li_joins_pruned <- li_joins_project[vapply(li_joins_project, \(joins) !length(joins) == 0, FUN.VALUE = logical(1))]
+  if(length(li_joins_pruned) == 0) {
+    cat("\U1F517 ", "Joins:", "\033[3m(None)\033[0m\n")
+  } else {
+    cat("\U1F517 ", "Joins:\n", sep = "")
+    projects <- names(li_joins_pruned)
+    li_raw_pairs <- list()
+    for (i in seq_along(projects)) {
+      project <- projects[i]
+      joins <- li_joins_pruned[[project]]
+      li_raw_pairs[[i]] <- lapply(joins, \(join) sort(c(project, join)))
+    }
+    li_raw_pairs <- unlist(li_raw_pairs, recursive = FALSE)
+    li_print_joins <- li_raw_pairs[!duplicated(li_raw_pairs)]
+    for (print_join in li_print_joins) {
+      cat("   \U1F504 ", print_join[1], " \U2194 ", print_join[2], "\n", sep = "")
+    }
+  }
 }
 
+print_objects <- function(projects, network) {
+
+
+  contents <- names(project_env$variables)
+  variables_classified <- vapply(contents, \(name) get_variable_link_type(name = name, project = project, network = network), FUN.VALUE = character(1))
+  variables <- contents[variables_classified == "query_link"]
+}
 eval_args <- function(link, network) {
   xo <- get_xafty_objects_vec(link)
   mapply(evaluate_arg, link$args, xo, MoreArgs = list(network = network), SIMPLIFY = FALSE, USE.NAMES = TRUE)
