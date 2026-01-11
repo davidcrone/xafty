@@ -21,7 +21,7 @@ nascent <- function(query, network) {
 #' @returns A list
 #' @export
 build_dag <- function(query, network, frame = "main") {
-  globals <- dots_to_query(network = network, ... = query)
+  globals <- dots_to_query(network = network, query)
   if (inherits(globals$internal, "xafty_object_query")) {
     dag <- build_object_dag(globals = globals, network = network)
   } else {

@@ -18,7 +18,7 @@ register <- function(quosure, project, network, link_type, ...) {
   invisible(network)
 }
 
-add_to_settings <- function(link, network, ... = ...) {
+add_to_settings <- function(link, network, ...) {
   .dots <- list(...)
   df_projects <- network$settings$projects$print_order
   type <- link$type
