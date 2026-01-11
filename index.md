@@ -163,7 +163,9 @@ mtcars_plot <- function() {
  
  plot_mtcars(mtcars = mtcars)
 }
+```
 
+``` r
 # Run the pipeline
 mtcars_plot()
 ```
@@ -230,10 +232,32 @@ xafty_network$mtcars$link(join_engine_details(mtcars = query(mtcars = "vs"),
 
 # Inspect the network
 xafty_network
+#> ---
+#> 📊 example_network 
+#> 
+#> 🌲 Projects (2):
+#>    │
+#>    ├─📁 mtcars
+#>    |    ├─ 🌱 Root: am, carb, cyl, disp, drat, gear, hp, mpg, qsec, vs, wt 
+#>    |    └─ 🛠 Layer 1: power_to_weight
+#>    | 
+#>    └─📁 engine
+#>         └─ 🌱 Root: type, vs 
+#>      
+#> 🔗 Joins (1):
+#>    🔄 engine ↔ mtcars
 
 # Pull data as needed from the network in the desired column order
-query(mtcars = c("hp", "wt", "vs"), engine = "type", mtcars = "power_to_weight") |>  
-  nascent(xafty_network)
+query(hp, wt, vs, type, power_to_weight) |>  
+  nascent(xafty_network) |> 
+  head()
+#>    hp    wt vs    type power_to_weight
+#> 1 110 2.620  0 V-Shape        41.98473
+#> 2 110 2.875  0 V-Shape        38.26087
+#> 3 245 3.570  0 V-Shape        68.62745
+#> 4 180 4.070  0 V-Shape        44.22604
+#> 5 175 3.440  0 V-Shape        50.87209
+#> 6 180 3.780  0 V-Shape        47.61905
 ```
 
 In xafty, each function from step 2 becomes a node in the network.
@@ -256,7 +280,7 @@ For example, if we use the above network to query the following
 variables:
 
 ``` r
-query(mtcars = "hp", engine = "type") |> nascent(xafty_network)
+query(hp, type) |> nascent(xafty_network)
 ```
 
 **The resulting pipeline can be represented as follows:**

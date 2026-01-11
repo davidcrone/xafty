@@ -48,11 +48,17 @@ in \`projects\` does not exist in the given network.
 xafty_network <- init_network("change_order",
                    projects = c("Project2", "Project1"))
 print(xafty_network) # Prints Project2 first, then Project1
-#> Number of projects in network 'change_order': 2
+#> ---
+#> 📊 change_order 
 #> 
-#> Project: Project2
+#> 🌲 Projects (2):
+#>    │
+#>    ├📁 Project2 (empty)
+#>    │ 
+#>    └📁 Project1 (empty)
+#>      
+#> 🔗  Joins: (None)
 #> 
-#> Project: Project1
 
 # Change the print order
 set_project_print_order(
@@ -61,9 +67,15 @@ set_project_print_order(
   network = xafty_network
 )
 print(xafty_network)
-#> Number of projects in network 'change_order': 2
+#> ---
+#> 📊 change_order 
 #> 
-#> Project: Project1
+#> 🌲 Projects (2):
+#>    │
+#>    ├📁 Project1 (empty)
+#>    │ 
+#>    └📁 Project2 (empty)
+#>      
+#> 🔗  Joins: (None)
 #> 
-#> Project: Project2
 ```

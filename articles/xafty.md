@@ -82,10 +82,14 @@ network for our desired variables:
 ``` r
 # Inspecting the network
 network
-#> Number of projects in network 'intro_network': 1
+#> ---
+#> 📊 intro_network 
 #> 
-#> Project: mtcars
-#> Variables: drat, vs, hp, am, disp, cyl, carb, mpg, qsec, wt, gear
+#> 🌲 Projects (1):
+#>    │
+#>    └📁 mtcars
+#>         └ 🌱 Root: am, carb, cyl, disp, drat, gear, hp, mpg, qsec, vs, wt 
+#> 
 
 # Querying a project by its name, will return all variables from that project
 mtcars <- query("mtcars") |> nascent(network)
@@ -337,7 +341,7 @@ head(data)
 Currently, the filter is applied at the end of the execution and is not
 pushed back.
 
-### Inspecting Pipelines
+### Developer Toolings
 
 As your network grows, it becomes increasingly important to understand
 how xafty assembles and executes your pipeline. Since nodes are combined
@@ -362,6 +366,33 @@ the assembled pipeline.
 #> [1] "mtcars.get_mtcars"             "engine.get_engine_details"    
 #> [3] "engine.join_engine_details"    "per_gear.group_by_gear"       
 #> [5] "per_gear.add_mean_hp_per_gear" "per_gear.ungroup_data"
+```
+
+xafty also supports a digestible way how contents of a network are
+printed. Simply pass your network object to the console to use this
+feature:
+
+``` r
+  network
+#> ---
+#> 📊 intro_network 
+#> 
+#> 🌲 Projects (3):
+#>    │
+#>    ├📁 mtcars
+#>    │    ├ 🌱 Root: am, carb, cyl, disp, drat, gear, hp, mpg, qsec, vs, wt 
+#>    │    └ 🛠 Layer 1: combined_label, power_to_weight
+#>    │ 
+#>    ├📁 engine
+#>    │    └ 🌱 Root: type, vs 
+#>    │ 
+#>    └📁 per_gear
+#>      ╭ group_by_gear
+#>         └ 🛠 Layer 1: mean_hp_per_gear
+#>      ╰ ungroup_data
+#>      
+#> 🔗 Joins (1):
+#>    🔄 engine ↔ mtcars
 ```
 
 ## Objects

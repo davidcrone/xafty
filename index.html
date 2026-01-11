@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">xafty</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -179,9 +179,9 @@ Diagram illustrating a functional pipeline as a modularized and linear structure
 <span> <span class="va">mtcars</span> <span class="op">&lt;-</span> <span class="fu">add_power_to_weight</span><span class="op">(</span>mtcars <span class="op">=</span> <span class="va">mtcars</span><span class="op">)</span></span>
 <span> </span>
 <span> <span class="fu">plot_mtcars</span><span class="op">(</span>mtcars <span class="op">=</span> <span class="va">mtcars</span><span class="op">)</span></span>
-<span><span class="op">}</span></span>
-<span></span>
-<span><span class="co"># Run the pipeline</span></span>
+<span><span class="op">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Run the pipeline</span></span>
 <span><span class="fu">mtcars_plot</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p>This is already a major improvement. The modular structure makes the pipeline composable, testable, reusable, and much easier to understand. While this approach modularizes the logic, it still needs to be assembled manually:</p>
 <ul>
@@ -200,7 +200,7 @@ Diagram illustrating a functional pipeline as a modularized and linear structure
 Diagram illustrating a network pipeline, where each step is a node connected according to its dependencies
 </figcaption></figure><p>Moving from a functional pipeline to a network pipeline is the final step in making our code fully declarative, flexible, and scalable.</p>
 <p>We <strong>reuse the functions from <a href="#step-2-functional-pipeline">step 2</a></strong> and express them as a xafty network:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## Preparation: </span></span>
 <span><span class="co"># Make sure that the functions from step 2 are loaded into memory.</span></span>
 <span><span class="co">## /Preparation</span></span>
@@ -228,10 +228,32 @@ Diagram illustrating a network pipeline, where each step is a node connected acc
 <span></span>
 <span><span class="co"># Inspect the network</span></span>
 <span><span class="va">xafty_network</span></span>
+<span><span class="co">#&gt; ---</span></span>
+<span><span class="co">#&gt; 📊 example_network </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; 🌲 Projects (2):</span></span>
+<span><span class="co">#&gt;    │</span></span>
+<span><span class="co">#&gt;    ├─📁 mtcars</span></span>
+<span><span class="co">#&gt;    |    ├─ 🌱 Root: am, carb, cyl, disp, drat, gear, hp, mpg, qsec, vs, wt </span></span>
+<span><span class="co">#&gt;    |    └─ 🛠 Layer 1: power_to_weight</span></span>
+<span><span class="co">#&gt;    | </span></span>
+<span><span class="co">#&gt;    └─📁 engine</span></span>
+<span><span class="co">#&gt;         └─ 🌱 Root: type, vs </span></span>
+<span><span class="co">#&gt;      </span></span>
+<span><span class="co">#&gt; 🔗 Joins (1):</span></span>
+<span><span class="co">#&gt;    🔄 engine ↔ mtcars</span></span>
 <span></span>
 <span><span class="co"># Pull data as needed from the network in the desired column order</span></span>
-<span><span class="fu"><a href="reference/query.html">query</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"hp"</span>, <span class="st">"wt"</span>, <span class="st">"vs"</span><span class="op">)</span>, engine <span class="op">=</span> <span class="st">"type"</span>, mtcars <span class="op">=</span> <span class="st">"power_to_weight"</span><span class="op">)</span> <span class="op">|&gt;</span>  </span>
-<span>  <span class="fu"><a href="reference/nascent.html">nascent</a></span><span class="op">(</span><span class="va">xafty_network</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="reference/query.html">query</a></span><span class="op">(</span><span class="va">hp</span>, <span class="va">wt</span>, <span class="va">vs</span>, <span class="va">type</span>, <span class="va">power_to_weight</span><span class="op">)</span> <span class="op">|&gt;</span>  </span>
+<span>  <span class="fu"><a href="reference/nascent.html">nascent</a></span><span class="op">(</span><span class="va">xafty_network</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt;    hp    wt vs    type power_to_weight</span></span>
+<span><span class="co">#&gt; 1 110 2.620  0 V-Shape        41.98473</span></span>
+<span><span class="co">#&gt; 2 110 2.875  0 V-Shape        38.26087</span></span>
+<span><span class="co">#&gt; 3 245 3.570  0 V-Shape        68.62745</span></span>
+<span><span class="co">#&gt; 4 180 4.070  0 V-Shape        44.22604</span></span>
+<span><span class="co">#&gt; 5 175 3.440  0 V-Shape        50.87209</span></span>
+<span><span class="co">#&gt; 6 180 3.780  0 V-Shape        47.61905</span></span></code></pre></div>
 <p>In xafty, each function from step 2 becomes a node in the network. Instead of passing data to each function, we use <code><a href="reference/query.html">xafty::query()</a></code> to declare which input variables are needed.</p>
 <p>In order to retrieve data from the network, we simply tell <code><a href="reference/nascent.html">xafty::nascent()</a></code> which variables we want.</p>
 <p>xafty then</p>
@@ -241,21 +263,21 @@ Diagram illustrating a network pipeline, where each step is a node connected acc
 <li>and returns a single data.frame containing precisely what you asked for.</li>
 </ol>
 <p>For example, if we use the above network to query the following variables:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="reference/query.html">query</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="st">"hp"</span>, engine <span class="op">=</span> <span class="st">"type"</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="reference/nascent.html">nascent</a></span><span class="op">(</span><span class="va">xafty_network</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/query.html">query</a></span><span class="op">(</span><span class="va">hp</span>, <span class="va">type</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="reference/nascent.html">nascent</a></span><span class="op">(</span><span class="va">xafty_network</span><span class="op">)</span></span></code></pre></div>
 <p><strong>The resulting pipeline can be represented as follows:</strong></p>
 <figure><img src="reference/figures/Example_Sub_Pipeline.png" alt="Diagram illustrating the “collapsed” pipeline from a xafty network"><figcaption aria-hidden="true">
 Diagram illustrating the “collapsed” pipeline from a xafty network
 </figcaption></figure><p>➜ Pipelines are no longer assembled manually. You simply query the data you need and let the system do the orchestration.</p>
 <p>➜ In network pipelines, intermediate steps are just as accessible as final data products. This makes it easy to “branch off” from these intermediate steps and reuse them, rather than starting from a blank slate, as is common in many data analytics projects.</p>
 <p>Finally, to add the original plot to the network, we now use “objects”:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># The add_object function allows us to register a function with any return value to our network</span></span>
 <span><span class="va">xafty_network</span><span class="op">$</span><span class="va">mtcars</span><span class="op">$</span><span class="fu">add_object</span><span class="op">(</span><span class="st">"mtcars_plot"</span>, </span>
 <span>                                <span class="fu">plot_mtcars</span><span class="op">(</span>mtcars <span class="op">=</span> <span class="fu"><a href="reference/query.html">query</a></span><span class="op">(</span>engine <span class="op">=</span> <span class="st">"type"</span>, </span>
 <span>                                                           mtcars <span class="op">=</span> <span class="st">"power_to_weight"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>And this is how we retrieve the object again from our network:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Write the object's name in squared brackets</span></span>
 <span><span class="fu"><a href="reference/query.html">query</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="st">"[mtcars_plot]"</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="reference/nascent.html">nascent</a></span><span class="op">(</span><span class="va">xafty_network</span><span class="op">)</span></span>
 <span><span class="co"># As of now, only a single object per query might be retrieved from the network</span></span></code></pre></div>
