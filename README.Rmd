@@ -101,7 +101,7 @@ This is a good start. It gets to the point, fast and comprehensible. But as your
 
 We can address many of the shortcomings of such a stateful script, by writing everything as a function:
 
-``` r
+``` {r}
 get_mtcars <- function() {
   data("mtcars", envir = environment())
   mtcars
@@ -140,7 +140,8 @@ mtcars_plot <- function() {
  
  plot_mtcars(mtcars = mtcars)
 }
-
+```
+``` r
 # Run the pipeline
 mtcars_plot()
 
@@ -160,7 +161,7 @@ Moving from a functional pipeline to a network pipeline is the final step in mak
 
 We **reuse the functions from [step 2](#step-2-functional-pipeline)** and express them as a xafty network:
 
-``` r
+``` {r}
 ## Preparation: 
 # Make sure that the functions from step 2 are loaded into memory.
 ## /Preparation
@@ -190,10 +191,12 @@ xafty_network$mtcars$link(join_engine_details(mtcars = query(mtcars = "vs"),
 xafty_network
 
 # Pull data as needed from the network in the desired column order
-query(mtcars = c("hp", "wt", "vs"), engine = "type", mtcars = "power_to_weight") |>  
-  nascent(xafty_network)
+query(hp, wt, vs, type, power_to_weight) |>  
+  nascent(xafty_network) |> 
+  head()
 
-```
+``` 
+
 In xafty, each function from step 2 becomes a node in the network. Instead of passing data to each function, we use `xafty::query()` to declare which input variables are needed. 
 
 In order to retrieve data from the network, we simply tell `xafty::nascent()` which variables we want. 

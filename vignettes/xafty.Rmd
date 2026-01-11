@@ -243,7 +243,7 @@ head(data)
 
 Currently, the filter is applied at the end of the execution and is not pushed back.
 
-## Inspecting Pipelines
+## Developer Toolings
 
 As your network grows, it becomes increasingly important to understand how xafty assembles and executes your pipeline. Since nodes are combined dynamically based on the variables you request, xafty provides tools to inspect the resulting execution plan before running it.
 
@@ -258,6 +258,12 @@ For example, the element `dag$execution_order` shows the exact order of the asse
 
 ``` {r}
   dag$execution_order
+```
+
+xafty also supports a digestible way how contents of a network are printed. Simply pass your network object to the console to use this feature:
+
+``` {r}
+  network
 ```
 
 # Objects

@@ -17,7 +17,7 @@ print.xafty_network <- function(x, ...) {
     cat("   │")
     cat("\n")
   } else {
-    cat("\U1F4A1 ", "\033[3mHint: Add a project to your network like this: network$add_project(\"my_project_name\")\033[0m\n", sep = "")
+    cat("\U1F4A1 ", "Hint: Add a project to your network like this: network$add_project(\"my_project_name\")\n", sep = "")
   }
 
   for(i in seq_along(projects)) {
@@ -48,8 +48,22 @@ print_project <- function(project, network) {
     downwards <- "    "
     project_close <- " └─"
   }
+
   if(length(variables) > 0) {
-    cat("  ", project_close, "\U1F4C1 ", "\033[1m", project, "\033[0m\n", sep = "")
+    cat("  ", project_close, "\U1F4C1 ", project, "\n", sep = "")
+  } else {
+    cat("  ", project_close, "\U1F4C1 ", project, " (empty)\n", sep = "")
+  }
+
+    # Print on Entry
+    on_entry_funcs <- network[[project]]$wrappers$on_entry
+    if(length(on_entry_funcs) > 0) {
+      # print on entry
+      print_on_entry <- paste0(on_entry_funcs, collapse = ", ")
+      cat(downwards, " \U256D ", print_on_entry, "\n", sep = "")
+    }
+
+  if(length(variables) > 0) {
     classified_contents <- vapply(variables, \(name) ruleset[[project_env$variables[[name]]]]$layer, FUN.VALUE = numeric(1))
     max_layer <- max(classified_contents)
     layer_vec <- sort(unique(classified_contents))
@@ -63,10 +77,16 @@ print_project <- function(project, network) {
         cat(downwards , "  ", layer_close, "\U1F331 Root:", layer_variables, "\n")
       }
     }
-  } else {
-    cat("  ", project_close, "\U1F4C1 ", "\033[1m", project, "\033[0m", " \033[3m(empty)\033[0m\n", sep = "")
-
   }
+
+  # Print on Entry
+  on_exit_funcs <- network[[project]]$wrappers$on_exit
+  if(length(on_exit_funcs) > 0) {
+    # print on entry
+    print_on_exit <- paste0(on_exit_funcs, collapse = ", ")
+    cat(downwards, " \U2570 ", print_on_exit, "\n", sep = "")
+  }
+  # on exit
   cat(downwards, "\n")
 }
 
@@ -74,7 +94,7 @@ print_joins <- function(projects, network) {
   li_joins_project <- sapply(projects, \(project) names(network[[project]]$joined_projects))
   li_joins_pruned <- li_joins_project[vapply(li_joins_project, \(joins) !length(joins) == 0, FUN.VALUE = logical(1))]
   if(length(li_joins_pruned) == 0) {
-    cat("\U1F517 ", "Joins:", "\033[3m(None)\033[0m\n")
+    cat("\U1F517 ", "Joins:", "(None)\n")
   } else {
     projects <- names(li_joins_pruned)
     li_raw_pairs <- list()
