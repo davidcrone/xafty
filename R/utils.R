@@ -28,6 +28,7 @@ print.xafty_network <- function(x, ...) {
   if(length(projects) > 1) {
     print_joins(projects, network = x)
   }
+  print_objects(projects, network = x)
 }
 
 print_project <- function(project, network) {
@@ -75,7 +76,6 @@ print_joins <- function(projects, network) {
   if(length(li_joins_pruned) == 0) {
     cat("\U1F517 ", "Joins:", "\033[3m(None)\033[0m\n")
   } else {
-    cat("\U1F517 ", "Joins:\n", sep = "")
     projects <- names(li_joins_pruned)
     li_raw_pairs <- list()
     for (i in seq_along(projects)) {
@@ -85,19 +85,37 @@ print_joins <- function(projects, network) {
     }
     li_raw_pairs <- unlist(li_raw_pairs, recursive = FALSE)
     li_print_joins <- li_raw_pairs[!duplicated(li_raw_pairs)]
+    cat("\U1F517 ", "Joins (", length(li_print_joins), "):\n", sep = "")
     for (print_join in li_print_joins) {
       cat("   \U1F504 ", print_join[1], " \U2194 ", print_join[2], "\n", sep = "")
     }
   }
+  cat("\n")
 }
 
 print_objects <- function(projects, network) {
-
-
-  contents <- names(project_env$variables)
-  variables_classified <- vapply(contents, \(name) get_variable_link_type(name = name, project = project, network = network), FUN.VALUE = character(1))
-  variables <- contents[variables_classified == "query_link"]
+  li_objects <- lapply(projects, collect_objects, network = network)
+  objects <- unlist(li_objects)
+  if(length(objects) > 0) {
+    objects_print <- paste0(objects, collapse = ", ")
+    cat("\U1F3D7  ", "Objects (", length(objects), "):\n", sep = "")
+    cat("   ", objects_print)
+    cat("\n")
+  }
 }
+
+collect_objects <- function(project, network) {
+  variables <- names(network[[project]]$variables)
+  link_names <- unique(vapply(variables, \(variable) network[[project]]$variables[[variable]], FUN.VALUE = character(1)))
+  ruleset <- network[[project]]$ruleset
+  links <- lapply(link_names, \(name) ruleset[[name]])
+  is_object <- vapply(links, is_object_link, FUN.VALUE = logical(1))
+  object_links <- links[is_object]
+  if (length(object_links) == 0) return(character(0))
+  object_names <- vapply(object_links, \(link) paste0("[", link$name, "]"), FUN.VALUE = character(1))
+  object_names
+}
+
 eval_args <- function(link, network) {
   xo <- get_xafty_objects_vec(link)
   mapply(evaluate_arg, link$args, xo, MoreArgs = list(network = network), SIMPLIFY = FALSE, USE.NAMES = TRUE)
