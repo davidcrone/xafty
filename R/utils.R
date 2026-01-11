@@ -14,7 +14,7 @@ print.xafty_network <- function(x, ...) {
   cat("\U1F332 ", "Projects (", length(projects), "):\n", sep = "")
 
   if(length(projects) > 0) {
-    cat("   │")
+    cat("   \u2502")
     cat("\n")
   } else {
     cat("\U1F4A1 ", "Hint: Add a project to your network like this: network$add_project(\"my_project_name\")\n", sep = "")
@@ -42,11 +42,11 @@ print_project <- function(project, network) {
   is_last_project <- which(df_print$project == project) == nrow(df_print)
 
   if(!is_last_project) {
-      downwards <- "   |"
-      project_close <- " ├─"
+      downwards <- "   \u2502"
+      project_close <- " \u251C" # unclosed project with
   } else {
     downwards <- "    "
-    project_close <- " └─"
+    project_close <- " \u2514"
   }
 
   if(length(variables) > 0) {
@@ -70,7 +70,7 @@ print_project <- function(project, network) {
     for (layer in layer_vec) {
       layer_variables <- paste0(sort(names(classified_contents)[classified_contents == layer]), collapse = ", ")
       is_max <- layer == max_layer
-      if(!is_max) layer_close <- "├─" else layer_close <- "└─"
+      if(!is_max) layer_close <- "\u251C" else layer_close <- "\u2514"
       if(layer > 0) {
         cat(downwards , "    ", layer_close, " \U1F6E0 Layer ", paste0(layer ,": "), layer_variables, "\n", sep = "")
       } else {
