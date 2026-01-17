@@ -65,7 +65,7 @@ build_join_bridges <- function(li_lookup, network, dag_sm) {
   list_join_codes <- dag_sm$get_joins()
   list_direct_joins <- li_lookup[names(li_lookup) %in% names(list_join_codes)]
   for (i in seq_along(list_direct_joins)) {
-    join_node <- list_direct_joins[i]
+    join_node <- list(node = list_direct_joins[i])
     dag_sm$set_nodes(link = NULL, code = join_node)
   }
   list_inderect_joins <- list_join_codes[!names(list_join_codes) %in% names(li_lookup)]
@@ -90,7 +90,7 @@ build_join_bridges <- function(li_lookup, network, dag_sm) {
   for (i in seq_along(join_codes)) {
     join <- join_codes[[i]]
     join_func <- vapply(join, \(j) li_lookup[[j]], FUN.VALUE = character(1), USE.NAMES = FALSE)
-    join_node <- setNames(list(join_func), unresolved_codes[i])
+    join_node <- list(node = setNames(list(join_func), unresolved_codes[i]))
     dag_sm$set_nodes(link = NULL, code = join_node)
   }
 
@@ -181,8 +181,8 @@ has_empty_list <- function(li) {
 set_nodes <- function(links, network, dag_sm) {
   links_vec <- vapply(links, \(link) is_query_link(link) || is_context_link(link), FUN.VALUE = logical(1))
   links <- links[links_vec]
-  codes <- lapply(links, build_dependency_codes, network = network, dag_sm = dag_sm)
-  mapply(dag_sm$set_nodes, links, codes, SIMPLIFY = FALSE)
+  li_nodes <- lapply(links, build_dependency_codes, network = network)
+  mapply(dag_sm$set_nodes, links, li_nodes, SIMPLIFY = FALSE)
   invisible(TRUE)
 }
 

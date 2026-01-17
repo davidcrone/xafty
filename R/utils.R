@@ -185,31 +185,37 @@ validate_link_type <- function(link_type, unpacked) {
   invisible(TRUE)
 }
 
-build_dependency_codes <- function(link, network, dag_sm) {
+build_dependency_codes <- function(link, network) {
   queries <- get_queries(link, which = c("xafty_query"), temper = FALSE)
   fun_code <- build_fun_code(link)
   # Early termination of function execution for a root node
   if (length(queries) == 0) {
     root_node <- setNames(list(character(0)), fun_code)
-    return(root_node)
+    root_return <- list(
+      node = root_node,
+      joins = list()
+    )
+    return(root_return)
   }
   # This splits queries from object queries which need a different prefix
   function_codes <- unique(unlist(lapply(queries, get_scoped_function_order, network = network)))
   wrapper_codes <- build_on_entry_dependencies(link = link, network = network, fun_code = fun_code)
   # TODO: link link$joins$projects may need re computation with function: 'project_needs_join' when a variable name has been interpolated
   #  -> This would also make a differentiation necessary between a link that has been "tampered" with and one who was not
-  join_codes <- character(length(link$joins$projects))
+  join_code <- character(length(link$joins$projects))
+  joins <- list()
   for (i in seq_along(link$joins$projects)) {
     projects <- link$joins$projects[[i]]
     join_id <- paste0("join.", paste0(sort(projects), collapse = "."))
-    # This is later used to resolve the join, but it would be nice to do this outside of the function in order to
-    # make it without side-effects
-    dag_sm$set_join(id = join_id, projects = projects)
-    join_codes[i] <- join_id
+    join_code[i] <- join_id
+    joins[[join_id]] <- projects
   }
-  link_dependencies <- c(function_codes, join_codes, wrapper_codes)
+  link_dependencies <- c(function_codes, join_code, wrapper_codes)
   node <- setNames(list(link_dependencies), fun_code)
-  node
+  list(
+    node = node,
+    joins = joins
+  )
 }
 
 build_on_entry_dependencies <- function(link, network, fun_code) {
@@ -227,9 +233,10 @@ build_on_entry_dependencies <- function(link, network, fun_code) {
 }
 
 # The function builds the dependencies for on_entry nodes
-build_on_entry_node <- function(link, network, dag, dag_sm) {
+build_on_entry_node <- function(link, network, dag) {
   project <- link$project
-  on_entry_node <- build_dependency_codes(link, network = network, dag_sm = dag_sm)
+  li_on_entry_node <- build_dependency_codes(link, network = network)
+  on_entry_node <- li_on_entry_node$node
   on_entry_code <- names(on_entry_node)
   project_dag <- dag[grepl(paste0("^", project, "\\."), names(dag))]
   # Adds foreign project nodes that wrapper nodes depend on; unique is necessary since the package toposort cannot work with
@@ -239,12 +246,16 @@ build_on_entry_node <- function(link, network, dag, dag_sm) {
   wrapper_node_deps <- filter_targets_without_prefix(project = project, targets = foreign_deps, dag = dag)
   deps <- unique(c(on_entry_node[[on_entry_code]], wrapper_node_deps))
   node <- setNames(list(deps), on_entry_code)
-  node
+  list(
+  node = node,
+  joins = li_on_entry_node$joins
+  )
 }
 
-build_on_exit_node <- function(link, network, dag, dag_sm) {
+build_on_exit_node <- function(link, network, dag) {
   project <- link$project
-  on_exit_node <- build_dependency_codes(link, network = network, dag_sm = dag_sm)
+  li_on_exit_node <- build_dependency_codes(link, network = network)
+  on_exit_node <- li_on_exit_node$node
   on_exit_code <- names(on_exit_node)
   deps_project <- names(dag)[grepl(paste0("^", project, "\\."), names(dag))]
 
@@ -255,7 +266,10 @@ build_on_exit_node <- function(link, network, dag, dag_sm) {
 
   deps <- unique(c(on_exit_node[[on_exit_code]], deps_project, exit_deps))
   node <- setNames(list(deps), on_exit_code)
-  node
+  list(
+    node = node,
+    joins = li_on_exit_node$joins
+  )
 }
 
 on_exit_codes <- function(link, network) {

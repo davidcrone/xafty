@@ -151,3 +151,24 @@ test_that("on entry also takes dependencies from on exit into account", {
                                           "group2.add_score_category", "group2.pass_through2", "group.pass_through",
                                           "group.pass_through3", "group.pass_through2"))
 })
+
+test_that("Interweaved foreign node will correctly close the context and reopen it", {
+  reorder_cars_by_color2 <- reorder_cars_by_color
+  add_tries_data_license2 <- function(data) {
+    data$Tries2 <- data$Tries + 1
+    data
+  }
+  network <- init_network("on_exit", projects = c("cars", "group"))
+  network$cars$link(test_get_car_data(conn = TRUE))
+  network$cars$link(test_add_car_color(data = query(cars = c("Has_Drivers_License", "Name", "Car"))))
+  network$group$on_entry(reorder_cars_by_color(cars = query(cars = "Car_Color")))
+  network$group$on_exit(reorder_cars_by_color2(cars = query(cars = "Car_Color")))
+  network$group$link(add_tries_data_license(data = query(cars = "Name")))
+  network$cars$link(add_id_to_car(data = query(cars = "Car_Color", group = "Tries")))
+  network$group$link(add_tries_data_license2(data = query(cars = c("ID"), group = "Tries")))
+  test_dag <- build_dag(query(group = c("Tries2")), network)
+  expect_identical(test_dag$execution_order, c("cars.test_get_car_data", "cars.test_add_car_color",
+                                               "group.reorder_cars_by_color", "group.add_tries_data_license",  "group.reorder_cars_by_color2", # group 1
+                                               "cars.add_id_to_car",
+                                               "group.reorder_cars_by_color", "group.add_tries_data_license2", "group.reorder_cars_by_color2")) # group 2
+})

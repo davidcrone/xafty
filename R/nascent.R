@@ -108,7 +108,7 @@ get_join_functions <- function(from, to, network, sm, state_query = NULL) {
   fun_name <- network[[from]]$joined_projects[[to]]
   link <- network[[from]]$ruleset[[fun_name]]
   link <- interpolate_link_queries(link = link, state_list = state_query, network = network)
-  code <- build_dependency_codes(link = link, network = network, dag_sm = sm)
+  code <- build_dependency_codes(link = link, network = network)
   sm$set_nodes(link = link, code = code)
   set_objects(links = list(link), network = network, dag_sm = sm)
   # Here columns that have the same variable names be joined into one variable will be noted in the mask state variable.
@@ -116,7 +116,7 @@ get_join_functions <- function(from, to, network, sm, state_query = NULL) {
   lst_masked_columns <- get_masked_column_names(link)
   sm$set_mask(lst_masked_columns)
   join_id <- paste0("join.", paste0(sort(c(from, to)), collapse = "."))
-  look_up_joins <- setNames(list(names(code)), nm = join_id)
+  look_up_joins <- setNames(list(names(code$node)), nm = join_id)
   list(
     link = link,
     projects = c(from, to),
@@ -301,10 +301,10 @@ resolve_on_entry <- function(project, network, dag_sm) {
   links <- lapply(func_names, \(func_name) network[[project]]$ruleset[[func_name]])
   for (i in seq_along(links)) {
     link <- links[[i]]
-    node <- build_on_entry_node(link = link, network = network, dag = dag, dag_sm = dag_sm)
+    node <- build_on_entry_node(link = link, network = network, dag = dag)
     # Following only needs to be done when an argument of the wrapper has {.data}"
     if(any(has_.data(link))) {
-      link <- build_.data_link(link = link, node = node, dag_sm = dag_sm)
+      link <- build_.data_link(link = link, node = node$node, dag_sm = dag_sm)
     }
     dag_sm$set_nodes(link = link, code = node)
   }
@@ -358,9 +358,9 @@ resolve_on_exit <- function(project, network, dag_sm) {
   dag <- dag_sm$get_codes()
   for (i in seq_along(links)) {
     link <- links[[i]]
-    node <- build_on_exit_node(link = link, network = network, dag = dag, dag_sm = dag_sm)
+    node <- build_on_exit_node(link = link, network = network, dag = dag)
     if(any(has_.data(link))) {
-      link <- build_.data_link(link = link, node = node, dag_sm = dag_sm)
+      link <- build_.data_link(link = link, node = node$node, dag_sm = dag_sm)
     }
     dag_sm$set_nodes(link = link, code = node)
   }

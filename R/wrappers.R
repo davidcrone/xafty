@@ -18,14 +18,13 @@ clean_wrapper <- function(project, order, dag, contexts, network) {
   entry_nodes <- if (!is.null(entry_funcs)) paste0(project, ".", entry_funcs) else character(0)
   exit_nodes  <- if (!is.null(exit_funcs))  paste0(project, ".", exit_funcs)  else character(0)
 
-
   # Handle on exit nodes which may depend on a foreign function
-
   li_classified <- classify_foreign_dependencies(project = project,
                                                  dag = dag[projects_extract],
                                                  targets = exit_nodes,
                                                  contexts = NULL,
-                                                 stop_at = character(0))
+                                                 stop_at = character(0),
+                                                 network = network)
   # Remove all on entry and on exit functions in order to begin rebuilding context from a clean slate
   extract <- projects_extract[!projects_extract %in% c(entry_nodes, exit_nodes)]
 
@@ -257,13 +256,28 @@ uncloak <- function(order, cloak, original) {
 
 # Here we classify the foreign dependencies of on exit functions, which need to be treated differently from
 # other foreign nodes since a foreign function does not
-classify_foreign_dependencies <- function(project, dag, targets, contexts = NULL, stop_at = character(0)) {
+classify_foreign_dependencies <- function(project, dag, targets, contexts = NULL, stop_at = character(0), network = NULL) {
   prefix <- paste0(project, ".")
+
+  # To sort the dag topologically correct, the on_exit nodes get all dependencies which are part of the group.
+  # This leads however for the algorithm to incorrectly detect polluted projects, since the on_exit nodes dependends
+  # on all domestic nodes even though it does not need the all. This is techincal debt, I think entry and exit nodes should not
+  # be placed before the topological sort and rather should be applied after.
+  if(!is.null(network)) {
+    for (target in targets) {
+      name <- gsub(paste0("^", project, "\\."), replacement = "", x = target)
+      link <- network[[project]]$ruleset[[name]]
+      if(is.null(link)) next # Is done for tests in "resolve_dependencies"
+      node <- build_dependency_codes(link = link, network = network)$node
+      # remove on entry
+      deps <- node[[target]][!node[[target]] %in% paste0(project, ".", network[[project]]$wrappers$on_entry)]
+      dag[[target]] <- deps
+    }
+  }
+
   dag <- append(dag, contexts)
   relevant <- names(dag)
-
   is_domestic <- function(x) startsWith(x, prefix)
-
   get_deps <- function(node) {
     if (is.null(dag[[node]])) character(0) else dag[[node]]
   }

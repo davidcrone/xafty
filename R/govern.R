@@ -77,9 +77,18 @@ build_tree <- function(network) {
 
   # Nodes of the directed (hopefully) acyclic graph
   set_nodes <- function(link, code) {
-    node_name <- names(code)
-    tree_env$codes[[node_name]] <- code[[node_name]]
-    tree_env$links[[node_name]] <- link
+    node <- code$node
+    if(!is.null(node)) {
+      node_name <- names(node)
+      tree_env$codes[[node_name]] <- node[[node_name]]
+      tree_env$links[[node_name]] <- link
+    }
+    ## set joins
+    joins <- code$joins
+    if(length(joins) != 0)
+    for (join in names(joins)) {
+      set_join(id = join, projects = joins[[join]])
+    }
   }
 
   append_deps <- function(name, deps) {
