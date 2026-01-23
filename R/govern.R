@@ -158,6 +158,14 @@ build_tree <- function(network) {
     tree_env$network
   }
 
+  set_wrapper_projects <- function(projects) {
+    tree_env$wrappers <- unique(c(tree_env$wrappers, projects))
+  }
+
+  get_wrapper_projects <- function() {
+    tree_env$wrappers
+  }
+
   list(
     set_nodes = set_nodes,
     append_deps = append_deps,
@@ -174,6 +182,8 @@ build_tree <- function(network) {
     get_join_path = get_join_path,
     set_mask = set_mask,
     get_mask = get_mask,
-    get_network_state = get_network_state
+    get_network_state = get_network_state,
+    set_wrapper_projects = set_wrapper_projects,
+    get_wrapper_projects = get_wrapper_projects
   )
 }

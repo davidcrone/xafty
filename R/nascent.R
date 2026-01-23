@@ -281,19 +281,6 @@ initialize_join_path <- function(join_path, dag_sm) {
   invisible(dag_sm)
 }
 
-resolve_wrappers <- function(network, dag_sm) {
-  projects <- get_projects(dag_sm$get_query())
-  has_wrappers <- vapply(projects, \(project) !is.null(c(network[[project]]$wrappers$on_entry,
-                                                         network[[project]]$wrappers$on_exit)), FUN.VALUE = logical(1))
-  if(all(!has_wrappers)) return(dag_sm)
-  projects_w_wrappers <- projects[has_wrappers]
-  for (project in projects_w_wrappers) {
-    resolve_on_exit(project = project, network = network, dag_sm = dag_sm)
-    resolve_on_entry(project = project, network = network, dag_sm = dag_sm)
-  }
-  dag_sm
-}
-
 resolve_on_entry <- function(project, network, dag_sm) {
   func_names <- network[[project]]$wrappers$on_entry
   if(is.null(func_names)) return(NULL)

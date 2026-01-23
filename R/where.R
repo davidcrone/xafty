@@ -29,7 +29,8 @@ where <- function(query_list, ...) {
 
 create_where_filter <- function(expr) {
   filter_func <- function(data) {
-    data[with(data, eval(expr)), , drop = FALSE]
+    idx <- eval(expr, envir = data, enclos = parent.frame())
+    data[which(idx), , drop = FALSE]
   }
   filter_func
 }

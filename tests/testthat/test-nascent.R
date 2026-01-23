@@ -477,3 +477,26 @@ test_that("Simple where filter can be nascented", {
   data <- query(customer_data = "name") |> where(id == 1) |> nascent(test_network)
   expect_identical(data, data.frame(name = "Alice"))
 })
+
+test_that("on_entry/on_exit depend on variable with context from a new project also correctly resolves", {
+  network <- init_network("test", projects = c("base", "queried", "dependend"))
+  network$base$link(get_sample_data())
+  network$dependend$on_entry(pass_through(data = "{.data}"))
+  network$dependend$link(add_score_category(data = query(base = "score")))
+  network$queried$on_entry(pass_through(data = query(dependend = "category")))
+  network$queried$link(add_score_category(data = query(base = "score")))
+  data_test <- query(queried = "category") |> nascent(network)
+  data_exp <- structure(list(category = c("Low", "High", "Low", "High", "Low"
+  )), row.names = c(NA, -5L), class = "data.frame")
+  expect_identical(data_test, data_exp)
+})
+
+test_that("Simple where filter can be nascented and filters NA values", {
+  add_missing_data <- function(data) {
+    data$missing <- c(TRUE, FALSE, NA, TRUE, FALSE)
+    data
+  }
+  test_network$customer_data$link(add_missing_data(query(customer_data = "name")))
+  data <- query(customer_data = "name") |> where(missing) |> nascent(test_network)
+  expect_identical(data$name, c("Alice", "Diana"))
+})

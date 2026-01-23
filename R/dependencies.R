@@ -52,6 +52,22 @@ join_dependencies <- function(network, dag_sm, state_query) {
   links
 }
 
+resolve_wrappers <- function(network, dag_sm) {
+  projects <- get_projects(dag_sm$get_query())
+  has_wrappers <- vapply(projects, \(project) !is.null(c(network[[project]]$wrappers$on_entry,
+                                                         network[[project]]$wrappers$on_exit)), FUN.VALUE = logical(1))
+  has_wrappers_unresolved <- has_wrappers[!names(has_wrappers) %in% dag_sm$get_wrapper_projects()]
+  unresolved_projects <- names(has_wrappers_unresolved)[has_wrappers_unresolved]
+  if(length(unresolved_projects) == 0) return(dag_sm)
+  dag_sm$set_wrapper_projects(unresolved_projects)
+  for (project in unresolved_projects) {
+    resolve_on_exit(project = project, network = network, dag_sm = dag_sm)
+    resolve_on_entry(project = project, network = network, dag_sm = dag_sm)
+  }
+  dag_sm <- resolve_wrappers(network = network, dag_sm = dag_sm)
+  dag_sm
+}
+
 build_flat_lookup <- function(li_joins) {
   li_lookup <- list()
   for (li_join in li_joins) {
