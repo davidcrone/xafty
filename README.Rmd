@@ -256,10 +256,11 @@ Network-based pipelines open the door to many extensions and integrations. Below
 
 Version 1.0 aims to make xafty a practical solution for ~95% of everyday data-pipeline workflows. To reach that milestone, several essential features still need to be implemented:
 
-- **Support for lossy transformations** (e.g., `dplyr::group_by() / summarise()`), integrated seamlessly into a network structure
+
 - **Added in 0.3.0:** ~~**A flexible filtering mechanism** using a `where()` clause, providing SQL-style filtering~~ 
-- **Developer tooling**, such as visualizations and printable summaries of network components, to make building with xafty easier
+- **Added in 0.3.2; 0.3.6:** **Developer tooling**, such as visualizations and ~~printable summaries~~ of network components and ~~writable pipelines~~, to make building and debugging with xafty easier
 - **Robust testing and bug fixing** to ensure reliability at scale
+- **Removed due to change in scope and vision:** ~~**Support for lossy transformations** (e.g., `dplyr::group_by() / summarise()`), integrated seamlessly into a network structure~~ 
 
 ### Visionary Features
 

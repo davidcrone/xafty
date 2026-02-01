@@ -1,6 +1,15 @@
 
+#' Write a Pipeline to a Script
+#' @description
+#' This function is used in conjunction with build_dag() to write the created pipeline as a linear script. This is useful
+#' for debugging purposes to see on which step the pipeline fails. The function creates a single file which can be run from
+#' top to bottom as it would be evaluated in nascent()
+#' @param dag A directed acyclic graph object obtained by build_dag()
+#' @param file A file name to write to
+#' @returns TRUE (invisibly)
+#' @export
 to_script <- function(dag, file = NULL) {
-  #stopifnot(!is.null(file))
+
   order_of_execution <- dag$execution_order
 
   blocks <- new.env()
@@ -10,6 +19,7 @@ to_script <- function(dag, file = NULL) {
   }
   write_vec <- unlist(li_write)
   writeLines(write_vec, con = file, sep = "\n")
+  invisible(TRUE)
 }
 
 write_function_call <- function(func_name, dag, blocks) {
