@@ -6,7 +6,6 @@ to_script <- function(dag, file = NULL) {
   blocks <- new.env()
   li_write <- list()
   for (func_name in order_of_execution) {
-    print(func_name)
     li_write[[func_name]] <- write_function_call(func_name = func_name, dag = dag, blocks = blocks)
   }
   write_vec <- unlist(li_write)
@@ -14,7 +13,6 @@ to_script <- function(dag, file = NULL) {
 }
 
 write_function_call <- function(func_name, dag, blocks) {
-  if(func_name == "group.reorder_cars_by_color2") browser()
   link <- dag$links[[func_name]]
   func <- link$fun
   formals <- write_formals_definition(func = func)
