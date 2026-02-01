@@ -24,6 +24,8 @@
   : Register a Function in a Network
 - [`set_project_print_order()`](https://davidcrone.github.io/xafty/reference/set_project_print_order.md)
   : Set or Change the Print Order of Projects
+- [`to_script()`](https://davidcrone.github.io/xafty/reference/to_script.md)
+  : Write a Pipeline to a Script
 - [`where()`](https://davidcrone.github.io/xafty/reference/where.md) :
   Filter a Network Pipeline
 - [`with_state()`](https://davidcrone.github.io/xafty/reference/with_state.md)

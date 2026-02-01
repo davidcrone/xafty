@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">xafty</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -305,14 +305,15 @@ Diagram illustrating the “collapsed” pipeline from a xafty network
 <p>Version 1.0 aims to make xafty a practical solution for ~95% of everyday data-pipeline workflows. To reach that milestone, several essential features still need to be implemented:</p>
 <ul>
 <li>
-<strong>Support for lossy transformations</strong> (e.g., <code>dplyr::group_by() / summarise()</code>), integrated seamlessly into a network structure</li>
-<li>
 <strong>Added in 0.3.0:</strong> <del><strong>A flexible filtering mechanism</strong> using a <code><a href="reference/where.html">where()</a></code> clause, providing SQL-style filtering</del>
 </li>
 <li>
-<strong>Developer tooling</strong>, such as visualizations and printable summaries of network components, to make building with xafty easier</li>
+<strong>Added in 0.3.2; 0.3.6:</strong> <strong>Developer tooling</strong>, such as visualizations and <del>printable summaries</del> of network components and <del>writable pipelines</del>, to make building and debugging with xafty easier</li>
 <li>
 <strong>Robust testing and bug fixing</strong> to ensure reliability at scale</li>
+<li>
+<strong>Removed due to change in scope and vision:</strong> <del><strong>Support for lossy transformations</strong> (e.g., <code>dplyr::group_by() / summarise()</code>), integrated seamlessly into a network structure</del>
+</li>
 </ul>
 </div>
 <div class="section level3">
