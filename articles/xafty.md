@@ -395,67 +395,6 @@ feature:
 #>    🔄 engine ↔ mtcars
 ```
 
-## Objects
-
-Objects represent the final consumers of data in a xafty network. Rather
-than producing new variables, an object returns an arbitrary R value,
-such as a plot, a model, or a summary table, that is intended to be used
-directly in a data product.
-
-To add an object to the network, we register it within a project using
-`add_object()`. Unlike transformation nodes, objects are identified by a
-name rather than by the variables they produce.
-
-Below, we add a boxplot as an object to our network:
-
-``` r
-  library(ggplot2)
-
-  network$add_project("objects")
-
-  plot_mtcars <- function(data) {
-    ggplot(data, aes(x = type, y = power_to_weight)) + geom_boxplot()
-  }
-  
-  network$objects$add_object(name = "plot_mtcars", 
-                             plot_mtcars(data = query(engine = "type", 
-                                                      mtcars = "power_to_weight")))
-```
-
-When registering an object, we explicitly assign it a name
-(“plot_mtcars” in this case). This name is used to reference the object
-in subsequent queries, instead of referring to variable names.
-
-To retrieve an object from the network, we query its name using square
-brackets:
-
-``` r
-query(objects = "[plot_mtcars]") |> nascent(network)
-```
-
-While objects are typically thought of as the final step in a pipeline,
-they can also serve as dependencies for later steps. This allows us to
-build more complex outputs by composing simpler ones.
-
-For example, we can define a second object that adds a reference line to
-the existing plot:
-
-``` r
-
-add_abline <- function(data, plot, colour = "red") {
-  plot + geom_hline(yintercept =  mean(data$power_to_weight), colour = colour)
-}
-
-network$objects$add_object("plot_line", add_abline(data = query(mtcars = "power_to_weight"), 
-                                                   plot = query(objects = "[plot_mtcars]")))
-```
-
-The underlying idea is that data analysts act as “network owners”,
-defining and composing objects that encapsulate reusable logic and
-results. These objects can then be reused by other analysts as root
-nodes in their own networks, allowing them to build increasingly complex
-structures without having to manage dependencies explicitly.
-
 ## States
 
 States provide a mechanism for parameterizing network execution at query
@@ -468,7 +407,7 @@ specify a default value (If no default value is set, the network will
 use `NULL` as a default):
 
 ``` r
-network$add_state("line_colour", default = "red")
+network$add_state("date_state", default = Sys.Date())
 ```
 
 Once defined, a state can be referenced inside a function by using its
@@ -476,9 +415,13 @@ name wrapped in curly braces:
 
 ``` r
 
-network$objects$add_object("plot_line", add_abline(data = query(mtcars = "power_to_weight"), 
-                                                   plot = query(objects = "[plot_mtcars]"), 
-                                                   colour = "{line_colour}"), update = TRUE)
+add_date <- function(data, date = NULL) {
+  data$date <- date
+  data
+}
+
+network$mtcars$link(add_date(data = query(mtcars = "am"), 
+                             date = "{date_state}"))
 ```
 
 To assign a concrete value to a state for a specific execution, use
@@ -487,9 +430,16 @@ when constructing the query:
 
 ``` r
 
-blue_line_plot <- query(objects = "[plot_line]") |> 
-  with_state(line_colour = "blue") |> 
-  nascent(network)  
+data <- query(am, mean_hp_per_gear, date) |> 
+  with_state(date_state = "2026-02-02") |> 
+  nascent(network)
+head(data, n = 3)
+#> # A tibble: 3 × 3
+#>      am mean_hp_per_gear date      
+#>   <dbl>            <dbl> <chr>     
+#> 1     1             89.5 2026-02-02
+#> 2     1             89.5 2026-02-02
+#> 3     1             89.5 2026-02-02
 ```
 
 States turn an otherwise rigid network into a flexible execution
@@ -515,14 +465,11 @@ data <- query(mtcars = "power_to_weight", engine = "type") |>
   add_join_path(path = c("mtcars", "engine")) |> 
   nascent(network)
 
-head(data)
+head(data, n = 3)
 #>   power_to_weight    type
 #> 1        41.98473 V-Shape
 #> 2        38.26087 V-Shape
 #> 3        68.62745 V-Shape
-#> 4        44.22604 V-Shape
-#> 5        50.87209 V-Shape
-#> 6        47.61905 V-Shape
 ```
 
 More formally, multiple join paths can be defined for a single query:
@@ -530,7 +477,8 @@ More formally, multiple join paths can be defined for a single query:
 ``` r
 
 qry <- query(projectA = "col1", projectB = "col2", projectC = "col3")
-query_join <- add_join_path(qry, path1 = c("projectA", "projectB"), path2 = c("projectA", "projectC"))
+query_join <- add_join_path(qry, path1 = c("projectA", "projectB"), 
+                            path2 = c("projectA", "projectC"))
 ```
 
 This configuration results in two joins being applied: `projectA` is
