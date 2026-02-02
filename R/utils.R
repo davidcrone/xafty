@@ -28,7 +28,6 @@ print.xafty_network <- function(x, ...) {
   if(length(projects) > 1) {
     print_joins(projects, network = x)
   }
-  print_objects(projects, network = x)
 }
 
 print_project <- function(project, network) {
@@ -111,29 +110,6 @@ print_joins <- function(projects, network) {
     }
   }
   cat("\n")
-}
-
-print_objects <- function(projects, network) {
-  li_objects <- lapply(projects, collect_objects, network = network)
-  objects <- unlist(li_objects)
-  if(length(objects) > 0) {
-    objects_print <- paste0(objects, collapse = ", ")
-    cat("\U1F3D7  ", "Objects (", length(objects), "):\n", sep = "")
-    cat("   ", objects_print)
-    cat("\n")
-  }
-}
-
-collect_objects <- function(project, network) {
-  variables <- names(network[[project]]$variables)
-  link_names <- unique(vapply(variables, \(variable) network[[project]]$variables[[variable]], FUN.VALUE = character(1)))
-  ruleset <- network[[project]]$ruleset
-  links <- lapply(link_names, \(name) ruleset[[name]])
-  is_object <- vapply(links, is_object_link, FUN.VALUE = logical(1))
-  object_links <- links[is_object]
-  if (length(object_links) == 0) return(character(0))
-  object_names <- vapply(object_links, \(link) paste0("[", link$name, "]"), FUN.VALUE = character(1))
-  object_names
 }
 
 eval_args <- function(link, network) {
@@ -302,7 +278,6 @@ interpolate_link_queries <- function(link, state_list = NULL, network) {
 
 find_xafty_objects <- function(arg) {
   if(is_state_variable(arg)) return("xafty_state")
-  if(inherits(arg, "xafty_object_query")) return("xafty_object")
   if("xafty_query_list" %in% class(arg)) return("xafty_query")
   "none_xafty_object"
 }
@@ -406,10 +381,6 @@ build_executable_args <- function(link, data_sm, mask, default_states) {
       project <- get_lead_project(query_list = query_list)
       data <- data_sm$get_data(project = project)
       data <- unscope(data = data, link = link, arg_name = arg_name, mask = mask)
-    } else if (xo == "xafty_object") {
-      object_query <- arg[[arg_name]]
-      object_key <- paste0(object_query[[1]]$from, ".", get_squared_variable(object_query[[1]]$select))
-      data <- data_sm$get_object(object_key)
     } else if (xo == "xafty_state") {
       name <- args[[arg_name]]
       data <- data_sm$get_state(name)
@@ -422,31 +393,7 @@ build_executable_args <- function(link, data_sm, mask, default_states) {
   executable_args
 }
 
-build_object_args <- function(link, state_list, network) {
-  args <- link$args
-  object_args <- list()
-  object_types <- get_xafty_objects_vec(link)
-  for (i in seq_along(args)) {
-    xo <- object_types[i]
-    arg <- args[i]
-    arg_name <- names(arg)
-    if(xo == "xafty_query" || xo == "xafty_object") {
-      query_list <- interpolate_state_in_query(arg[[arg_name]], state_list = state_list, network_env = network)
-      # TODO: Needs to pass the state of the previous iteration
-      data <- build_dag(query_list, network = network)
-    }  else if (xo == "xafty_state") {
-      name <- get_braced_variable(args[[arg_name]])
-      data <- state_list[[name]]
-      if(is.null(data)) data <- get_default_state(name = name, network_env = network)
-    } else if (xo == "none_xafty_object") {
-      data <- args[[arg_name]]
-    }
-    object_args[[arg_name]] <- data
-  }
-  object_args
-}
-
-get_lead_projects <- function(link, which = c("xafty_query", "xafty_object")) {
+get_lead_projects <- function(link, which = "xafty_query") {
   queries <- get_queries(link, which = which)
   arg_w_query <- names(queries)
   # The lead project will always be the first project in a query

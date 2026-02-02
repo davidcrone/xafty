@@ -40,9 +40,9 @@ test_that("merge_queries respects xafty_object_query class", {
 })
 
 test_that("merge_queries can merge a query list which has been treated by fill_raw_query", {
-  raw_query_list <- query("mean_nickname", customer_data = "id", "intelligence_plus_mean", map = "id")
+  raw_query_list <- query("mean_nickname", customer_data = "id", "new_column", map = "id")
   test_query <- fill_raw_query(query_list = raw_query_list, network = test_network)
   test_query <- merge_queries(test_query)
-  exp_query <- query(customer_data = c("mean_nickname", "id"), intelligence = "intelligence_plus_mean", map = "id")
+  exp_query <- query(customer_data = c("mean_nickname", "id"), intelligence = "new_column", map = "id")
   expect_identical(test_query, exp_query)
 })

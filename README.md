@@ -315,25 +315,13 @@ final data products. This makes it easy to “branch off” from these
 intermediate steps and reuse them, rather than starting from a blank
 slate, as is common in many data analytics projects.
 
-Finally, to add the original plot to the network, we now use “objects”:
+Finally, create our plot, we simply query the data we need from the
+network and run the plot:
 
 ``` r
-# The add_object function allows us to register a function with any return value to our network
-xafty_network$mtcars$add_object("mtcars_plot", 
-                                plot_mtcars(mtcars = query(engine = "type", 
-                                                           mtcars = "power_to_weight")))
+data <- query(type, power_to_weight) |> nascent(xafty_network)
+plot_mtcars(mtcars = data)
 ```
-
-And this is how we retrieve the object again from our network:
-
-``` r
-# Write the object's name in squared brackets
-query(mtcars = "[mtcars_plot]") |> nascent(xafty_network)
-# As of now, only a single object per query might be retrieved from the network
-```
-
-This finally allows us to fully represent the functional pipeline from
-step 2 as a network pipeline.
 
 ## Additional Features
 
@@ -344,11 +332,13 @@ being quite feature rich:
   `xafty::with_state()`.
 - Context on entry/exit for each project, similar to
   `dplyr::group_by() / ungroup()`, enabling wrapping for lossless
-  transformations.
-- Wildcard selection with `xafty::query(project = "*")` to request all
-  variables from a project.
+  transformations
+- Project selection with `xafty::query(project_name)` to request all
+  variables from a project using the project’s name
 - Inspection tools, such as `xafty::build_dag()`, to view the internal
   dependency graph.
+- Debugging tools, such as `xafty::to_script`, which allows you to write
+  the entire pipeline as a linear script
 
 ## Ideas for Future Enhancements
 

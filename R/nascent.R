@@ -22,11 +22,7 @@ nascent <- function(query, network) {
 #' @export
 build_dag <- function(query, network, frame = "main") {
   globals <- dots_to_query(network = network, query)
-  if (inherits(globals$internal, "xafty_object_query")) {
-    dag <- build_object_dag(globals = globals, network = network)
-  } else {
-    dag <- build_query_dag(globals = globals, network = network)
-  }
+  dag <- build_query_dag(globals = globals, network = network)
   dag
 }
 
@@ -47,48 +43,10 @@ build_query_dag <- function(globals, network) {
     join_path = dag_sm$get_join_path(),
     masked_columns = dag_sm$get_mask(),
     network_states = dag_sm$get_network_state(),
-    query_states = globals$states,
-    objects = dag_sm$get_objects()
+    query_states = globals$states
   )
   class(dag) <- c("list", "query_dag")
   dag
-}
-
-build_object_dag <- function(globals, network) {
-  object_query <- globals$internal
-  project <- object_query[[1]]$from
-  object_name <- get_squared_variable(object_query[[1]]$select)
-  object_link <- get_chatty_link_from_network(name = object_name, project = project, network = network)
-  object_query <- get_queries(link = object_link, temper = TRUE, state_list = globals$states, network = network)
-  dag_args <- build_object_args(link = object_link, state_list = globals$states, network = network)
-  object_dag <- list(
-    name = object_name,
-    project = project,
-    object_link = object_link,
-    args = dag_args
-  )
-  class(object_dag) <- c("list", "object_dag")
-  object_dag
-}
-
-resolve_objects <- function(network, dag_sm = NULL) {
-  codes <- names(dag_sm$get_codes())
-  log_object <- vapply(codes, \(code) grepl("^object", code), FUN.VALUE = logical(1))
-  if(!any(log_object)) return(dag_sm)
-  object_codes <- codes[log_object]
-  for (object_code in object_codes) {
-    link <- dag_sm$get_links()[[object_code]]
-    queries <- get_queries(link, temper = FALSE)
-    arg_names <- names(queries)
-    object_dag_list <- list()
-    for (arg_name in arg_names) {
-      query <- queries[[arg_name]]
-      object_dag <- build_dag(query, network = network, frame = object_code)
-      object_dag_list[[arg_name]] <- object_dag
-    }
-    dag_sm$set_object(object_code = object_code, dag = object_dag_list)
-  }
-  dag_sm
 }
 
 resolve_function_stack <- function(dag_sm, network) {
@@ -110,7 +68,6 @@ get_join_functions <- function(from, to, network, sm, state_query = NULL) {
   link <- interpolate_link_queries(link = link, state_list = state_query, network = network)
   code <- build_dependency_codes(link = link, network = network)
   sm$set_nodes(link = link, code = code)
-  set_objects(links = list(link), network = network, dag_sm = sm)
   # Here columns that have the same variable names be joined into one variable will be noted in the mask state variable.
   # This enables later unscope of variables that might be scoped from a different project not expected by the link queries
   lst_masked_columns <- get_masked_column_names(link)
@@ -203,9 +160,7 @@ execute_stack <- function(link, mask, data_sm, default_states) {
     error = function(e) {
       stop(paste0("Error occurred: ", e$message))
     })
-  if(!is_object_link(link)) {
-    data <- scope(data = data, link = link, mask = mask)
-  }
+  data <- scope(data = data, link = link, mask = mask)
   projects_update_key <- do.call(c, lapply(projects, \(project) {
     key <- data_sm$get_data_key(project)
     if(is.null(key)) return(project)
@@ -225,20 +180,7 @@ execute_stack <- function(link, mask, data_sm, default_states) {
 #' @export
 evaluate_dag <- function(dag) {
   data_sm <- data_sm()
-  if(inherits(dag, "object_dag")) {
-    object_fun <- dag$object_link$fun
-    evaluated_args <- sapply(dag$args, \(arg) {
-      if (inherits(arg, "query_dag") || inherits(arg, "object_dag")) {
-        evaluate_dag(arg)
-      } else {
-        arg
-      }
-    }, simplify = FALSE, USE.NAMES = TRUE)
-    data <- do.call(object_fun, evaluated_args)
-    return(data)
-  }
   data_sm <- set_states(states = dag$query_states, data_sm = data_sm)
-  data_sm <- evaluate_objects(dags = dag$objects, global_data_sm = data_sm)
   links <- dag$links
   execution_order <- dag$execution_order
   mask <- dag$masked_columns
@@ -253,15 +195,6 @@ evaluate_dag <- function(dag) {
   data <- apply_where_filter(data = data, dag = dag)
   data <- return_unscoped_data(data = data, query = dag$order_query, dag = dag)
   data
-}
-
-evaluate_objects <- function(dags, global_data_sm) {
-  dags_evaluated <- sapply(dags, evaluate_dag, simplify = FALSE, USE.NAMES = TRUE)
-  object_keys <- names(dags_evaluated)
-  for (object_key in object_keys) {
-    global_data_sm$set_object(object_key = object_key, data = dags_evaluated[[object_key]])
-  }
-  global_data_sm
 }
 
 get_data_key <- function(data_sm, dag, network) {

@@ -116,32 +116,6 @@ test_that("register throws an error when a column within a query is not present 
   expect_error(test_network$customer_data$add(test_func(data = query(customer_data = "col_not_present")), vars = c("add_col")))
 })
 
-test_that("register can register an object", {
-  test_network <- init_network(name = "test_network", projects = "intelligence")
-  test_network$intelligence$link(intelligence_date())
-  filter_active_customers <- function(data) {
-    data[data$intelligence > 100, ]
-  }
-  test_network$intelligence$add_object("active_customers", filter_active_customers(data = query(intelligence = "intelligence")))
-  expect_equal(test_network$intelligence$variables$active_customers, "filter_active_customers")
-  expect_equal(test_network$intelligence$ruleset$filter_active_customers$name, "active_customers")
-})
-
-test_that("register can register a function with an object as dependency", {
-  test_network <- init_network(name = "test_network", projects = "intelligence")
-  test_network$intelligence$link(intelligence_date())
-  filter_active_customers <- function(data) {
-    data[data$intelligence > 100, , drop = FALSE]
-  }
-  test_network$intelligence$add_object("active_customers", filter_active_customers(data = query(intelligence = "intelligence")))
-  build_kpi <- function(active_customers) {
-    mean(active_customers$intelligence)
-  }
-  test_network$intelligence$add_object("mean_intelligence", build_kpi(active_customers = query(intelligence = c("[active_customers]"))))
-  expect_equal(test_network$intelligence$variables$mean_intelligence, "build_kpi")
-  expect_equal(test_network$intelligence$ruleset$build_kpi$name, "mean_intelligence")
-})
-
 test_that("A xafty state can be registered", {
   test_network <- init_network(name = "test_network")
   test_network$add_state("test_state", allowed = c(TRUE, FALSE), example = TRUE, default = TRUE, documentation = "this is an example")

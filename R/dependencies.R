@@ -14,7 +14,6 @@ dependencies <- function(query_list, state_list = NULL, network, dag_sm = build_
   links <- get_dependend_links(query_list = query_list, network = network)
   links <- lapply(links, interpolate_link_queries, network = network, state_list = state_list)
   set_nodes(links = links, network = network, dag_sm = dag_sm)
-  set_objects(links = links, network = network, dag_sm = dag_sm)
   queries <- get_dependend_queries(links)
   new_query_list <- do.call(merge_queries, queries)
   dependencies(query_list = new_query_list, state_list = state_list, network = network, dag_sm = dag_sm)
@@ -181,7 +180,6 @@ get_dependend_links <- function(query_list, network) {
 get_links <- function(xafty_query, network) {
   project <- xafty_query$from
   selects <- xafty_query$select
-  if(any(is_object_variable(selects))) selects <- get_squared_variable(selects)
   links <- lapply(selects, \(select) get_chatty_link_from_network(name = select, project = project, network = network))
   links
 }
@@ -195,27 +193,9 @@ has_empty_list <- function(li) {
 }
 
 set_nodes <- function(links, network, dag_sm) {
-  links_vec <- vapply(links, \(link) is_query_link(link) || is_context_link(link), FUN.VALUE = logical(1))
-  links <- links[links_vec]
   li_nodes <- lapply(links, build_dependency_codes, network = network)
   mapply(dag_sm$set_nodes, links, li_nodes, SIMPLIFY = FALSE)
   invisible(TRUE)
-}
-
-set_objects <- function(links, network, dag_sm) {
-  for (link in links) {
-    xafty_objects <- get_xafty_objects_vec(link)
-    logical_vec <- xafty_objects == "xafty_object"
-    has_object_query <- any(logical_vec)
-    if(!has_object_query) next
-    object_queries <-link$args[logical_vec]
-    for(object_query in object_queries) {
-      query <- object_query[[1]]
-      object_key <- paste0(query$from, ".", get_squared_variable(query$select))
-      object_dag <- build_dag(object_query, network = network, frame = object_key)
-      dag_sm$set_object(object_code = object_key, dag = object_dag)
-    }
-  }
 }
 
 get_dependend_queries <- function(links) {

@@ -43,9 +43,6 @@ query <- function(...) {
     }
     xafty_query
   })
-  if(has_misuse_of_object_in_query_list(query_list = query_list)){
-    stop("You are querying an object in an unexpected way. Please check {Vignette on objects} on how to query an object.")
-  }
   names(query_list) <- vapply(query_list, \(query) query$from, FUN.VALUE = character(1))
   query_list <- set_query_list_class(query_list = query_list)
   query_list
@@ -163,7 +160,7 @@ dots_to_query <- function(network, ...)  {
     query_list <- query_raw$query
     state_list <- query_raw$states
     join_path <- query_raw$join_path
-  } else if (inherits(query_raw[[1]], what = "xafty_query_list") || inherits(query_raw[[1]], what = "xafty_object_query")) {
+  } else if (inherits(query_raw[[1]], what = "xafty_query_list")) {
     query_list <- query_raw[[1]]
     state_list <- NULL
     join_path <- NULL
@@ -186,34 +183,9 @@ dots_to_query <- function(network, ...)  {
   )
 }
 
-is_object_query_list <- function(query_list) {
-  if (length(query_list) != 1) return(FALSE)
-  if(length(query_list[[1]]$select) > 1) return(FALSE)
-  if (!is_squared_variable(query_list[[1]]$select)) return(FALSE)
-  TRUE
-}
-
 set_query_list_class <- function(query_list) {
-  if (is_object_query_list(query_list = query_list)) {
-    class(query_list) <- c("list", "xafty_object_query")
-  } else {
-    class(query_list) <- c("list", "xafty_query_list")
-  }
+  class(query_list) <- c("list", "xafty_query_list")
   query_list
-}
-
-has_misuse_of_object_in_query_list <- function(query_list) {
-  n_projects <- length(query_list)
-  misuse_detected <- FALSE
-  for (query in query_list) {
-    project <- query$project
-    select <- query$select
-    object_variable_vec <- vapply(select, is_squared_variable, FUN.VALUE = logical(1))
-    has_object <- any(object_variable_vec)
-    more_than_one <- length(object_variable_vec) > 1
-    if((n_projects > 1 & has_object) | (has_object & more_than_one)) misuse_detected <- TRUE
-  }
-  misuse_detected
 }
 
 resolve_star_select <- function(query_list, network_env) {
@@ -224,7 +196,7 @@ resolve_star_select <- function(query_list, network_env) {
       variable_query <- query(setNames(list(variable_names), query$from))
       links <- lapply(variable_query, get_links, network = network_env)[[1]]
       selection <- variable_names[vapply(links, check_link_type, FUN.VALUE = character(1)) == "query_link"]
-      if(length(selection) == 0) stop(paste0("No query found in project ", project, ". Star select (*) cannot select contexts or objects."))
+      if(length(selection) == 0) stop(paste0("No query found in project ", project, ". Star select (*) cannot select on entry or on exit."))
       query$select <- selection
     }
     query

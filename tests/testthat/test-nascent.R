@@ -47,7 +47,7 @@ test_that("nascent can resolve a large network", {
   test_table <- query(map = "id", intelligence = "new_column",
                       side1 = "col1", side2 = "col2", side3 = "col3") |> nascent(large_network)
   expected_table <- data.frame(
-    id = c(1, 2, 3, 4, 5),
+    id = c(1L, 2L, 3L, 4L, 5L),
     new_column = c("HR1", "IT2", "Finance3", "Marketing4", "Sales5"),
     col1 = c("Why", "What", "How", NA_character_, NA_character_),
     col2 = c("Hallo", "Ja", "Nein", NA_character_, NA_character_),
@@ -148,25 +148,6 @@ test_that("State argument correclty passes the argument into the state variable"
   expect_identical(test_data, expected_data)
 })
 
-test_that("nascent can query an object from the network", {
-  test_data <- query(intelligence = c("[active_customers]")) |> nascent(test_network)
-  expected_data <- data.frame(intelligence = c(120, 130), row.names = c(1L, 4L))
-  expect_equal(test_data, expected_data)
-})
-
-test_that("nascent can query an object from the network which has an object as dependency", {
-  test_data <- query(intelligence = c("[mean_intelligence]")) |> nascent(test_network)
-  expected_data <- 125
-  expect_equal(test_data, expected_data)
-})
-
-test_that("An interwoven object in a network query does execute the object by itself", {
-  test_data <- query(intelligence = c("intelligence_plus_mean")) |> nascent(test_network)
-  expected_data <- structure(list(intelligence_plus_mean = c(245, 224, 225, 255, 205)),
-                             row.names = c(NA, -5L), class = "data.frame")
-  expect_equal(test_data, expected_data)
-})
-
 test_that("Flow of functions can be controlled through states", {
   test_network <- init_network(name = "test_network", projects = "customer_data")
   test_network$customer_data$link(get_sample_data())
@@ -259,7 +240,7 @@ test_that("nascent has access to default state and returns the default value dur
 test_that("Objects and States are correctly integrated during join_dependencies", {
   qry <- query(occupations = "id", map = "secret_id") |> with_state(column_name = "id")
   test_data <- nascent(qry, test_network)
-  expected_data <-structure(list(id = c(1, 2, 3, 4, 5),
+  expected_data <-structure(list(id = c(1L, 2L, 3L, 4L, 5L),
                                  secret_id = c(2, 3, 4, 5, 6)), row.names = c(NA, -5L), class = "data.frame")
   expect_identical(test_data, expected_data)
 })
@@ -395,20 +376,6 @@ test_that("Dependencies in on_exit are correctly resolved", {
   test_data <- nascent(query(group = "Tries"), on_exit_network)
   expect_data <- structure(list(Tries = c(1L, 2L, 5L)), row.names = c(2L, 3L, 1L), class = "data.frame")
   expect_identical(test_data, expect_data)
-})
-
-test_that("Non-query default args are available in nascent", {
-  state_object_test <- function(data, state = "{state_test}", logical = TRUE) {
-    if(logical) {
-      data$state <- state
-    }
-    data
-  }
-  test_network$add_state(name = "state_test", default = 2)
-  test_network$occupations$add_object("object_with_state", state_object_test(data = query(intelligence = "[active_customers]")))
-  test_data <- nascent(query(occupations = "[object_with_state]"), test_network)
-  expected_data <- structure(list(intelligence = c(120, 130), state = c(2, 2)), row.names = c(1L, 4L), class = "data.frame")
-  expect_identical(test_data, expected_data)
 })
 
 test_that("on_exit function does not take duplicated dependencies", {

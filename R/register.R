@@ -155,8 +155,6 @@ create_link <- function(quosure, project, link_type, network, ...) {
     link <- link_add_variables(link = link, variable_names = .dots[["vars"]], network = network)
   } else if (link_type == "context") {
     link <- link_add_context(link = link, name = .dots[["name"]], func_type = .dots[["func_type"]])
-  } else if (link_type == "object") {
-    link <- link_add_object(link = link, name = .dots[["name"]], func_type = .dots[["func_type"]])
   }
   link <- link_add_joins(link = link, network = network)
   link
@@ -188,20 +186,6 @@ link_add_context <- function(link, name, func_type) {
   }
   link$type <- func_type
   class(link) <- c("list", "link", "context_link")
-  link
-}
-
-link_add_object <- function(link, name = NULL, func_type) {
-  if(!is.null(name)) {
-    is_squared_already <- is_squared_variable(name)
-    if(!is_squared_already) obj_name <- paste0("[", name, "]")
-    if(!is_object_variable(obj_name)) stop(paste0("Object name '", name, "' is not a valid variable name."))
-    link$name<- name
-  } else {
-    link$name <- NULL
-  }
-  link$type <- func_type
-  class(link) <- c("list", "link", "object_link")
   link
 }
 

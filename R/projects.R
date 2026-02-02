@@ -38,7 +38,7 @@ create_add_project <- function(network_env) {
   add_project <- function(name, ...) {
     validate_project_name(name = name, network = network_env)
     .network_env <- add_new_project(project = name, network_env = network_env,
-                                    func_types = c("link", "on_entry", "on_exit", "add_object"))
+                                    func_types = c("link", "on_entry", "on_exit"))
     .network_env <- set_project_print_order(projects = name, network = .network_env)
     invisible(.network_env)
   }
@@ -71,17 +71,6 @@ add_new_project <- function(project, network_env, func_types) {
   invisible(network_env)
 }
 
-create_add_object <- function(project, network, func_type = "object") {
-  force(project)
-  force(network)
-  force(func_type)
-  add_object <- function(name, fun, ...) {
-    quosure <- rlang::enquo(fun)
-    register(quosure = quosure, link_type = "object", network = network, project = project, name = name, func_type = func_type, ...)
-  }
-  add_object
-}
-
 create_add_context <- function(project, network, func_type = NULL) {
   force(project)
   force(network)
@@ -107,13 +96,11 @@ compose_link_function <- function(project, network, func_type) {
 
 bundle_link_functions <- function(project, network) {
   link_fun <- compose_link_function(project = project, network = network, func_type = "link")
-  object_fun <- create_add_object(project = project, network = network, func_type = "object")
   on_entry_fun <- create_add_context(project = project, network = network, func_type = "entry")
   on_exit_fun <- create_add_context(project = project, network = network, func_type = "exit")
   list(
     "on_entry" = on_entry_fun,
     "link" = link_fun,
-    "add_object" = object_fun,
     "on_exit" = on_exit_fun
   )
 }
@@ -146,7 +133,7 @@ merge_networks <- function(name, ...) {
     network_env <- passed_networks[[i]]
     for (project in vec_projects) {
       link_funs <- bundle_link_functions(project = project, network = new_network_env)
-      link_names <- c("link", "add_object")
+      link_names <- "link"
       project_env <- network_env[[project]]
       rm(list = link_names, envir = project_env)
       for (lp in link_names) {

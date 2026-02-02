@@ -53,16 +53,6 @@ test_that("passing just a character vecror into xafty_query returns the query wi
   expect_equal(xafty_query$customer_data$from, "customer_data")
 })
 
-test_that("an object query correctly adds the class xafty_object_query to the class vector", {
-  xafty_query <- query(customer_data = "[my_object]")
-  expect_in(c("xafty_object_query"), class(xafty_query))
-})
-
-test_that("trying to query an object and any other column or object gives an informative error", {
-  expect_error(query(customer_data = c("[my_object]", "column")))
-  expect_error(query(customer_data = "column", occupation = "[my_object]"))
-})
-
 test_that("adding a with list for states will return the query with the state list", {
   xafty_query <- query(customer_data = c("id", "score")) |>
     with_state(param1 = TRUE, param2 = FALSE)
@@ -101,15 +91,6 @@ test_that("interpolate_state_in_query correctly fills the select variable with t
   expect_identical(query_test, query_expected)
 })
 
-test_that("interpolate_state_in_query can also interpolate an object", {
-  network_env <- init_network("test_network")
-  network_env$add_state("year", default = "2019")
-  query_list <- query(object = "[object.{year}]")
-  query_test <- interpolate_state_in_query(query_list = query_list, state_list = NULL, network_env = network_env)
-  query_expected <- query(object = "[object.2019]")
-  expect_identical(query_test, query_expected)
-})
-
 test_that("interpolate_state_in_query correctly fills the select variable with the same project appearing twice", {
   network_env <- init_network("test_network")
   network_env$add_state("year", default = "2019")
@@ -143,12 +124,12 @@ test_that("query with multiples of the same project presevers the variables", {
 })
 
 test_that("A raw query is correctly filled with a project", {
-  raw_query_list <- query("mean_nickname", customer_data = "id", "intelligence_plus_mean", map = "id")
+  raw_query_list <- query("mean_nickname", customer_data = "id", "new_column", map = "id")
   test_query <- fill_raw_query(query_list = raw_query_list, network = test_network)
   tets_projects <- vapply(test_query, \(query) query$from, character(1), USE.NAMES = FALSE)
   tets_variables <- vapply(test_query, \(query) query$select, character(1), USE.NAMES = FALSE)
   expect_identical(tets_projects, c("customer_data", "customer_data", "intelligence", "map"))
-  expect_identical(tets_variables, c("mean_nickname", "id", "intelligence_plus_mean", "id"))
+  expect_identical(tets_variables, c("mean_nickname", "id", "new_column", "id"))
   expect_s3_class(test_query, "xafty_query_list")
 })
 
