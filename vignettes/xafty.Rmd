@@ -273,16 +273,20 @@ States provide a mechanism for parameterizing network execution at query time. T
 States are defined on the network using `add_state()` and may optionally specify a default value (If no default value is set, the network will use `NULL` as a default):
 
 ``` {r}
-network$add_state("line_colour", default = "red")
+network$add_state("date_state", default = Sys.Date())
 ```
 
 Once defined, a state can be referenced inside a function by using its name wrapped in curly braces:
 
 ``` {r}
 
-network$objects$add_object("plot_line", add_abline(data = query(mtcars = "power_to_weight"), 
-                                                   plot = query(objects = "[plot_mtcars]"), 
-                                                   colour = "{line_colour}"), update = TRUE)
+add_date <- function(data, date = NULL) {
+  data$date <- date
+  data
+}
+
+network$mtcars$link(add_date(data = query(mtcars = "am"), 
+                             date = "{date_state}"))
 
 ```
 
@@ -290,9 +294,10 @@ To assign a concrete value to a state for a specific execution, use `xafty::with
 
 ``` {r}
 
-blue_line_plot <- query(objects = "[plot_line]") |> 
-  with_state(line_colour = "blue") |> 
-  nascent(network)  
+data <- query(am, mean_hp_per_gear, date) |> 
+  with_state(date_state = "2026-02-02") |> 
+  nascent(network)
+head(data, n = 3)
 
 ```
 
@@ -310,7 +315,7 @@ data <- query(mtcars = "power_to_weight", engine = "type") |>
   add_join_path(path = c("mtcars", "engine")) |> 
   nascent(network)
 
-head(data)
+head(data, n = 3)
 
 ```
 
@@ -319,7 +324,8 @@ More formally, multiple join paths can be defined for a single query:
 ``` {r}
 
 qry <- query(projectA = "col1", projectB = "col2", projectC = "col3")
-query_join <- add_join_path(qry, path1 = c("projectA", "projectB"), path2 = c("projectA", "projectC"))
+query_join <- add_join_path(qry, path1 = c("projectA", "projectB"), 
+                            path2 = c("projectA", "projectC"))
 ```
 
 This configuration results in two joins being applied: `projectA` is joined with `projectB`, and `projectA` is joined with `projectC`. Explicit join paths provide a reliable way to control join behavior in complex networks and help prevent unintended join resolutions as the network evolves.
