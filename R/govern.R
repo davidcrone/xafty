@@ -64,6 +64,14 @@ build_tree <- function(network) {
   tree_env$network$settings <- network$settings
   tree_env$network$states <- network$states
 
+  set_main_project <- function(project) {
+    tree_env$main_project <- project
+  }
+
+  get_main_project <- function() {
+    tree_env$main_project
+  }
+
   # Nodes of the directed (hopefully) acyclic graph
   set_nodes <- function(link, code) {
     node <- code$node
@@ -144,6 +152,8 @@ build_tree <- function(network) {
   }
 
   list(
+    set_main_project = set_main_project,
+    get_main_project = get_main_project,
     set_nodes = set_nodes,
     append_deps = append_deps,
     get_codes = get_codes,

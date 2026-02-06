@@ -467,3 +467,20 @@ test_that("Simple where filter can be nascented and filters NA values", {
   data <- query(customer_data = "name") |> where(missing) |> nascent(test_network)
   expect_identical(data$name, c("Alice", "Diana"))
 })
+
+test_that("join_dependencies can be resolved as delat adding joins to the join path instead of rewriting it", {
+  join_func <- function(join, other) {
+    merge(join, other, by = "id", all.x = TRUE)
+  }
+  join_func2 <- join_func
+  network <- init_network("test", projects = c("join1", "join2", "join3"))
+  network$join1$link(get_sample_data())
+  network$join2$link(get_sample_data())
+  network$join3$link(get_sample_data())
+  network$join1$link(join_func(join = query(join1 = "id"), other = query(join2 = "id")))
+  network$join2$link(add_score_category(query(join1 = "name", join2 = "score")))
+  network$join3$link(join_func2(join = query(join3 = "id"), other = query(join2 = c("id", "category"))))
+  test_data <- query(join3 = "id", join2 = "name") |> nascent(network)
+  exp_data <- data.frame(id = 1:5, name = c("Alice", "Bob", "Charlie", "Diana", "Eve"))
+  expect_identical(test_data, exp_data)
+})

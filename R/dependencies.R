@@ -19,31 +19,26 @@ dependencies <- function(query_list, state_list = NULL, network, dag_sm = build_
   dependencies(query_list = new_query_list, state_list = state_list, network = network, dag_sm = dag_sm)
 }
 
-# Currently re-calling resolve_join_dependencies is inefficient, because if the join_path has not changed,
-# running join_dependencies again is unnecessary which would also run dependencies again. running join dependencies again
-# would only be necessary when the dependencies of the join-dependencies would need a totally different join not yet in the join_path
-# resolve_join_dependencies would need to be rewritten to only join the delta projects
 resolve_join_dependencies <- function(network, dag_sm, state_list = NULL) {
-  new_projects <- projects_not_in_join_path(dag_sm = dag_sm, network = network)
-  if(length(new_projects) > 1) {
-    join_path <- greedy_best_first_search(new_projects, network, dag_sm = dag_sm)
-    dag_sm$set_join_path(join_path)
+  projects_new <- get_unjoined_projects(dag_sm = dag_sm, network = network)
+  if(length(projects_new) == 0) return(dag_sm)
+  graph <- build_join_graph(network = network, dag_sm = dag_sm)
+  ## add project to a given join path
+  new_paths <- list()
+  for (i in seq_along(projects_new)) {
+    project_add <- projects_new[i]
+    new_paths[[project_add]] <- greedy_best_first_search(project_add, network, dag_sm = dag_sm, graph = graph)
   }
-  links <- join_dependencies(network = network, dag_sm = dag_sm, state_query = state_list)
+  paths <- unique(flatten_list(remove_empty_lists(new_paths)))
+  links <- join_dependencies(new_paths = paths, network = network, dag_sm = dag_sm, state_query = state_list)
   queries <- get_dependend_queries(links)
   query_list <- do.call(merge_queries, queries)
-  dependencies(query_list = query_list, network = network, dag_sm = dag_sm)
+  resolve_dependencies(query_list = query_list, network = network, dag_sm = dag_sm, state_list = state_list)
   invisible(dag_sm)
 }
 
-join_dependencies <- function(network, dag_sm, state_query) {
-  join_path <- dag_sm$get_join_path()
-  li_joins <- lapply(join_path, \(path) {
-    from <- path[-length(path)]
-    to <- path[-1]
-    mapply(get_join_functions, from, to, MoreArgs = list(network = network, sm = dag_sm, state_query = state_query), SIMPLIFY = FALSE)
-  })
-  li_joins <- flatten_list(li_joins)
+join_dependencies <- function(new_paths, network, dag_sm, state_query) {
+  li_joins <- lapply(new_paths, \(path) get_join_functions(from = path[1], to = path[2], network = network, sm = dag_sm, state_query = state_query))
   li_lookup <- build_flat_lookup(li_joins = li_joins)
   build_join_bridges(li_lookup = li_lookup, network = network, dag_sm = dag_sm)
   # Here the potential new dependencies will be resolved calling dependencies and join functions again.
@@ -215,4 +210,11 @@ get_provided_queries <- function(project, links) {
   variables <- do.call(c, lapply(links, \(link) if(inherits(link, "query_link")) link$variables))
   named_project_list <- setNames(list(variables), project)
   query(named_project_list)
+}
+
+add_to_join_path <- function(new_paths, dag_sm) {
+  join_path <- dag_sm$get_join_path()
+  new_join_path <- append(join_path, new_paths)
+  dag_sm$set_join_path(new_join_path)
+  invisible(dag_sm)
 }

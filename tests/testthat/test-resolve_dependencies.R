@@ -75,7 +75,7 @@ test_that("resolve_dependencies can correctly resolve a column that depends on t
 test_that("resolve_dependencies can correctly resolve a column that depends on two projects, but only pulls from one project", {
   network <- test_network
   query <- query(occupations = "department", intelligence = "intelligence", customer_data = c("name", "nickname")) |>
-    add_join_path(path1= c("customer_data", "occupations"), path2 = c("intelligence", "map", "customer_data"))
+    add_join_path(path1= c("customer_data", "occupations"), path2 = c("intelligence", "map"), path3 = c("map", "customer_data"))
   dag_sm <- build_tree(network)
   globals <- dots_to_query(network, query)
   dag_sm <- initialize_join_path(join_path = query$join_path, dag_sm = dag_sm)

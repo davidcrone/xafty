@@ -59,7 +59,7 @@ resolve_function_stack <- function(dag_sm, network) {
 }
 
 remove_join_helpers <- function(stack_sorted) {
-  stack_sorted[!grepl("^join.", stack_sorted)]
+  stack_sorted[!grepl("^join\\.", stack_sorted)]
 }
 
 get_join_functions <- function(from, to, network, sm, state_query = NULL) {
@@ -81,41 +81,64 @@ get_join_functions <- function(from, to, network, sm, state_query = NULL) {
   )
 }
 
-build_join_graph <- function(network) {
-  names_network <- names(network)
-  projects <- names_network[vapply(names_network, \(project) is.environment(network[[project]]), FUN.VALUE = logical(1))]
-  project_pairs <- sapply(projects, \(project) names(network[[project]]$joined_projects), simplify = FALSE, USE.NAMES = TRUE)
-  project_pairs
+build_join_graph <- function(network, dag_sm) {
+  project_main <- dag_sm$get_main_project()
+  graph <- build_centered_graph(queue = project_main, network = network)
+  graph
 }
 
-projects_not_in_join_path <- function(dag_sm, network) {
-  query_list <- dag_sm$get_query()
-  all_projects <- get_projects(query_list)
-  projects <- all_projects[vapply(all_projects, project_needs_join, network = network, query_list = query_list, FUN.VALUE = logical(1))]
-  join_path <- dag_sm$get_join_path()
-  projects_joined <- unique(do.call(c, join_path))
-  projects[!projects %in% projects_joined]
-}
-
-greedy_best_first_search <- function(projects, network, dag_sm) {
-  graph <- build_join_graph(network)
-  check_graph(graph = graph, check_projects = projects)
-  join_paths <- dag_sm$get_join_path()
-  for (i in seq_along(projects)) {
-    vec_joins <- do.call(c, join_paths)
-    start <- projects[i]
-    if(start %in% vec_joins) next # if project is already present in join path, the job is already done!
-    if(length(vec_joins) > 0) {
-      # Greedy network resolution by looking for the shortest path to a project already in the join path
-      possible_paths <- lapply(vec_joins, \(end) bfs_traversal(graph, start = start, end = end))
-      join_paths[[start]] <- possible_paths[[which.min(vapply(possible_paths, \(path) length(path), FUN.VALUE = numeric(1)))]]
-    } else {
-      # Here we check whether any project can be linked
-      end <- projects[i + 1]
-      join_paths[[start]] <- bfs_traversal(graph, start = start, end = end)
-    }
+build_centered_graph <- function(queue, network, graph = list()) {
+  if(length(queue) == 0) return(graph)
+  new_queue <- list()
+  for(project in queue) {
+    joins <- names(network[[project]]$joined_projects)
+    new_queue[[project]] <- joins[!joins %in% names(graph)]
+    graph[[project]] <- joins
   }
-  join_paths
+  queue <- unlist(new_queue)
+  build_centered_graph(queue = queue, network = network, graph = graph)
+}
+
+get_unjoined_projects <- function(dag_sm, network) {
+  query_list <- dag_sm$get_query()
+  projects <- get_projects(query_list)
+  projects_joined <- unique(unlist(dag_sm$get_join_path()))
+  projects_non <- projects[!projects %in% projects_joined]
+  project_main <- dag_sm$get_main_project()
+  projects_new <- projects_non[vapply(projects_non, project_needs_join, network = network, query_list = query_list, FUN.VALUE = logical(1))]
+  if(is.null(project_main)) dag_sm$set_main_project(projects_new[[1]])
+  projects_new[projects_new != dag_sm$get_main_project()]
+}
+
+greedy_best_first_search <- function(project_add, network, dag_sm, graph) {
+  join_path <- dag_sm$get_join_path()
+  join_vec <- unique(unlist(join_path))
+  if(is.null(join_vec)) join_vec <- dag_sm$get_main_project()
+  possible_paths <- lapply(join_vec, \(start) bfs_traversal(graph = graph, start = start, end = project_add))
+  new_join_path <- possible_paths[[which.min(vapply(possible_paths, \(path) length(path), FUN.VALUE = numeric(1)))]]
+  if(is.null(new_join_path)) stop(paste0("building a join path is not possible! Project: ", project_add, " is not accessible from project ", dag_sm$get_main_project()))
+  unresolved_paths <- get_unresolved_path(new_path = new_join_path, join_path = join_path)
+  add_to_join_path(new_paths = unresolved_paths, dag_sm = dag_sm)
+  unresolved_paths
+}
+
+get_unresolved_path <- function(new_path, join_path) {
+  from <- new_path[1:(length(new_path) - 1)]
+  to <- new_path[-1]
+  new_path <- mapply(\(from, to) c(from, to), from, to, SIMPLIFY = FALSE, USE.NAMES = FALSE)
+  new_path_elements <- get_new_elements(join_path = join_path, new_path = new_path)
+  new_path_elements
+}
+
+get_new_elements <- function(join_path, new_path) {
+  make_key <- function(x) {
+    paste(x, collapse = "\r")
+  }
+
+  main_keys <- vapply(join_path, make_key, character(1))
+  new_keys  <- vapply(new_path,  make_key, character(1))
+
+  new_path[!new_keys %in% main_keys]
 }
 
 # check_projects only contains the projects that are in needed to resolve a join path
@@ -211,6 +234,7 @@ initialize_join_path <- function(join_path, dag_sm) {
   if(is.null(join_path)) return(invisible(dag_sm))
   dag_sm$set_join_path(join_path)
   join_projects <- unique(unlist(join_path, recursive = TRUE, use.names = FALSE))
+  dag_sm$set_main_project(join_projects[[1]])
   invisible(dag_sm)
 }
 
