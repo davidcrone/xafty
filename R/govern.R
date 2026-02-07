@@ -117,6 +117,8 @@ build_tree <- function(network) {
   }
 
   set_join_path <- function(path) {
+    path_names <- vapply(path, \(p) paste0("join.", paste0(sort(p), collapse = ".")), FUN.VALUE = character(1))
+    path <- setNames(path, path_names)
     tree_env$join_path <- path
   }
 

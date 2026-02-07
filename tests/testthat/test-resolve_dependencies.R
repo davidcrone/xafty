@@ -78,7 +78,7 @@ test_that("resolve_dependencies can correctly resolve a column that depends on t
     add_join_path(path1= c("customer_data", "occupations"), path2 = c("intelligence", "map"), path3 = c("map", "customer_data"))
   dag_sm <- build_tree(network)
   globals <- dots_to_query(network, query)
-  dag_sm <- initialize_join_path(join_path = query$join_path, dag_sm = dag_sm)
+  dag_sm <- initialize_join_path(join_path = query$join_path, network = network, dag_sm = dag_sm, state_list = globals$states)
   sm <- resolve_dependencies(query_list = globals$internal, state_list = globals$states, network = network, dag_sm = dag_sm)
   query <- sm$get_query()
   projects <- get_projects(query)

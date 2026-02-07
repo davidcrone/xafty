@@ -1,7 +1,7 @@
 resolve_dependencies <- function(query_list, state_list, network, dag_sm = NULL) {
   dependencies(query_list = query_list, state_list = state_list, network = network, dag_sm = dag_sm)
   resolve_join_dependencies(network = network, dag_sm = dag_sm, state_list = state_list)
-  resolve_wrappers(network = network, dag_sm = dag_sm)
+  resolve_wrappers(network = network, dag_sm = dag_sm, state_list = state_list)
   dag_sm
 }
 
@@ -38,15 +38,11 @@ resolve_join_dependencies <- function(network, dag_sm, state_list = NULL) {
 }
 
 join_dependencies <- function(new_paths, network, dag_sm, state_query) {
-  li_joins <- lapply(new_paths, \(path) get_join_functions(from = path[1], to = path[2], network = network, sm = dag_sm, state_query = state_query))
-  li_lookup <- build_flat_lookup(li_joins = li_joins)
-  build_join_bridges(li_lookup = li_lookup, network = network, dag_sm = dag_sm)
-  # Here the potential new dependencies will be resolved calling dependencies and join functions again.
-  links <- lapply(li_joins, \(li_join) li_join$link)
+  links <- lapply(new_paths, \(path) get_join_functions(from = path[1], to = path[2], network = network, sm = dag_sm, state_query = state_query))
   links
 }
 
-resolve_wrappers <- function(network, dag_sm) {
+resolve_wrappers <- function(network, dag_sm, state_list) {
   projects <- get_projects(dag_sm$get_query())
   has_wrappers <- vapply(projects, \(project) !is.null(c(network[[project]]$wrappers$on_entry,
                                                          network[[project]]$wrappers$on_exit)), FUN.VALUE = logical(1))
@@ -55,10 +51,9 @@ resolve_wrappers <- function(network, dag_sm) {
   if(length(unresolved_projects) == 0) return(dag_sm)
   dag_sm$set_wrapper_projects(unresolved_projects)
   for (project in unresolved_projects) {
-    resolve_on_exit(project = project, network = network, dag_sm = dag_sm)
-    resolve_on_entry(project = project, network = network, dag_sm = dag_sm)
+    resolve_on_exit(project = project, network = network, dag_sm = dag_sm, state_list = state_list)
+    resolve_on_entry(project = project, network = network, dag_sm = dag_sm, state_list = state_list)
   }
-  dag_sm <- resolve_wrappers(network = network, dag_sm = dag_sm)
   dag_sm
 }
 
@@ -71,8 +66,17 @@ build_flat_lookup <- function(li_joins) {
   li_lookup
 }
 
-build_join_bridges <- function(li_lookup, network, dag_sm) {
+build_join_bridges <- function(network, dag_sm) {
   list_join_codes <- dag_sm$get_joins()
+  if(length(list_join_codes) == 0) return(dag_sm)
+  join_path <- dag_sm$get_join_path()
+  li_lookup <- sapply(join_path, \(path) {
+    from <- path[1]
+    to <- path[2]
+    fun_name <- network[[from]]$joined_projects[[to]]
+    link <- network[[from]]$ruleset[[fun_name]]
+    paste0(link$project, ".", fun_name)
+  }, simplify = FALSE, USE.NAMES = TRUE)
   list_direct_joins <- li_lookup[names(li_lookup) %in% names(list_join_codes)]
   for (i in seq_along(list_direct_joins)) {
     join_node <- list(node = list_direct_joins[i])
@@ -80,8 +84,7 @@ build_join_bridges <- function(li_lookup, network, dag_sm) {
   }
   list_inderect_joins <- list_join_codes[!names(list_join_codes) %in% names(li_lookup)]
   if(length(list_inderect_joins) <= 0) return(dag_sm)
-  list_join_path <- dag_sm$get_join_path()
-  sub_graph <- build_sub_graph(join_path = list_join_path)
+  sub_graph <- build_sub_graph(join_path = join_path)
   join_pairs <- join_pairs(list_inderect_joins)
   # Each pair is traveresd through the sub graph resulting in the join codes that are present in li_lookup
   list_join_bfs <- lapply(join_pairs, \(pairs) {
