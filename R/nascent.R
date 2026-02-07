@@ -228,7 +228,7 @@ initialize_join_path <- function(join_path, network, dag_sm, state_list = NULL) 
   dag_sm$set_main_project(join_projects[[1]])
 
   # Resolves dependencies of joins and sets nodes in dag
-  links <- join_dependencies(new_paths = join_path, network = network, dag_sm = dag_sm, state_query = state_list)
+  links <- join_dependencies(paths = join_path, network = network, dag_sm = dag_sm, state_list = state_list)
   queries <- get_dependend_queries(links)
   query_list <- do.call(merge_queries, queries)
   dag_sm <- resolve_dependencies(query_list = query_list, network = network, dag_sm = dag_sm, state_list = state_list)
