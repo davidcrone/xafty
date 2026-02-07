@@ -63,10 +63,10 @@ remove_join_helpers <- function(stack_sorted) {
   stack_sorted[!grepl("^join\\.", stack_sorted)]
 }
 
-get_join_functions <- function(from, to, network, sm, state_query = NULL) {
+get_join_functions <- function(from, to, network, sm, state_list = NULL) {
   fun_name <- network[[from]]$joined_projects[[to]]
   link <- network[[from]]$ruleset[[fun_name]]
-  link <- interpolate_link_queries(link = link, state_list = state_query, network = network)
+  link <- interpolate_link_queries(link = link, state_list = state_list, network = network)
   code <- build_dependency_codes(link = link, network = network)
   sm$set_nodes(link = link, code = code)
   # Here columns that have the same variable names be joined into one variable will be noted in the mask state variable.
@@ -117,6 +117,14 @@ greedy_best_first_search <- function(project_add, network, dag_sm, graph) {
   unresolved_paths
 }
 
+add_to_join_path <- function(new_paths, dag_sm) {
+  join_path <- dag_sm$get_join_path()
+  new_join_path <- append(join_path, new_paths)
+  dag_sm$set_join_path(new_join_path)
+  invisible(dag_sm)
+}
+
+
 get_unresolved_path <- function(new_path, join_path) {
   from <- new_path[1:(length(new_path) - 1)]
   to <- new_path[-1]
@@ -134,18 +142,6 @@ get_new_elements <- function(join_path, new_path) {
   new_keys  <- vapply(new_path,  make_key, character(1))
 
   new_path[!new_keys %in% main_keys]
-}
-
-# check_projects only contains the projects that are in needed to resolve a join path
-check_graph <- function(graph, check_projects) {
-  projects_in_graph <- names(graph)
-  for (project in check_projects) {
-    if(all(!graph[[project]] %in% projects_in_graph)) {
-      stop(paste0("Project: '", project, "' is not joined to any other project in the network.",
-                  " Therefore, building a join path is not possible. You need to add a join function that joins '",
-                  project, "' to another project within the network."))
-    }
-  }
 }
 
 get_chatty_link_from_network <- function(name, project, network) {
@@ -230,6 +226,8 @@ initialize_join_path <- function(join_path, network, dag_sm, state_list = NULL) 
   dag_sm$set_join_path(join_path)
   join_projects <- unique(unlist(join_path, recursive = TRUE, use.names = FALSE))
   dag_sm$set_main_project(join_projects[[1]])
+
+  # Resolves dependencies of joins and sets nodes in dag
   links <- join_dependencies(new_paths = join_path, network = network, dag_sm = dag_sm, state_query = state_list)
   queries <- get_dependend_queries(links)
   query_list <- do.call(merge_queries, queries)

@@ -555,7 +555,7 @@ build_.data_link <- function(link, node, dag_sm) {
   deps_funcs <- dep_codes[!grepl("^join.", dep_codes)]
   all_links <- dag_sm$get_links()
   dep_links <- lapply(deps_funcs, \(code) all_links[[code]])
-  dep_queries <- get_suplied_queries(links = dep_links)
+  dep_queries <- get_supplied_queries(links = dep_links)
   link$args <- sapply(link$args, \(arg) {
     if(!is.character(arg)) return(arg)
     if(all(arg == "{.data}")) {

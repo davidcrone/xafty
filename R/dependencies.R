@@ -30,15 +30,15 @@ resolve_join_dependencies <- function(network, dag_sm, state_list = NULL) {
     new_paths[[project_add]] <- greedy_best_first_search(project_add, network, dag_sm = dag_sm, graph = graph)
   }
   paths <- unique(flatten_list(remove_empty_lists(new_paths)))
-  links <- join_dependencies(new_paths = paths, network = network, dag_sm = dag_sm, state_query = state_list)
+  links <- join_dependencies(paths = paths, network = network, dag_sm = dag_sm, state_list = state_list)
   queries <- get_dependend_queries(links)
   query_list <- do.call(merge_queries, queries)
   resolve_dependencies(query_list = query_list, network = network, dag_sm = dag_sm, state_list = state_list)
   invisible(dag_sm)
 }
 
-join_dependencies <- function(new_paths, network, dag_sm, state_query) {
-  links <- lapply(new_paths, \(path) get_join_functions(from = path[1], to = path[2], network = network, sm = dag_sm, state_query = state_query))
+join_dependencies <- function(paths, network, dag_sm, state_list) {
+  links <- lapply(paths, \(path) get_join_functions(from = path[1], to = path[2], network = network, sm = dag_sm, state_list = state_list))
   links
 }
 
@@ -55,15 +55,6 @@ resolve_wrappers <- function(network, dag_sm, state_list) {
     resolve_on_entry(project = project, network = network, dag_sm = dag_sm, state_list = state_list)
   }
   dag_sm
-}
-
-build_flat_lookup <- function(li_joins) {
-  li_lookup <- list()
-  for (li_join in li_joins) {
-    join_id <- names(li_join$lookup)
-    li_lookup[[join_id]] <- li_join$lookup[[join_id]]
-  }
-  li_lookup
 }
 
 build_join_bridges <- function(network, dag_sm) {
@@ -200,24 +191,11 @@ get_dependend_queries <- function(links) {
   flatten_list(remove_empty_lists(lapply(links, get_queries, which = "xafty_query")))
 }
 
-get_suplied_queries <- function(links) {
+get_supplied_queries <- function(links) {
   is_query_link <- vapply(links, is_query_link, FUN.VALUE = logical(1))
   links <- links[is_query_link]
   projects <- vapply(links, \(link) link$project, FUN.VALUE = character(1))
   li_variables <- lapply(links, \(link) link$variables)
   names(li_variables) <- projects
   query(li_variables)
-}
-
-get_provided_queries <- function(project, links) {
-  variables <- do.call(c, lapply(links, \(link) if(inherits(link, "query_link")) link$variables))
-  named_project_list <- setNames(list(variables), project)
-  query(named_project_list)
-}
-
-add_to_join_path <- function(new_paths, dag_sm) {
-  join_path <- dag_sm$get_join_path()
-  new_join_path <- append(join_path, new_paths)
-  dag_sm$set_join_path(new_join_path)
-  invisible(dag_sm)
 }
