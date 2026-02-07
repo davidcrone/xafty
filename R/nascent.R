@@ -28,7 +28,7 @@ build_dag <- function(query, network, frame = "main") {
 
 build_query_dag <- function(globals, network) {
   dag_sm <- build_tree(network = network)
-  dag_sm <- initialize_join_path(join_path = globals$join_path, dag_sm = dag_sm)
+  dag_sm <- initialize_join_path(join_path = globals$join_path, network = network, dag_sm = dag_sm)
   dag_sm <- resolve_dependencies(query_list = globals$internal, state_list = globals$states,
                                  network = network, dag_sm = dag_sm)
   execution_order <- resolve_function_stack(dag_sm = dag_sm, network = network)
