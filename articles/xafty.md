@@ -477,8 +477,8 @@ More formally, multiple join paths can be defined for a single query:
 ``` r
 
 qry <- query(projectA = "col1", projectB = "col2", projectC = "col3")
-query_join <- add_join_path(qry, path1 = c("projectA", "projectB"), 
-                            path2 = c("projectA", "projectC"))
+query_join <- add_join_path(qry, join1 = c("projectA", "projectB"), 
+                            join2 = c("projectA", "projectC"))
 ```
 
 This configuration results in two joins being applied: `projectA` is
