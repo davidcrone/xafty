@@ -224,7 +224,7 @@ query(hp, type) |> nascent(xafty_network)
 Finally, create our plot, we simply query the data we need from the network and run the plot:
 
 ``` r
-data <- query(type, power_to_weight) |> nascent(xafty_network)
+data <- query(power_to_weight, type) |> nascent(xafty_network)
 plot_mtcars(mtcars = data)
 
 ```

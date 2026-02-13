@@ -6,14 +6,14 @@
 #' @param project The project name of the project within the network where the function should be registered.
 #' @param network A xafty network.
 #' @param link_type The link_type name of the rulset. Currently "link" and "object" are supported
-#' @param ... Unused. Configurations of the link type.
+#' @param ... Configurations and advanced use when registering a new link
 #' @returns A xafty network (invisibly)
 #' @export
 register <- function(quosure, project, network, link_type, ...) {
   link <- create_link(quosure = quosure, project = project, link_type = link_type, network = network, ... = ...)
   validate_network_integrity(link = link, network = network)
   add_to_settings(link = link, network = network, ... = ...)
-  add_to_ruleset(link = link, project = project, network = network, ... = ...)
+  add_to_ruleset(link = link, network = network, ... = ...)
   add_to_network(link = link, project = project, network = network, ... = ...)
   invisible(network)
 }
@@ -41,83 +41,116 @@ add_to_settings <- function(link, network, ...) {
   invisible(network)
 }
 
+add_to_ruleset <- function(link, network, ...) {
+  project <- link$project
+  function_name <- link$fun_name
+  .dots <- list(...)
+
+  current_rules <- network[[project]]$ruleset
+
+  if(link_exists(link = link, network = network)) {
+    update <- isTRUE(.dots[["update"]])
+    if(!update) {
+      user_update <- readline(paste0("Function '", function_name, "' was already registered in project '",  paste0(project, collapse = " and "),"'. Would you like to update? (y/n): "))
+      if(user_update == "y") {
+        update <- TRUE
+      } else {
+        update <- FALSE
+      }
+    }
+    # Check the user input
+    if (update) {
+      # Proceed with the update
+      # remove the previously registered variables
+      clean_variables <- current_rules[[function_name]]$variables
+      rm(list = clean_variables, envir = network[[project]]$variables)
+      link_remove <- current_rules[[function_name]]
+      group_remove <- link_remove$group
+      if(!is.null(group_remove)) {
+        current_variables <- network[[project]]$groups[[group_remove]]$variables
+        new_variables <- current_variables[!current_variables %in% clean_variables]
+        new_variables <- if(length(new_variables) == 0) NULL else new_variables
+        network[[project]]$groups[[group_remove]]$variables <- new_variables
+      }
+      current_rules[[function_name]] <- NULL
+      if(exists("user_update")) {
+        message(paste0("Updated function '", function_name, "'!"))
+      }
+      # Add your update code here
+    } else {
+      # Abort the function
+      message(paste0("Function '", link$fun_name, "' exists already in ruleset of project '",
+                     paste0(project, collapse = " and "),"'"))
+    }
+  }
+  network[[project]]$ruleset[[function_name]] <- link
+
+  if(!is.null(.dots[["direction"]])) {
+    if(.dots[["direction"]] == "both" & link$type == "join") {
+      link$project <- get_join_project(link = link)
+      add_to_ruleset(link = link, network = network, update = .dots[["update"]])
+    }
+  }
+
+  network
+}
+
+link_exists <- function(link, network) {
+  project <- link$project
+  function_name <- link$fun_name
+  links <- network[[project]]$ruleset
+  exists <- function_name %in% names(links)
+  if(inherits(link, "query_link")) return(exists)
+  group <- link$group
+  wrappers <- c(network[[project]][["groups"]][[group]]$contexts$on_entry,
+                network[[project]][["groups"]][[group]]$contexts$on_exit)
+  in_group <- function_name %in% wrappers
+  exists & in_group
+}
+
 add_to_network <- function(link, project, network, ...) {
   .dots <- list(...)
-  project_env <- network[[project]]
-  fun_name <- link$fun_name
   project <- link$project
+  fun_name <- link$fun_name
+  project_env <- network[[project]]
+  group <- link$group
 
   if (inherits(link, "query_link")) {
     variables <- link$variables
-    added_joins <- get_ordered_join_pairs(link = link)
-    for (new_join in added_joins) {
-      from <-  new_join[1]
-      to <- new_join[2]
+    if(link$type == "join") {
+      from <- link$project
+      to <- get_join_project(link = link)
       assign(to, fun_name, envir = network[[from]]$joined_projects)
+      if(!is.null(.dots[["direction"]])) {
+        if(.dots[["direction"]] == "both")
+          assign(from, fun_name, envir = network[[to]]$joined_projects)
+      }
     }
-  } else if(inherits(link, "context_link") | inherits(link, "object_link")) {
+    if(!is.null(group)) {
+      current_variables <- network[[project]]$groups[[group]]$variables
+      network[[project]]$groups[[group]]$variables <- c(current_variables, variables)
+    }
+  } else if(inherits(link, "context_link")) {
     variables <- link$name
   }
 
   if(link$type == "entry") {
-    current_entries <- network[[project]]$wrappers$on_entry
+    current_entries <- network[[project]]$groups[[group]]$contexts$on_entry
     if(!link$fun_name %in% current_entries) {
       new_entries <- c(current_entries, link$fun_name)
-      network[[project]]$wrappers$on_entry <- new_entries
+      network[[project]]$groups[[group]]$contexts$on_entry <- new_entries
     }
   } else if (link$type == "exit") {
-    current_exits <- network[[project]]$wrappers$on_exit
+    current_exits <- network[[project]]$groups[[group]]$contexts$on_exit
     if(!link$fun_name %in% current_exits) {
       new_exits <- c(current_exits, link$fun_name)
-      network[[project]]$wrappers$on_exit <- new_exits
+      network[[project]]$groups[[group]]$contexts$on_exit <- new_exits
     }
   }
   for (variable in variables) {
     assign(variable, fun_name, envir = project_env$variables)
   }
   invisible(network)
-}
-
-add_to_ruleset <- function(link, project, network, ...) {
-  function_name <- link$fun_name
-  .dots <- list(...)
-  if(link$type == "join") {
-    projects <- unique(c(project, get_lead_projects(link)))
-  } else {
-    projects <- project
-  }
-  for (proj in projects) {
-    current_rules <- network[[proj]]$ruleset
-    if(function_name %in% names(current_rules)) {
-      update <- isTRUE(.dots[["update"]])
-      if(!update) {
-        user_update <- readline(paste0("Function '", function_name, "' was already registered in project '",  paste0(projects, collapse = " and "),"'. Would you like to update? (y/n): "))
-        if(user_update == "y") {
-          update <- TRUE
-        } else {
-          update <- FALSE
-        }
-      }
-      # Check the user input
-      if (update) {
-        # Proceed with the update
-        # remove the previously registered variables
-        clean_variables <- current_rules[[function_name]]$variables
-        rm(list = clean_variables, envir = network[[project]]$variables)
-        current_rules[[function_name]] <- NULL
-        if(exists("user_update")) {
-          message(paste0("Updated function '", function_name, "'!"))
-        }
-        # Add your update code here
-      } else {
-        # Abort the function
-        message(paste0("Function '", link$fun_name, "' exists already in ruleset of project '",
-                       paste0(projects, collapse = " and "),"'"))
-      }
-    }
-    network[[proj]]$ruleset[[function_name]] <- link
-  }
-  network
 }
 
 #' Get the Package Name of a Function
@@ -150,7 +183,7 @@ get_function_package <- function(func_name) {
 
 create_link <- function(quosure, project, link_type, network, ...) {
   .dots <- list(...)
-  link <- create_base_link(quosure = quosure, project = project, network = network, link_type = link_type)
+  link <- create_base_link(quosure = quosure, project = project, network = network, link_type = link_type, group = .dots[["group"]])
   if (link_type == "query") {
     link <- link_add_variables(link = link, variable_names = .dots[["vars"]], network = network)
   } else if (link_type == "context") {
@@ -160,7 +193,7 @@ create_link <- function(quosure, project, link_type, network, ...) {
   link
 }
 
-create_base_link <- function(quosure, project, network, link_type = NULL) {
+create_base_link <- function(quosure, project, network, link_type = NULL, group) {
   fun_exp <- rlang::get_expr(quosure)
   fun_env <- rlang::get_env(quosure)
   list_args <- unpack_args(exp = fun_exp, env = fun_env)
@@ -173,6 +206,7 @@ create_base_link <- function(quosure, project, network, link_type = NULL) {
   link <- append(list_args, list_info)
   class(link) <- c("list", "link")
   link$type <- determine_link_type(args = list_args$args, link_type = link_type)
+  link$group <- group
   link
 }
 
@@ -302,8 +336,10 @@ determine_link_type <- function(args, link_type) {
       link_func_type <- "get"
     } else if (n_queries == 1) {
       link_func_type <- "add"
-    } else {
+    } else if (n_queries == 2) {
       link_func_type <- "join"
+    } else {
+      stop("Only two projects may be joined per link")
     }
   } else {
     link_func_type <- NULL

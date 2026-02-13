@@ -15,7 +15,7 @@ register(quosure, project, network, link_type, ...)
 
 \item{link_type}{The link_type name of the rulset. Currently "link" and "object" are supported}
 
-\item{...}{Unused. Configurations of the link type.}
+\item{...}{Configurations and advanced use when registering a new link}
 }
 \value{
 A xafty network (invisibly)

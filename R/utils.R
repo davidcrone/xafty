@@ -196,9 +196,11 @@ build_dependency_codes <- function(link, network) {
 
 build_on_entry_dependencies <- function(link, network, fun_code) {
   project <- link$project
-  on_entry_funcs <- network[[project]]$wrappers$on_entry
+  group <- link$group
+  if(is.null(group)) return(character(0))
+  on_entry_funcs <- network[[project]][["groups"]][[group]]$contexts$on_entry
   if(is.null(on_entry_funcs)) return(character(0))
-  on_entry_codes <- paste0(project, ".", on_entry_funcs)
+  on_entry_codes <- paste0(group, ".", project, ".", on_entry_funcs)
   # If the fun_code is itself is a wrapper function, it should only get on_entry codes as dependencies
   # that were registered earlier
   if(fun_code %in% on_entry_codes) {
@@ -210,11 +212,11 @@ build_on_entry_dependencies <- function(link, network, fun_code) {
 
 # The function builds the dependencies for on_entry nodes
 build_on_entry_node <- function(link, network, dag) {
-  project <- link$project
+  project <- paste0(link$group, ".", link$project)
   li_on_entry_node <- build_dependency_codes(link, network = network)
   on_entry_node <- li_on_entry_node$node
   on_entry_code <- names(on_entry_node)
-  project_dag <- dag[grepl(paste0("^", project, "\\."), names(dag))]
+  project_dag <- dag[grepl(paste0("^", link$group, "\\.", link$project, "\\."), names(dag))]
   # Adds foreign project nodes that wrapper nodes depend on; unique is necessary since the package toposort cannot work with
   # duplicated dependencies in a single node
   foreign_deps <- unique(get_all_non_project_codes(project = project, codes = project_dag))
@@ -229,14 +231,14 @@ build_on_entry_node <- function(link, network, dag) {
 }
 
 build_on_exit_node <- function(link, network, dag) {
-  project <- link$project
+  project <- paste0(link$group, ".", link$project)
   li_on_exit_node <- build_dependency_codes(link, network = network)
   on_exit_node <- li_on_exit_node$node
   on_exit_code <- names(on_exit_node)
-  deps_project <- names(dag)[grepl(paste0("^", project, "\\."), names(dag))]
+  deps_project <- names(dag)[grepl(paste0("^", link$group, "\\.", link$project, "\\."), names(dag))]
 
   # Adding on exit functions registered earlier from wrapper project as dependencies
-  on_exit_codes <- paste0(project, ".", network[[project]]$wrappers$on_exit)
+  on_exit_codes <- paste0(project, ".", network[[link$project]][["groups"]][[link$group]]$contexts$on_exit)
   pos <- which(on_exit_code == on_exit_codes) - 1
   if(pos == 0) exit_deps <- character(0) else exit_deps <- on_exit_codes[1:pos]
 
@@ -343,29 +345,12 @@ is_object_variable <- function(arg) {
   is_valid_variable_name(match)
 }
 
-get_ordered_join_pairs <- function(link) {
-  projects <- get_lead_projects(link)
-  # This filters objects from the joined projects. Objects are currently only meant as "end-products" or "helpers"
-  # not as intermediary steps that should be used in a xafty query pipeline.
-  # Using objects as building steps in a xafty pipeline would break its underlying logic, since objects are a snapshot of
-  # a certain query while normal xafty queries are meant to add logic to a variable data.frame
-  xafty_objects <- get_xafty_objects_vec(link)
-  projects <- projects[vapply(names(projects),
-                              \(arg_name) xafty_objects[names(xafty_objects) == arg_name] == "xafty_query",
-                              FUN.VALUE = logical(1))]
-  n <- length(projects)
-  pairs <- list()
-  if(n <= 1) return(pairs)
-  k <- 1
-  for (i in seq_len(n)) {
-    for (j in seq_len(n)) {
-      if (i != j) {
-        pairs[[k]] <- c(projects[i], projects[j])
-        k <- k + 1
-      }
-    }
-  }
-  pairs
+get_join_project <- function(link) {
+  from <- link$project
+  query_lists <- get_queries(link, which = "xafty_query")
+  joins <- vapply(query_lists, get_lead_project, character(1), USE.NAMES = FALSE)
+  joins_to <- joins[!joins %in% from]
+  joins_to
 }
 
 build_executable_args <- function(link, data_sm, mask, default_states) {
@@ -468,7 +453,8 @@ is_object_link <- function(link) {
 }
 
 build_fun_code <- function(link) {
-  paste0(link$project, ".", link$fun_name)
+  if(is.null(link$group)) group <- character(0) else group <- paste0(link$group, ".")
+  paste0(group, link$project, ".", link$fun_name)
 }
 
 bfs_traversal <- function(graph, start, end) {

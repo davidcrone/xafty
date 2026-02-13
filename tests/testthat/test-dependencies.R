@@ -39,57 +39,62 @@ test_that("dependencies from two projects can be retrieved and hidden dependenci
 })
 
 test_that("on entry takes copies foreign dependency of nodes", {
-  network <- init_network("test", projects = c("cars", "group"))
+  network <- init_network("test", projects = "cars")
   network$cars$link(get_sample_data())
-  network$group$on_entry(pass_through(data = "{.data}"))
-  network$group$link(add_score_category(data = query(cars = "score")))
-  dag <- build_dag(query(group = "category"), network = network)
-  test_deps <- dag$dag[["group.pass_through"]]
+  network$cars$add_group("group")
+  network$cars$on_entry(pass_through(data = "{.data}"), group = "group")
+  network$cars$link(add_score_category(data = query(cars = "score")), group = "group")
+  dag <- query(cars = "category") |> from(cars) |> build_dag(network = network)
+  test_deps <- dag$dag[["group.cars.pass_through"]]
   expect_identical(test_deps, "cars.get_sample_data")
 })
 
 test_that("on exit takes the dependency from the wrapper nodes", {
-  network <- init_network("test", projects = c("cars", "group"))
+  network <- init_network("test", projects = "cars")
   network$cars$link(get_sample_data())
-  network$group$on_exit(pass_through(data = "{.data}"))
-  network$group$link(add_score_category(data = query(cars = "score")))
-  dag <- build_dag(query(group = "category"), network = network)
-  test_deps <- dag$dag[["group.pass_through"]]
-  expect_identical(test_deps, "group.add_score_category")
+  network$cars$add_group("group")
+  network$cars$on_exit(pass_through(data = "{.data}"), group = "group")
+  network$cars$link(add_score_category(data = query(cars = "score")), group = "group")
+  dag <- query(cars = "category") |>  from(cars) |> build_dag(network = network)
+  test_deps <- dag$dag[["group.cars.pass_through"]]
+  expect_identical(test_deps, "group.cars.add_score_category")
 })
 
 test_that("on entry also takes dependencies from on exit into account", {
   pass_through2 <- pass_through
-  network <- init_network("test", projects = c("cars", "group"))
+  network <- init_network("test", projects = c("cars"))
   network$cars$link(get_sample_data())
-  network$cars$link(add_score_category(data = query(cars = "score")))
-  network$group$on_entry(pass_through(data = "{.data}"))
-  network$group$on_exit(pass_through2(data = query(cars = "category")))
-  network$group$link(add_score_category(data = query(cars = "score")))
-  dag <- build_dag(query(group = "category"), network = network)
-  test_deps1 <- dag$dag[["group.pass_through"]]
-  test_deps2 <- dag$dag[["group.pass_through2"]]
-  expect_identical(test_deps1, c("cars.get_sample_data", "cars.add_score_category"))
-  expect_identical(test_deps2, c("cars.add_score_category", "group.pass_through", "group.add_score_category"))
+  network$cars$add_group("group")
+  network$cars$on_entry(pass_through(data = "{.data}"), group = "group")
+  network$cars$on_exit(pass_through2(data = query(cars = "score")), group = "group")
+  network$cars$link(add_score_category(data = query(cars = "score")), group = "group")
+  dag <- query(cars = "category") |> from(cars) |>  build_dag(network = network)
+  test_deps1 <- dag$dag[["group.cars.pass_through"]]
+  test_deps2 <- dag$dag[["group.cars.pass_through2"]]
+  expect_identical(test_deps1, c("cars.get_sample_data"))
+  expect_identical(test_deps2, c("cars.get_sample_data", "group.cars.pass_through", "group.cars.add_score_category"))
 })
 
 test_that("on entry also takes dependencies from on exit into account", {
-  pass_through2 <- pass_through
-  network <- init_network("test", projects = c("cars", "group", "group2"))
+  pass_through4 <- pass_through3 <- pass_through2 <- pass_through
+  add_score_category2 <- add_score_category
+  # TODO
+  network <- init_network("test", projects = "cars")
+  network$cars$add_group("group")
+  network$cars$add_group("group2")
   network$cars$link(get_sample_data())
-  network$cars$link(add_score_category(data = query(cars = "score")))
-  network$group$on_entry(pass_through(data = "{.data}"))
-  network$group$on_exit(pass_through2(data = query(cars = "category")))
-  network$group2$on_entry(pass_through(data = "{.data}"))
-  network$group2$on_exit(pass_through2(data = "{.data}"))
-  network$group$link(add_score_category(data = query(cars = "score")))
-  network$group2$link(add_score_category(data = query(cars = "score", group = "category")), vars = "category")
-  dag <- build_dag(query(group2 = "category"), network = network)
-  test_deps1 <- dag$dag[["group.pass_through"]]
-  test_deps2 <- dag$dag[["group.pass_through2"]]
-  test_deps3 <- dag$dag[["group2.pass_through"]]
-  test_deps4 <- dag$dag[["group2.pass_through2"]]
-  expect_identical(test_deps1, c("cars.get_sample_data", "cars.add_score_category"))
+  network$cars$on_entry(pass_through(data = "{.data}"), group = "group")
+  network$cars$on_exit(pass_through2(data = query(cars = "score")),  group = "group")
+  network$cars$on_entry(pass_through3(data = "{.data}"), group = "group2")
+  network$cars$on_exit(pass_through4(data = "{.data}"), group = "group2")
+  network$cars$link(add_score_category(data = query(cars = "score")),  group = "group")
+  network$cars$link(add_score_category2(data = query(cars = c("score", "category"))), group = "group2", vars = "category2")
+  dag <- query(cars = "category2") |> from(cars) |> build_dag(network = network)
+  test_deps1 <- dag$dag[["group.cars.pass_through"]]
+  test_deps2 <- dag$dag[["group.cars.pass_through2"]]
+  test_deps3 <- dag$dag[["group2.cars.pass_through3"]]
+  test_deps4 <- dag$dag[["group2.cars.pass_through4"]]
+  expect_identical(test_deps1, c("cars.get_sample_data"))
   expect_identical(test_deps2, c("cars.add_score_category", "group.pass_through", "group.add_score_category"))
   expect_identical(test_deps3, c("cars.get_sample_data", "group.add_score_category"))
   expect_identical(test_deps4, c("group2.add_score_category"))
@@ -108,7 +113,7 @@ test_that("on entry and on exit get correct dependencies on depending on differe
   network$group$link(add_score_category(data = query(cars = "score")))
   network$group2$link(add_score_category(data = query(cars = "score", group = "category")), vars = "category")
   network$group$link(pass_through3(data = query(group2 = "category")), vars = "value")
-  dag <- build_dag(query(group = "value"), network = network)
+  dag <- query(group = "value") |> from(cars) |> build_dag(network = network)
   test_deps1 <- dag$dag[["group.pass_through"]]
   test_deps2 <- dag$dag[["group.pass_through2"]]
   test_deps3 <- dag$dag[["group2.pass_through"]]
@@ -137,7 +142,7 @@ test_that("on entry also takes dependencies from on exit into account", {
   network$group2$link(add_score_category(data = query(cars = "score", group = "category")), vars = "category")
   network$group$link(pass_through3(data = query(group2 = "category")), vars = "value")
   network$group$on_exit(pass_through2(data = query(group = "value")))
-  dag <- build_dag(query(group = "value"), network = network)
+  dag <- query(group = "value") |> from(cars) |>  build_dag(network = network)
   test_deps1 <- dag$dag[["group.pass_through"]]
   test_deps2 <- dag$dag[["group.pass_through2"]]
   test_deps3 <- dag$dag[["group2.pass_through"]]
@@ -166,7 +171,7 @@ test_that("Interweaved foreign node will correctly close the context and reopen 
   network$group$link(add_tries_data_license(data = query(cars = "Name")))
   network$cars$link(add_id_to_car(data = query(cars = "Car_Color", group = "Tries")))
   network$group$link(add_tries_data_license2(data = query(cars = c("ID"), group = "Tries")))
-  test_dag <- build_dag(query(group = c("Tries2")), network)
+  test_dag <- query(group = c("Tries2")) |> from(cars) |> build_dag(network)
   expect_identical(test_dag$execution_order, c("cars.test_get_car_data", "cars.test_add_car_color",
                                                "group.reorder_cars_by_color", "group.add_tries_data_license",  "group.reorder_cars_by_color2", # group 1
                                                "cars.add_id_to_car",

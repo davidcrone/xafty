@@ -61,6 +61,7 @@ build_tree <- function(network) {
   tree_env <- new.env()
   tree_env$query <- query()
   tree_env$joins <- list()
+  tree_env$wrappers <- list()
   tree_env$network$settings <- network$settings
   tree_env$network$states <- network$states
 
@@ -145,12 +146,13 @@ build_tree <- function(network) {
     tree_env$network
   }
 
-  set_wrapper_projects <- function(projects) {
-    tree_env$wrappers <- unique(c(tree_env$wrappers, projects))
+  set_wrapper_project <- function(project, group) {
+    current_groups <- tree_env$wrappers[[project]]
+    tree_env$wrappers[[project]] <- unique(c(current_groups, group))
   }
 
-  get_wrapper_projects <- function() {
-    tree_env$wrappers
+  get_wrapper_project <- function(project) {
+    tree_env$wrappers[[project]]
   }
 
   list(
@@ -169,7 +171,7 @@ build_tree <- function(network) {
     set_mask = set_mask,
     get_mask = get_mask,
     get_network_state = get_network_state,
-    set_wrapper_projects = set_wrapper_projects,
-    get_wrapper_projects = get_wrapper_projects
+    set_wrapper_project = set_wrapper_project,
+    get_wrapper_project = get_wrapper_project
   )
 }

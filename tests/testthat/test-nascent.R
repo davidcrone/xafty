@@ -253,14 +253,16 @@ test_that("Registering the wrong variable name through vars yields an informativ
 })
 
 test_that("On entry is correctly interweaved into the dag and evaluates properly", {
-  test_network <- init_network(name = "test_network", projects = c("customer_data", "occupations"))
+  test_network <- init_network(name = "test_network", projects = "customer_data")
   test_network$customer_data$link(get_sample_data())
+  test_network$customer_data$add_group("occupations")
+  test_network$customer_data$on_entry(increase_score(data = "{.data}"), "increase_score", group = "occupations")
   test_network$occupations$link(add_score_category(data = query(customer_data = "score")))
   increase_score <- function(data = "{.data}") {
     data$score <- data$score + 100
     data
   }
-  test_network$occupations$on_entry(increase_score(data = "{.data}"), "increase_score")
+
   test_data <- query(customer_data = "name", occupations = "category") |> nascent(test_network)
   expected_data <- structure(list(name = c("Alice", "Bob", "Charlie", "Diana", "Eve"),
                                   category = c("High", "High", "High", "High", "High")),
@@ -347,7 +349,7 @@ test_that("On entry is correctly interpolated into the dag and evaluates properl
     data
   }
   test_network$final_pass$link(add_has_passed())
-  test_data <- nascent(query(customer_data = c("name", "score"), occupations= "category", final_pass = "has_passed"), test_network)
+  test_data <- query(customer_data = c("name", "score"), occupations = "category", final_pass = "has_passed") |> nascent(test_network)
   expected_data <- structure(list(name = c("Alice", "Bob", "Charlie", "Diana", "Eve"),
                                   score = c(85, 92, 78, 90, 88),
                                   category = c("High", "High", "High", "High", "High"),
@@ -477,9 +479,9 @@ test_that("join_dependencies can be resolved as delat adding joins to the join p
   network$join1$link(get_sample_data())
   network$join2$link(get_sample_data())
   network$join3$link(get_sample_data())
-  network$join1$link(join_func(join = query(join1 = "id"), other = query(join2 = "id")))
+  network$join1$link(join_func(join = query(join1 = "id"), other = query(join2 = "id")), direction = "both")
   network$join2$link(add_score_category(query(join1 = "name", join2 = "score")))
-  network$join3$link(join_func2(join = query(join3 = "id"), other = query(join2 = c("id", "category"))))
+  network$join3$link(join_func2(join = query(join3 = "id"), other = query(join2 = c("id", "category"))),  direction = "both")
   test_data <- query(join3 = "id", join2 = "name") |> nascent(network)
   exp_data <- data.frame(id = 1:5, name = c("Alice", "Bob", "Charlie", "Diana", "Eve"))
   expect_identical(test_data, exp_data)

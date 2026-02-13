@@ -1,3 +1,7 @@
+pass_through <- function(data) {
+  data
+}
+
 
 get_sample_data <- function() {
   data.frame(
@@ -73,7 +77,7 @@ test_network$occupations$link(get_additional_info())
 
 # Join  projects
 test_network$customer_data$link(join_datasets(main_data = query(customer_data = c("id", "category")),
-                                              extra_data = query(occupations = "id")), vars = character(0))
+                                              extra_data = query(occupations = "id")), vars = character(0), direction = "both")
 # Column depending on a two projects
 test_network$customer_data$link(new_column_from_both_projects(query(customer_data = "name", occupations = "department")))
 
@@ -83,11 +87,11 @@ test_network$add_project("map")
 
 test_network$intelligence$link(intelligence_date())
 test_network$map$link(mapping_data())
-test_network$intelligence$link(fun = join_datasets_map(intelligence = query(intelligence = "secret_id"), map = query(map =  "secret_id")))
+test_network$map$link(fun = join_datasets_map(intelligence = query(intelligence = "secret_id"), map = query(map =  "secret_id")), direction = "both")
 
 test_network$map$link(add_decoded_id(query(map = "secret_id")))
 
-test_network$customer_data$link(fun = join_intelligence(main_data = query(customer_data = "id"), extra_data = query(map = "id")))
+test_network$customer_data$link(fun = join_intelligence(main_data = query(customer_data = "id"), extra_data = query(map = "id")), direction = "both")
 
 # new_add
 add_new_nickname <- function(data) {
@@ -97,12 +101,12 @@ add_new_nickname <- function(data) {
   data
 }
 
-test_network$customer_data$link(add_new_nickname(data = query(intelligence = "intelligence", customer_data = "nickname")))
+test_network$customer_data$link(add_new_nickname(data = query(customer_data = "nickname", intelligence = "intelligence")))
 # join between occupations and intelligence
 add_column_to_intelligence <- function(data) {
   data$new_column <- paste0(data$department, data$id)
   data
 }
 
-test_network$intelligence$link(add_column_to_intelligence(data = query(occupations = "department", map = "id")))
+test_network$intelligence$link(add_column_to_intelligence(data = query(map = "id", occupations = "department")))
 

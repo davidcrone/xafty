@@ -47,7 +47,7 @@ xafty_network$test1$link(test_add_car_color(data = query(test1 = c("Has_Drivers_
 xafty_network$add_project("test2")
 xafty_network$test2$link(test_get_car_color_id())
 
-xafty_network$test1$link(fun = test_join_car_id(data_right = query(test2 = "Car_Color"), data_left = query(test1 = "Car_Color")))
+xafty_network$test1$link(fun = test_join_car_id(data_right = query(test2 = "Car_Color"), data_left = query(test1 = "Car_Color")), direction = "both")
 
 # setup tornado
 
@@ -100,9 +100,9 @@ main_network$side2$link(get_join_2())
 main_network$side3$link(get_join_3())
 
 # join all side projects with main
-main_network$main$link(join_main1(main = query(main = "id"), join1 = query(side1 = "id")))
-main_network$main$link(join_main2(main = query(main = "id"), join2 = query(side2 = "id")))
-main_network$main$link(join_main3(main = query(main = "id"), join3 = query(side3 = "id")))
+main_network$main$link(join_main1(main = query(main = "id"), join1 = query(side1 = "id")), direction = "both")
+main_network$main$link(join_main2(main = query(main = "id"), join2 = query(side2 = "id")), direction = "both")
+main_network$main$link(join_main3(main = query(main = "id"), join3 = query(side3 = "id")), direction = "both")
 
 data_tornado <- query(side1 = "col1", side2 = "col2", side3 = "col3") |> nascent(main_network)
 

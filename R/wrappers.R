@@ -1,8 +1,9 @@
 
 # Handles correct context for on_entry and on_exit
 clean_wrapper <- function(project, order, dag, contexts, network) {
-  entry_funcs <- network[[project]]$wrappers$on_entry
-  exit_funcs <- network[[project]]$wrappers$on_exit
+  entry_funcs <- network[[project$project]][["groups"]][[project$group]]$contexts$on_entry
+  exit_funcs <- network[[project$project]][["groups"]][[project$group]]$contexts$on_exit
+  project <- project$group_project
   # Early exit when no wrapper functions are available
   if (length(entry_funcs) == 0 && length(exit_funcs) == 0) return(order)
   prefix <- paste0(project, ".")
@@ -77,20 +78,24 @@ clean_wrapper <- function(project, order, dag, contexts, network) {
   rebuild_context(project = project, order = order, on_entry = entry_nodes, on_exit = exit_nodes)
 }
 
-projects_with_context <- function(projects, network) {
-  has_on_entry <- vapply(projects, \(project) !is.null(network[[project]]$wrappers$on_entry), FUN.VALUE = logical(1))
-  has_on_exit <- vapply(projects, \(project) !is.null(network[[project]]$wrappers$on_exit), FUN.VALUE = logical(1))
-  project_w_contect <- unique(c(projects[has_on_entry], projects[has_on_exit]))
-  project_w_contect
+projects_with_context <- function(projects, network, dag) {
+  browser()
+  li_groups_name <- remove_empty_lists(sapply(projects, \(project) names(network[[project]]$groups), simplify = FALSE, USE.NAMES = TRUE))
+  groups_names <- unlist(li_groups_name, use.names = FALSE)
+  li_groups <- sapply(names(li_groups_name), \(project) paste0(li_groups_name[[project]], ".", project), simplify = FALSE, USE.NAMES = TRUE)
+  reps <- vapply(li_groups, \(groups) length(groups), FUN.VALUE = numeric(1))
+  projects <- rep(names(li_groups), times = reps)
+  group_vec <- unlist(li_groups, use.names = FALSE)
+  df_all_projects <- data.frame(project = projects, group = groups_names, group_project = group_vec)
 }
 
 
 clean_all_wrappers <- function(projects, order, dag, network) {
   # Step 1: find all context ranges (entry .. exit)
-  projects <- projects_with_context(projects = projects, network = network)
-  if(length(projects) <= 0) return(order)
+  df_projects <- projects_with_context(projects = projects, dag = dag, network = network)
+  if(nrow(df_projects) <= 0) return(order)
 
-  li_ranges <- lapply(projects, function(p) {
+  li_ranges <- lapply(df_projects$group_project, function(p) {
     project. <- paste0(p, ".")
     project_start <- startsWith(order, project.)
     if (any(project_start)) {
@@ -111,7 +116,8 @@ clean_all_wrappers <- function(projects, order, dag, network) {
   projects <- ranges$project
   contexts <-  NULL
   for (project in projects) {
-    order <- clean_wrapper(project = project, order = order, dag = dag, contexts = contexts, network = network)
+    row_project <- df_projects[df_projects$group_project == project,]
+    order <- clean_wrapper(project = row_project, order = order, dag = dag, contexts = contexts, network = network)
     packed_wrappers <- pack_project_wrappers(project = project, order = order, contexts = contexts)
     order <- packed_wrappers$order
     contexts <- packed_wrappers$contexts

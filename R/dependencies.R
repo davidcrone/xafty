@@ -43,18 +43,51 @@ join_dependencies <- function(paths, network, dag_sm, state_list) {
 }
 
 resolve_wrappers <- function(network, dag_sm, state_list) {
-  projects <- get_projects(dag_sm$get_query())
-  has_wrappers <- vapply(projects, \(project) !is.null(c(network[[project]]$wrappers$on_entry,
-                                                         network[[project]]$wrappers$on_exit)), FUN.VALUE = logical(1))
-  has_wrappers_unresolved <- has_wrappers[!names(has_wrappers) %in% dag_sm$get_wrapper_projects()]
-  unresolved_projects <- names(has_wrappers_unresolved)[has_wrappers_unresolved]
-  if(length(unresolved_projects) == 0) return(dag_sm)
-  dag_sm$set_wrapper_projects(unresolved_projects)
-  for (project in unresolved_projects) {
-    resolve_on_exit(project = project, network = network, dag_sm = dag_sm, state_list = state_list)
-    resolve_on_entry(project = project, network = network, dag_sm = dag_sm, state_list = state_list)
+  unresolved <- get_unresolved_wrappers(network = network, dag_sm = dag_sm)
+  if(length(unresolved) == 0) return(dag_sm)
+  projects <- names(unresolved)
+  query_list <- list()
+  for(project in projects) {
+    groups <- unresolved[[project]]
+    for (group in groups) {
+      dag_sm$set_wrapper_project(project = project, group = group)
+      query_exit <- resolve_on_exit(group = group, project = project, network = network, dag_sm = dag_sm, state_list = state_list)
+      query_entry <- resolve_on_entry(group = group, project = project, network = network, dag_sm = dag_sm, state_list = state_list)
+      query_list[[paste0(group, ".", project)]] <- merge_queries(query_exit, query_entry)
+    }
   }
+  query_list <- do.call(merge_queries, query_list)
+  dag_sm <- resolve_dependencies(query_list = query_list, state_list = state_list, network = network, dag_sm = dag_sm)
   dag_sm
+
+  dag_sm
+}
+
+get_unresolved_wrappers <- function(network, dag_sm) {
+  projects <- get_projects(dag_sm$get_query())
+  has_groups <- vapply(projects, \(project) length(network[[project]]$groups) > 0, FUN.VALUE = logical(1))
+  projects_groups <- names(has_groups)[has_groups]
+  dag <- dag_sm$get_codes()
+  if(length(projects_groups) == 0) return(list())
+  li_groups <- sapply(projects_groups, \(project) {
+    li_groups <- network[[project]]$groups
+    groups <- names(li_groups)
+    has_context <- vapply(groups, \(group) {
+      prefix <- paste0(group, ".", project, ".")
+      (!is.null(li_groups[[group]]$contexts$on_entry) ||
+       !is.null(li_groups[[group]]$contexts$on_exit)) &
+       any(startsWith(names(dag), prefix))
+    },   FUN.VALUE = logical(1))
+    groups[has_context]
+  }, simplify = FALSE, USE.NAMES = TRUE)
+
+  li_groups_un <- sapply(projects_groups, \(project) {
+    groups <- li_groups[[project]]
+    res_groups <- dag_sm$get_wrapper_project(project)
+    groups[!groups %in% res_groups]
+  }, simplify = FALSE, USE.NAMES = TRUE)
+  li_empty_removed <- remove_empty_lists(li_groups_un)
+  li_empty_removed
 }
 
 build_join_bridges <- function(network, dag_sm) {

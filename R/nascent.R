@@ -28,6 +28,7 @@ build_dag <- function(query, network, frame = "main") {
 
 build_query_dag <- function(globals, network) {
   dag_sm <- build_tree(network = network)
+  dag_sm$set_main_project(globals$main)
   dag_sm <- initialize_join_path(join_path = globals$join_path, network = network, dag_sm = dag_sm)
   dag_sm <- resolve_dependencies(query_list = globals$internal, state_list = globals$states,
                                  network = network, dag_sm = dag_sm)
@@ -107,12 +108,10 @@ get_unjoined_projects <- function(dag_sm, network) {
 
 greedy_best_first_search <- function(project_add, network, dag_sm, graph) {
   join_path <- dag_sm$get_join_path()
-  join_vec <- unique(unlist(join_path))
-  if(is.null(join_vec)) join_vec <- dag_sm$get_main_project()
-  possible_paths <- lapply(join_vec, \(start) bfs_traversal(graph = graph, start = start, end = project_add))
-  new_join_path <- possible_paths[[which.min(vapply(possible_paths, \(path) length(path), FUN.VALUE = numeric(1)))]]
-  if(is.null(new_join_path)) stop(paste0("building a join path is not possible! Project: ", project_add, " is not accessible from project ", dag_sm$get_main_project()))
-  unresolved_paths <- get_unresolved_path(new_path = new_join_path, join_path = join_path)
+  start <- dag_sm$get_main_project()
+  linear_path <- bfs_traversal(graph = graph, start = start, end = project_add)
+  if(length(linear_path) == 0) stop(paste0("building a join path is not possible! Project: ", project_add, " is not accessible from project ", dag_sm$get_main_project()))
+  unresolved_paths <- get_unresolved_path(new_path = linear_path, join_path = join_path)
   add_to_join_path(new_paths = unresolved_paths, dag_sm = dag_sm)
   unresolved_paths
 }
@@ -224,9 +223,6 @@ set_states <- function(states, data_sm) {
 initialize_join_path <- function(join_path, network, dag_sm, state_list = NULL) {
   if(is.null(join_path)) return(invisible(dag_sm))
   dag_sm$set_join_path(join_path)
-  join_projects <- unique(unlist(join_path, recursive = TRUE, use.names = FALSE))
-  dag_sm$set_main_project(join_projects[[1]])
-
   # Resolves dependencies of joins and sets nodes in dag
   links <- join_dependencies(paths = join_path, network = network, dag_sm = dag_sm, state_list = state_list)
   queries <- get_dependend_queries(links)
@@ -235,8 +231,8 @@ initialize_join_path <- function(join_path, network, dag_sm, state_list = NULL) 
   invisible(dag_sm)
 }
 
-resolve_on_entry <- function(project, network, dag_sm, state_list) {
-  func_names <- network[[project]]$wrappers$on_entry
+resolve_on_entry <- function(group, project, network, dag_sm, state_list) {
+  func_names <- network[[project]][["groups"]][[group]]$contexts$on_entry
   if(is.null(func_names)) return(NULL)
   dag <- dag_sm$get_codes()
   links <- lapply(func_names, \(func_name) network[[project]]$ruleset[[func_name]])
@@ -250,8 +246,7 @@ resolve_on_entry <- function(project, network, dag_sm, state_list) {
     dag_sm$set_nodes(link = link, code = node)
   }
   on_entry_query_list <- do.call(merge_queries, get_dependend_queries(links))
-  # TODO: resolve dependency at the end of resolve_wrappers
-  resolve_dependencies(query_list = on_entry_query_list, state_list = state_list, network = network, dag_sm = dag_sm)
+  on_entry_query_list
 }
 
 filter_targets_without_prefix <- function(project, targets, dag) {
@@ -293,8 +288,8 @@ get_all_non_project_codes <- function(project, codes) {
   codes[!startsWith(codes, prefix)]
 }
 
-resolve_on_exit <- function(project, network, dag_sm, state_list) {
-  func_names <- network[[project]]$wrappers$on_exit
+resolve_on_exit <- function(group, project, network, dag_sm, state_list) {
+  func_names <- network[[project]][["groups"]][[group]]$contexts$on_exit
   if(is.null(func_names)) return(dag_sm)
   links <- lapply(func_names, \(func_name) network[[project]]$ruleset[[func_name]])
   dag <- dag_sm$get_codes()
@@ -307,6 +302,5 @@ resolve_on_exit <- function(project, network, dag_sm, state_list) {
     dag_sm$set_nodes(link = link, code = node)
   }
   on_exit_query_list <- do.call(merge_queries, get_dependend_queries(links))
-  dag_sm <- resolve_dependencies(query_list = on_exit_query_list, state_list = state_list, network = network, dag_sm = dag_sm)
-  dag_sm
+  on_exit_query_list
 }

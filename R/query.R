@@ -48,6 +48,21 @@ query <- function(...) {
   query_list
 }
 
+from <- function(query_list, project) {
+  project <- deparse(substitute(project))
+  if(length(project) != 1) stop("Project must be of length 1")
+  if(inherits(query_list, "state_query")) {
+    state_query <- add_to_state_query(name = "main", what = project, state_query = query_list)
+  } else {
+    state_query <- list(
+      query = query_list,
+      main = project
+    )
+  }
+  class(state_query) <- c("list", "xafty_query")
+  state_query
+}
+
 #' Add a State to a xafty Query
 #' @description
 #' The state of a xafty query is passed to arguments that were declared as xafty states
@@ -156,25 +171,32 @@ dots_to_query <- function(network, ...)  {
     query_list <- query_raw[[1]]$query
     state_list <- query_raw[[1]]$states
     join_path <- query_raw[[1]]$join_path
+    main <- query_raw[[1]]$main
   } else if (inherits(query_raw, "xafty_query")) {
     query_list <- query_raw$query
     state_list <- query_raw$states
     join_path <- query_raw$join_path
+    main <- query_raw[[1]]$main
   } else if (inherits(query_raw[[1]], what = "xafty_query_list")) {
     query_list <- query_raw[[1]]
     state_list <- NULL
     join_path <- NULL
+    main <- NULL
   } else if(!inherits(query_raw[[1]], what = "xafty_query_list")) {
     query_list <- query(query_raw)
     state_list <- NULL
     join_path <- NULL
+    main <- NULL
   } else {
     stop("Could not parse passed query")
   }
   query_tempered <- temper_query(query_list = query_list, state_list = state_list, network = network)
+  main <- if(is.null(main)) get_lead_project(query_tempered) else main
   query_order <- remove_where_query(query_tempered)
   query_internal <- merge_queries(remove_where_expr(query_tempered))
+
   list(
+    main = main,
     internal = query_internal,
     order = query_order,
     states = state_list,

@@ -51,12 +51,23 @@ test_that("Register builds a join node in the network environment correctly", {
 
   project_env$add_project("test2")
   project_env$test2$link(test2_get_function())
-  project_env$test$link(test_join_function(data_left = query(test = "a"), data_right = query(test2 = "a")), vars = character(0))
+  project_env$test$link(test_join_function(data_left = query(test = "a"), data_right = query(test2 = "a")), vars = character(0), direction = "both")
 
   expect_equal(names(project_env$test$joined_projects), "test2")
   expect_equal(names(project_env$test2$joined_projects), "test")
   expect_equal(project_env$test2$joined_projects$test, "test_join_function")
   expect_equal(project_env$test$joined_projects$test2, "test_join_function")
+})
+
+test_that("One-directional joins (default) correctly only register the join in the indexed project", {
+  network <- init_network(name = "project_env", projects = c("test", "test2"))
+  network$test$link(get_sample_data())
+  network$test2$link(get_additional_info())
+  network$test$link(join_datasets(main_data = query(test = c("id")), extra_data = query(test2 = "id")))
+  expect_equal(names(network$test$joined_projects), "test2")
+  expect_equal(names(network$test2$joined_projects), character(0))
+  expect_equal(network$test2$joined_projects$test, NULL)
+  expect_equal(network$test$joined_projects$test2, "join_datasets")
 })
 
 test_that("register add also works with xafty link instead of passing data into the to be registered function", {
@@ -83,9 +94,9 @@ test_that("A unjoined project's variable can be nascented from the network even 
   test_state_1$customer_data$link(get_sample_data())
   test_state_1$customer_data$link(add_score_category(data = query(customer_data = "score")))
   test_state_1$occupation$link(get_additional_info())
-  test_state_1$customer_data$link(join_datasets(main_data = query(customer_data = "id"), extra_data = query(occupation = "id")))
+  test_state_1$customer_data$link(join_datasets(main_data = query(customer_data = "id"), extra_data = query(occupation = "id")), direction = "both")
   test_state_1$value_sheet$link(new_column_from_both_projects(query(occupation = "department", customer_data = "name")))
-  table_test <- query(value_sheet = "nickname") |> nascent(test_state_1)
+  table_test <- query(value_sheet = "nickname") |> from(customer_data) |> nascent(test_state_1)
   table_expected <- structure(list(nickname = c("HRAlice", "ITBob", "FinanceCharlie",
                        "MarketingDiana", "SalesEve")), row.names = c(NA, -5L), class = "data.frame")
   expect_identical(table_test, table_expected)
@@ -99,10 +110,10 @@ test_that("A unjoined variable can be nascented from the network alongside tradi
   test_state_1$customer_data$link(get_sample_data())
   test_state_1$customer_data$link(add_score_category(data = query(customer_data = "score")))
   test_state_1$occupation$link(get_additional_info())
-  test_state_1$customer_data$link(join_datasets(main_data = query(customer_data = "id"), extra_data = query(occupation = "id")))
+  test_state_1$customer_data$link(join_datasets(main_data = query(customer_data = "id"), extra_data = query(occupation = "id")),  direction = "both")
   test_state_1$value_sheet$link(new_column_from_both_projects(query(occupation = "department", customer_data = "name")))
   test_state_1$value_sheet$link(add_column_to_intelligence(data = query(occupation = "department", customer_data = "id", value_sheet = "nickname")))
-  table_test <- query(occupation = "department", value_sheet = "new_column") |> nascent(test_state_1)
+  table_test <- query(occupation = "department", value_sheet = "new_column") |> from(occupation) |> nascent(test_state_1)
   table_expected <- structure(list(
     department = c("HR", "IT", "Finance", "Marketing", "Sales"),
     new_column = c("HR1", "IT2", "Finance3", "Marketing4", "Sales5")), row.names = c(NA, -5L), class = "data.frame")
@@ -187,6 +198,25 @@ test_that("Registering a on_entry with the same name twice, does not create a du
   test_network$customer_data$on_exit(reorder_cars_by_color(cars = "test"), name = "reorder", update = TRUE)
   expect_length(test_network$customer_data$wrappers$on_exit, 1)
   expect_equal(test_network$customer_data$wrappers$on_exit, "reorder_cars_by_color")
+})
+
+test_that("Registering a link with a group adds the group value correctly to the link list", {
+  test_network <- init_network("test_network", projects = "customer_data")
+  test_network$customer_data$add_group("test_group")
+  test_network$customer_data$link(get_sample_data())
+  test_network$customer_data$link(add_score_category(data = query(customer_data = c("score", "name"))), group = "test_group")
+  expect_identical(test_network$customer_data$groups$test_group$variables, "category")
+  expect_identical(test_network$customer_data$ruleset$add_score_category$group, "test_group")
+})
+
+test_that("Updating a link with a group removed correctly deletes the variables from the group entry", {
+  test_network <- init_network("test_network", projects = "customer_data")
+  test_network$customer_data$add_group("test_group")
+  test_network$customer_data$link(get_sample_data())
+  test_network$customer_data$link(add_score_category(data = query(customer_data = c("score", "name"))), group = "test_group")
+  test_network$customer_data$link(add_score_category(data = query(customer_data = c("score", "name"))), update = TRUE, group = NULL)
+  expect_identical(test_network$customer_data$groups$test_group$variables, NULL)
+  expect_identical(test_network$customer_data$ruleset$add_score_category$group, NULL)
 })
 
 test_that("Adding a polluted on_exit context node informs the user with a warning", {

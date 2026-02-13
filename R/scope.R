@@ -73,11 +73,9 @@ get_scoped_column_order <- function(query) {
 }
 
 get_scoped_function_order <- function(query, network) {
-  variables <- get_column_order(query)
-  projects <- get_project_order(query)
-  functions <- do.call(c, mapply(get_chatty_func_name_from_network, variables, projects, MoreArgs = list(network = network),
-                                   SIMPLIFY = FALSE, USE.NAMES = TRUE))
-  paste0(projects, ".", functions)
+  links <- flatten_list(lapply(query, get_links, network = network))
+  codes <- vapply(links, build_fun_code, FUN.VALUE = character(1))
+  codes
 }
 
 get_project_order <- function(query) {
