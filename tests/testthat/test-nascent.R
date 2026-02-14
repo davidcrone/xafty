@@ -253,17 +253,17 @@ test_that("Registering the wrong variable name through vars yields an informativ
 })
 
 test_that("On entry is correctly interweaved into the dag and evaluates properly", {
-  test_network <- init_network(name = "test_network", projects = "customer_data")
-  test_network$customer_data$link(get_sample_data())
-  test_network$customer_data$add_group("occupations")
-  test_network$customer_data$on_entry(increase_score(data = "{.data}"), "increase_score", group = "occupations")
-  test_network$occupations$link(add_score_category(data = query(customer_data = "score")))
   increase_score <- function(data = "{.data}") {
     data$score <- data$score + 100
     data
   }
+  test_network <- init_network(name = "test_network", projects = "customer_data")
+  test_network$customer_data$link(get_sample_data())
+  test_network$customer_data$add_group("occupations")
+  test_network$customer_data$on_entry(increase_score(data = "{.data}"), "increase_score", group = "occupations")
+  test_network$customer_data$link(add_score_category(data = query(customer_data = "score")), group = "occupations")
 
-  test_data <- query(customer_data = "name", occupations = "category") |> nascent(test_network)
+  test_data <- query(customer_data = c("name", "category")) |> nascent(test_network)
   expected_data <- structure(list(name = c("Alice", "Bob", "Charlie", "Diana", "Eve"),
                                   category = c("High", "High", "High", "High", "High")),
                              row.names = c(NA, -5L), class = "data.frame")

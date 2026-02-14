@@ -1,14 +1,12 @@
 
 # Handles correct context for on_entry and on_exit
-clean_wrapper <- function(project, order, dag, contexts, network) {
-  entry_funcs <- network[[project$project]][["groups"]][[project$group]]$contexts$on_entry
-  exit_funcs <- network[[project$project]][["groups"]][[project$group]]$contexts$on_exit
-  project <- project$group_project
+clean_wrapper <- function(project, group, order, dag, contexts, network) {
+  entry_funcs <- network[[project]][["groups"]][[group]]$contexts$on_entry
+  exit_funcs <- network[[project]][["groups"]][[group]]$contexts$on_exit
   # Early exit when no wrapper functions are available
   if (length(entry_funcs) == 0 && length(exit_funcs) == 0) return(order)
-  prefix <- paste0(project, ".")
+  prefix <- paste0(group, ".", project, ".")
   is_project <- which(startsWith(order, prefix))
-
   start_pos <- min(is_project)
   end_pos <- max(is_project)
   projects_extract <- order[start_pos:end_pos]
@@ -16,11 +14,12 @@ clean_wrapper <- function(project, order, dag, contexts, network) {
   is_project_sub <- startsWith(projects_extract, prefix)
   # Early exit when all projects have no foreign project between variable and wrapper functions
   if(all(is_project_sub)) return(order)
-  entry_nodes <- if (!is.null(entry_funcs)) paste0(project, ".", entry_funcs) else character(0)
-  exit_nodes  <- if (!is.null(exit_funcs))  paste0(project, ".", exit_funcs)  else character(0)
+  entry_nodes <- if (!is.null(entry_funcs)) paste0(prefix, entry_funcs) else character(0)
+  exit_nodes  <- if (!is.null(exit_funcs))  paste0(prefix, exit_funcs)  else character(0)
 
   # Handle on exit nodes which may depend on a foreign function
   li_classified <- classify_foreign_dependencies(project = project,
+                                                 group = group,
                                                  dag = dag[projects_extract],
                                                  targets = exit_nodes,
                                                  contexts = NULL,
@@ -47,11 +46,11 @@ clean_wrapper <- function(project, order, dag, contexts, network) {
   }
 
   # Package order into building blocks for easy resolving of wrappers
-  packages <- package_wrapper(project = project, extract = extract)
+  packages <- package_wrapper(project = prefix, extract = extract)
 
   if(length(packages$packages) == 0) {
     order <- c(start, packages$start, packages$end, end)
-    rebuild <- rebuild_context(project = project, order = order, on_entry = entry_nodes, on_exit = exit_nodes)
+    rebuild <- rebuild_context(project = prefix, order = order, on_entry = entry_nodes, on_exit = exit_nodes)
     return(uncloak(order = rebuild, cloak = cloak, original = original))
   }
   for (i in seq_along(packages$packages)) {
@@ -75,11 +74,10 @@ clean_wrapper <- function(project, order, dag, contexts, network) {
   extract_reorder <- unlist(lapply(packages$packages, \(package) c(package$foreign, package$project)))
 
   order <- c(start, packages$start, extract_reorder, packages$end, end)
-  rebuild_context(project = project, order = order, on_entry = entry_nodes, on_exit = exit_nodes)
+  rebuild_context(project = prefix, order = order, on_entry = entry_nodes, on_exit = exit_nodes)
 }
 
 projects_with_context <- function(projects, network, dag) {
-  browser()
   li_groups_name <- remove_empty_lists(sapply(projects, \(project) names(network[[project]]$groups), simplify = FALSE, USE.NAMES = TRUE))
   groups_names <- unlist(li_groups_name, use.names = FALSE)
   li_groups <- sapply(names(li_groups_name), \(project) paste0(li_groups_name[[project]], ".", project), simplify = FALSE, USE.NAMES = TRUE)
@@ -87,6 +85,8 @@ projects_with_context <- function(projects, network, dag) {
   projects <- rep(names(li_groups), times = reps)
   group_vec <- unlist(li_groups, use.names = FALSE)
   df_all_projects <- data.frame(project = projects, group = groups_names, group_project = group_vec)
+  if(nrow(df_all_projects) == 0) return(df_all_projects)
+  df_all_projects[vapply(paste0(df_all_projects$group_project, "."), \(prefix) any(startsWith(names(dag), prefix)), FUN.VALUE = logical(1)), ]
 }
 
 
@@ -117,15 +117,18 @@ clean_all_wrappers <- function(projects, order, dag, network) {
   contexts <-  NULL
   for (project in projects) {
     row_project <- df_projects[df_projects$group_project == project,]
-    order <- clean_wrapper(project = row_project, order = order, dag = dag, contexts = contexts, network = network)
-    packed_wrappers <- pack_project_wrappers(project = project, order = order, contexts = contexts)
+    project <- row_project$project
+    group <- row_project$group
+    order <- clean_wrapper(project = project, group = group, order = order, dag = dag, contexts = contexts, network = network)
+    packed_wrappers <- pack_project_wrappers(project = project, group = group, order = order, contexts = contexts)
     order <- packed_wrappers$order
     contexts <- packed_wrappers$contexts
   }
   interpolate_contexts(order = order, contexts = contexts)
 }
 
-pack_project_wrappers <- function(project, order, contexts = NULL) {
+pack_project_wrappers <- function(project, group, order, contexts = NULL) {
+  project <- paste0(group, ".", project)
   if(is.null(contexts)) {
     contexts <- list()
   }
@@ -172,7 +175,7 @@ interpolate_contexts <- function(order, contexts) {
 # The function brings the wrappers into a form that allows for sequential checking of dependencies of foreigns
 # in order to check wether the wrappers need to be broken apart
 package_wrapper <- function(project, extract) {
-  suffix <- paste0(project, ".")
+  suffix <- project
   is_project <- startsWith(extract, suffix)
   rle_is_project <- rle(is_project)
 
@@ -228,7 +231,7 @@ package_wrapper <- function(project, extract) {
 }
 
 rebuild_context <- function(project, order, on_entry, on_exit) {
-  suffix <- paste0(project, ".")
+  suffix <- project
   rebuilt_context <- character(0)
   opened <- FALSE
   for (i in seq_along(order)) {
@@ -262,8 +265,8 @@ uncloak <- function(order, cloak, original) {
 
 # Here we classify the foreign dependencies of on exit functions, which need to be treated differently from
 # other foreign nodes since a foreign function does not
-classify_foreign_dependencies <- function(project, dag, targets, contexts = NULL, stop_at = character(0), network = NULL) {
-  prefix <- paste0(project, ".")
+classify_foreign_dependencies <- function(project, group, dag, targets, contexts = NULL, stop_at = character(0), network = NULL) {
+  prefix <- paste0(group, ".", project, ".")
 
   # To sort the dag topologically correct, the on_exit nodes get all dependencies which are part of the group.
   # This leads however for the algorithm to incorrectly detect polluted projects, since the on_exit nodes dependends
@@ -271,12 +274,12 @@ classify_foreign_dependencies <- function(project, dag, targets, contexts = NULL
   # be placed before the topological sort and rather should be applied after.
   if(!is.null(network)) {
     for (target in targets) {
-      name <- gsub(paste0("^", project, "\\."), replacement = "", x = target)
+      name <- gsub(paste0("^", group, "\\.", project, "\\."), replacement = "", x = target)
       link <- network[[project]]$ruleset[[name]]
       if(is.null(link)) next # Is done for tests in "resolve_dependencies"
       node <- build_dependency_codes(link = link, network = network)$node
       # remove on entry
-      deps <- node[[target]][!node[[target]] %in% paste0(project, ".", network[[project]]$wrappers$on_entry)]
+      deps <- node[[target]][!node[[target]] %in% paste0(prefix, network[[project]][["groups"]][[group]]$contexts$on_entry)]
       dag[[target]] <- deps
     }
   }

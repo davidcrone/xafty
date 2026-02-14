@@ -290,7 +290,7 @@ get_all_non_project_codes <- function(project, codes) {
 
 resolve_on_exit <- function(group, project, network, dag_sm, state_list) {
   func_names <- network[[project]][["groups"]][[group]]$contexts$on_exit
-  if(is.null(func_names)) return(dag_sm)
+  if(is.null(func_names)) return(NULL)
   links <- lapply(func_names, \(func_name) network[[project]]$ruleset[[func_name]])
   dag <- dag_sm$get_codes()
   for (i in seq_along(links)) {
