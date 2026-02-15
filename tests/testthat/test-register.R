@@ -162,12 +162,13 @@ test_that("Updating a function with revised variable names removes all legacy va
 
 test_that("Registering on_entry creates a on_entry function in wrappers", {
   test_network <- init_network("test_network", projects = "customer_data")
+  test_network$customer_data$add_group("group")
   remove_redundant_data <- function(data, values = FALSE) {
     data
   }
-  test_network$customer_data$on_entry(name = "remove_redundant", fun = remove_redundant_data(data = "{.data}"))
-  expect_identical(test_network$customer_data$wrappers$on_entry, "remove_redundant_data")
-  expect_identical(test_network$customer_data$wrappers$on_exit, NULL)
+  test_network$customer_data$on_entry(name = "remove_redundant", fun = remove_redundant_data(data = "{.data}"), group = "group")
+  expect_identical(test_network$customer_data[["groups"]]$group$contexts$on_entry, "remove_redundant_data")
+  expect_identical(test_network$customer_data[["groups"]]$group$contexts$on_exit, NULL)
   expect_identical(test_network$customer_data$ruleset$remove_redundant_data$args$data, "{.data}")
   expect_identical(test_network$customer_data$ruleset$remove_redundant_data$args$values, FALSE)
 })
@@ -177,27 +178,27 @@ test_that("Registering on_entry creates a on_entry function in wrappers", {
   add_redundant_data <- function(data, values = FALSE) {
     data
   }
-  test_network$customer_data$on_exit(name = "add_redundant", fun = add_redundant_data(data = "{.data}"))
-  expect_identical(test_network$customer_data$wrappers$on_entry, NULL)
-  expect_identical(test_network$customer_data$wrappers$on_exit, "add_redundant_data")
+  test_network$customer_data$on_exit(name = "add_redundant", fun = add_redundant_data(data = "{.data}"), group = "group")
+  expect_identical(test_network$customer_data[["groups"]]$group$contexts$on_entry, NULL)
+  expect_identical(test_network$customer_data[["groups"]]$group$contexts$on_exit, "add_redundant_data")
   expect_identical(test_network$customer_data$ruleset$add_redundant_data$args$data, "{.data}")
   expect_identical(test_network$customer_data$ruleset$add_redundant_data$args$values, FALSE)
 })
 
 test_that("Registering a on_entry with the same name twice, does not create a duplicate entries in wrappers", {
   test_network <- init_network("test_network", projects = "customer_data")
-  test_network$customer_data$on_entry(reorder_cars_by_color(cars = "test"), name = "reorder", update = TRUE)
-  test_network$customer_data$on_entry(reorder_cars_by_color(cars = "test"), name = "reorder", update = TRUE)
-  expect_length(test_network$customer_data$wrappers$on_entry, 1)
-  expect_equal(test_network$customer_data$wrappers$on_entry, "reorder_cars_by_color")
+  test_network$customer_data$on_entry(reorder_cars_by_color(cars = "test"), name = "reorder", update = TRUE, group = "group")
+  test_network$customer_data$on_entry(reorder_cars_by_color(cars = "test"), name = "reorder", update = TRUE, group = "group")
+  expect_length(test_network$customer_data[["groups"]]$group$contexts$on_entry, 1)
+  expect_equal(test_network$customer_data[["groups"]]$group$contexts$on_entry, "reorder_cars_by_color")
 })
 
-test_that("Registering a on_entry with the same name twice, does not create a duplicate entries in wrappers", {
+test_that("Registering a on_exit with the same name twice, does not create a duplicate entries in wrappers", {
   test_network <- init_network("test_network", projects = "customer_data")
-  test_network$customer_data$on_exit(reorder_cars_by_color(cars = "test"), name = "reorder", update = TRUE)
-  test_network$customer_data$on_exit(reorder_cars_by_color(cars = "test"), name = "reorder", update = TRUE)
-  expect_length(test_network$customer_data$wrappers$on_exit, 1)
-  expect_equal(test_network$customer_data$wrappers$on_exit, "reorder_cars_by_color")
+  test_network$customer_data$on_exit(reorder_cars_by_color(cars = "test"), name = "reorder", update = TRUE, group = "group")
+  test_network$customer_data$on_exit(reorder_cars_by_color(cars = "test"), name = "reorder", update = TRUE, group = "group")
+  expect_length(test_network$customer_data[["groups"]]$group$contexts$on_exit, 1)
+  expect_equal(test_network$customer_data[["groups"]]$group$contexts$on_exit, "reorder_cars_by_color")
 })
 
 test_that("Registering a link with a group adds the group value correctly to the link list", {
@@ -228,6 +229,14 @@ test_that("Adding a polluted on_exit context node informs the user with a warnin
   test_network$polluted$add(add_score_category(data = query(customer_data = "score")))
   test_network$customer_data$add(add_score_category(data = query(customer_data = "score", polluted = "category")), vars = "category")
   expect_warning(test_network$polluted$on_exit(pass_through2(data = query(customer_data  = "category"))))
+})
+
+test_that("Register detects a cycle, when a dependency of the context is attached to the dependency", {
+  skip("Not implemented yet!")
+  on_entry_network <- init_network("on_entry", projects = c("cars"))
+  on_entry_network$cars$link(test_get_car_data(conn = TRUE))
+  on_entry_network$cars$on_entry(reorder_cars_by_color(cars = query(cars = "Car_Color")), group = "group")
+  on_entry_network$cars$link(test_add_car_color(data = query(cars = c("Has_Drivers_License", "Name", "Car"))), group = "group")
 })
 
 # test_that("Registering context creates the correct entry in ruleset and network", {

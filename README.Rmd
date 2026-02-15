@@ -192,6 +192,7 @@ xafty_network
 
 # Pull data as needed from the network in the desired column order
 query(hp, wt, vs, type, power_to_weight) |>  
+  from(mtcars) |> 
   nascent(xafty_network) |> 
   head()
 
@@ -210,7 +211,7 @@ xafty then
 For example, if we use the above network to query the following variables:
 
 ``` r
-query(hp, type) |> nascent(xafty_network)
+query(type, hp) |> from(mtcars) |> nascent(xafty_network)
 ```
 **The resulting pipeline can be represented as follows:**
 

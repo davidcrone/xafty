@@ -106,107 +106,106 @@ test_that("splitting an order into a package", {
 
 test_that("classify_foreign_dependencies returns only relevant dependencies to the extracted pipeline", {
   dag <- list(
-    group.add_tries_data_license = "cars.test_get_car_data",
+    group.group.add_tries_data_license = "cars.test_get_car_data",
     cars.test_add_car_color = "cars.test_get_car_data",
-    group.reorder_cars_by_color = c("group.add_tries_data_license", "cars.test_add_car_color")
+    group.group.reorder_cars_by_color = c("group.group.add_tries_data_license", "cars.test_add_car_color")
   )
-  test_deps <- classify_foreign_dependencies(project = "group", dag = dag, targets = "group.reorder_cars_by_color")
+  test_deps <- classify_foreign_dependencies(project = "group", group = "group", dag = dag, targets = "group.group.reorder_cars_by_color")
   expect_identical(test_deps$before, "cars.test_add_car_color")
   expect_identical(test_deps$pollution, character(0))
 })
 
 test_that("classify_foreign_dependencies returns polluted foreign nodes", {
   dag <- list(
-    group.add_tries_data_license = "cars.test_get_car_data",
-    cars.test_add_car_color = c("cars.test_get_car_data", "group.add_tries_data_license"),
-    group.reorder_cars_by_color = c("group.add_tries_data_license", "cars.test_add_car_color")
+    group.group.add_tries_data_license = "cars.test_get_car_data",
+    cars.test_add_car_color = c("cars.test_get_car_data", "group.group.add_tries_data_license"),
+    group.group.reorder_cars_by_color = c("group.group.add_tries_data_license", "cars.test_add_car_color")
   )
-  test_deps <- classify_foreign_dependencies(project = "group", dag = dag, targets = "group.reorder_cars_by_color")
-  exp_deps <- c("cars.test_add_car_color")
+  test_deps <- classify_foreign_dependencies(project = "group", group = "group", dag = dag, targets = "group.group.reorder_cars_by_color")
   expect_identical(test_deps$before, character(0))
   expect_identical(test_deps$pollution, "cars.test_add_car_color")
 })
 
 test_that("classify_foreign_dependencies returns the whole polluted chain of thought", {
   dag <- list(
-    group.add_tries_data_license = "cars.test_get_car_data",
-    cars.depends_on_group = "group.add_tries_data_license",
+    group.group.add_tries_data_license = "cars.test_get_car_data",
+    cars.depends_on_group = "group.group.add_tries_data_license",
     cars.test_add_car_color = c("cars.test_get_car_data", "cars.depends_on_group"),
-    group.reorder_cars_by_color = c("group.add_tries_data_license", "cars.test_add_car_color")
+    group.group.reorder_cars_by_color = c("group.group.add_tries_data_license", "cars.test_add_car_color")
   )
-  test_deps <- classify_foreign_dependencies(project = "group", dag = dag, targets = "group.reorder_cars_by_color")
+  test_deps <- classify_foreign_dependencies(project = "group", group = "group",  dag = dag, targets = "group.group.reorder_cars_by_color")
   expect_identical(test_deps$before, character(0))
   expect_identical(test_deps$pollution, c("cars.test_add_car_color", "cars.depends_on_group"))
 })
 
 test_that("A target idependent of foreign functions returns an empty character", {
   dag <- list(
-    group.add_tries_data_license = "cars.test_get_car_data",
-    cars.depends_on_group = "group.add_tries_data_license",
+    group.group.add_tries_data_license = "cars.test_get_car_data",
+    cars.depends_on_group = "group.group.add_tries_data_license",
     cars.test_add_car_color = c("cars.test_get_car_data", "cars.depends_on_group"),
-    group.reorder_cars_by_color = c("group.add_tries_data_license")
+    group.group.reorder_cars_by_color = c("group.group.add_tries_data_license")
   )
-  test_deps <- classify_foreign_dependencies(project = "group", dag = dag, targets = "group.reorder_cars_by_color")
+  test_deps <- classify_foreign_dependencies(project = "group", group = "group", dag = dag, targets = "group.group.reorder_cars_by_color")
   expect_identical(test_deps$before, character(0))
   expect_identical(test_deps$pollution, character(0))
 })
 
 test_that("Targets idependent of foreign functions returns an empty character", {
   dag <- list(
-    group.add_tries_data_license = "cars.test_get_car_data",
+    group.group.add_tries_data_license = "cars.test_get_car_data",
     cars.test_add_car_color = c("cars.test_get_car_data", "cars.depends_on_group"),
-    group.reorder_cars_by_color = "group.add_tries_data_license",
-    group.reorder_cars_by_id = "group.reorder_cars_by_color"
+    group.group.reorder_cars_by_color = "group.group.add_tries_data_license",
+    group.group.reorder_cars_by_id = "group.group.reorder_cars_by_color"
   )
-  test_deps <- classify_foreign_dependencies(project = "group", dag = dag, targets = c("group.reorder_cars_by_color", "group.reorder_cars_by_id"))
+  test_deps <- classify_foreign_dependencies(project = "group", group = "group", dag = dag, targets = c("group.group.reorder_cars_by_color", "group.group.reorder_cars_by_id"))
   expect_identical(test_deps$before, character(0))
   expect_identical(test_deps$pollution, character(0))
 })
 
 test_that("Targets depend only on domestic, while dependend domestics depend on foreign function", {
   dag <- list(
-    group.add_tries_data_license = "cars.test_get_car_data",
+    group.group.add_tries_data_license = "cars.test_get_car_data",
     cars.test_add_car_color = c("cars.test_get_car_data", "cars.depends_on_group"),
-    group.reorder_cars_by_color = "cars.test_add_car_color",
-    group.reorder_cars_by_id = "group.reorder_cars_by_color"
+    group.group.reorder_cars_by_color = "cars.test_add_car_color",
+    group.group.reorder_cars_by_id = "group.group.reorder_cars_by_color"
   )
-  test_deps <- classify_foreign_dependencies(project = "group", dag = dag, targets = c("group.reorder_cars_by_color", "group.reorder_cars_by_id"))
+  test_deps <- classify_foreign_dependencies(project = "group", group = "group", dag = dag, targets = c("group.group.reorder_cars_by_color", "group.group.reorder_cars_by_id"))
   expect_identical(test_deps$before, "cars.test_add_car_color")
   expect_identical(test_deps$pollution, character(0))
 })
 
 test_that("Several Targets while only one depends on foreign functions returns the dependency", {
   dag <- list(
-    group.add_tries_data_license = "cars.test_get_car_data",
+    group.group.add_tries_data_license = "cars.test_get_car_data",
     cars.test_add_car_color = c("cars.test_get_car_data", "cars.depends_on_group"),
-    group.reorder_cars_by_color = c("group.add_tries_data_license", "cars.test_get_car_data"),
-    group.reorder_cars_by_id = c("group.reorder_cars_by_color", "cars.test_add_car_color")
+    group.group.reorder_cars_by_color = c("group.group.add_tries_data_license", "cars.test_get_car_data"),
+    group.group.reorder_cars_by_id = c("group.group.reorder_cars_by_color", "cars.test_add_car_color")
   )
-  test_deps <- classify_foreign_dependencies(project = "group", dag = dag, targets = c("group.reorder_cars_by_color", "group.reorder_cars_by_id"))
+  test_deps <- classify_foreign_dependencies(project = "group", group = "group", dag = dag, targets = c("group.group.reorder_cars_by_color", "group.group.reorder_cars_by_id"))
   expect_identical(test_deps$before, "cars.test_add_car_color")
   expect_identical(test_deps$pollution, character(0))
 })
 
 test_that("Target with both polluting and before are correctly classified", {
   dag <- list(
-    group.add_tries_data_license = "cars.test_get_car_data",
+    group.group.add_tries_data_license = "cars.test_get_car_data",
     cars.test_add_car_color = c("cars.test_get_car_data", "cars.depends_on_group"),
-    cars.polluter = "group.add_tries_data_license",
-    group.reorder_cars_by_id = c("group.add_tries_data_license", "cars.test_add_car_color", "cars.polluter")
+    cars.polluter = "group.group.add_tries_data_license",
+    group.group.reorder_cars_by_id = c("group.group.add_tries_data_license", "cars.test_add_car_color", "cars.polluter")
   )
-  test_deps <- classify_foreign_dependencies(project = "group", dag = dag, targets = "group.reorder_cars_by_id")
+  test_deps <- classify_foreign_dependencies(project = "group", group = "group", dag = dag, targets = "group.group.reorder_cars_by_id")
   expect_identical(test_deps$before, "cars.test_add_car_color")
   expect_identical(test_deps$pollution, "cars.polluter")
 })
 
 test_that("Target with both polluting from different sources are correctly classified", {
   dag <- list(
-    group.add_tries_data_license = "cars.test_get_car_data",
-    cars.test_add_car_color = c("cars.test_get_car_data", "cars.depends_on_group", "group.add_tries_data_license"),
+    group.group.add_tries_data_license = "cars.test_get_car_data",
+    cars.test_add_car_color = c("cars.test_get_car_data", "cars.depends_on_group", "group.group.add_tries_data_license"),
     cars.polluter = "cars.test_add_car_color",
-    group.reorder_cars_by_id = c("group.add_tries_data_license", "cars.test_add_car_color", "cars.polluter")
+    group.group.reorder_cars_by_id = c("group.group.add_tries_data_license", "cars.test_add_car_color", "cars.polluter")
   )
-  test_deps <- classify_foreign_dependencies(project = "group", dag = dag, targets = "group.reorder_cars_by_id")
+  test_deps <- classify_foreign_dependencies(project = "group", group = "group", dag = dag, targets = "group.group.reorder_cars_by_id")
   expect_identical(test_deps$before, character(0))
   expect_in(test_deps$pollution, c("cars.polluter", "cars.test_add_car_color"))
 })

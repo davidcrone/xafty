@@ -100,12 +100,7 @@ link_exists <- function(link, network) {
   function_name <- link$fun_name
   links <- network[[project]]$ruleset
   exists <- function_name %in% names(links)
-  if(inherits(link, "query_link")) return(exists)
-  group <- link$group
-  wrappers <- c(network[[project]][["groups"]][[group]]$contexts$on_entry,
-                network[[project]][["groups"]][[group]]$contexts$on_exit)
-  in_group <- function_name %in% wrappers
-  exists & in_group
+  exists
 }
 
 add_to_network <- function(link, project, network, ...) {
