@@ -1,14 +1,14 @@
-settings <- function(network_name) {
-  if(length(network_name) == 0 | length(network_name) > 1) stop("Please enter the network's name.")
-  if(!identical(network_name, make.names(network_name))) stop("Please enter a valid network name")
+settings <- function(name) {
+  if(length(name) == 0 | length(name) > 1) stop("Please enter the network's name.")
+  if(!identical(name, make.names(name))) stop("Please enter a valid name")
     list(
-      network_name = network_name,
+      name = name,
       state = list(
         global_default = NULL
       ),
       # Data.Frame must have zero rows upon creation
       projects = list(
-        print_order = data.frame(project = character(0), order = integer(0), root = character(0))
+        print_order = data.frame(project = character(0), order = integer(0), root = character(0), info = character(0))
       )
     )
 }
@@ -87,4 +87,12 @@ create_single_order_df <- function(df_projects, project, order) {
   mtrx$project <- project
   mtrx$order <- order
   mtrx
+}
+
+set_project_info <- function(project, info = NULL, network) {
+  df_order <- network$settings$projects$print_order
+  if(is.null(info)) info <- NA_character_
+  df_order$info[df_order$project == project] <- info
+  network$settings$projects$print_order <- df_order
+  network
 }

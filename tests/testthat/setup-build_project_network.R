@@ -68,7 +68,7 @@ join_datasets_map <- function(intelligence, map) {
 
 test_network <- init_network("test_network")
 ## Project 1 ##
-test_network$add_project("customer_data")
+test_network$add_project("customer_data", info = "Customer Names and ID")
 test_network$customer_data$link(get_sample_data())
 test_network$customer_data$link(add_score_category(data = query(customer_data = c("score", "name"))))
 ## Project 2 ##

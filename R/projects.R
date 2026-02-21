@@ -15,7 +15,7 @@
 #' @export
 init_network <- function(name, projects = NULL) {
   network_env <- new.env() # This is the network where all projects will be merged together
-  network_env$settings <- settings(network_name = name)
+  network_env$settings <- settings(name = name)
   network_env$states <- list()
   add_project <- create_add_project(network_env = network_env)
   save_project <- create_save_project(network_env = network_env)
@@ -35,11 +35,12 @@ init_network <- function(name, projects = NULL) {
 
 create_add_project <- function(network_env) {
   force(network_env)
-  add_project <- function(name, ...) {
+  add_project <- function(name, info = NULL, ...) {
     validate_project_name(name = name, network = network_env)
     .network_env <- add_new_project(project = name, network_env = network_env,
                                     func_types = c("link", "on_entry", "on_exit"))
     .network_env <- set_project_print_order(projects = name, network = .network_env)
+    .network_env <- set_project_info(project = name, info = info, network = network_env)
     invisible(.network_env)
   }
   add_project
@@ -55,11 +56,11 @@ create_save_project <- function(network_env) {
 
 add_new_project <- function(project, network_env, func_types) {
   env_names <- c("variables", "joined_projects", "groups") # These will be environments for frequent look-ups during the nascent process
-
   project_env <- new.env() # This is the environment, where all code will be organized
   class(project_env) <- c("environment", "xafty_project")
   network_env[[project]] <- project_env
   network_env[[project]][["ruleset"]] <- list()
+  network_env[[project]][["settings"]] <- settings(name = project)
   network_env[[project]][["add_group"]] <- create_add_group(project = project, network = network_env)
   for (env_name in env_names) {
     assign(env_name, new.env(), envir = project_env)

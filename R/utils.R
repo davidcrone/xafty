@@ -5,7 +5,7 @@
 #' @param ... further arguments passed to or from other methods.
 #' @export
 print.xafty_network <- function(x, ...) {
-  network_name <- x$settings$network_name
+  network_name <- x$settings$name
   values_in_x <- names(x)
   projects <- x$settings$projects$print_order$project
   cat("---\n")
@@ -13,103 +13,109 @@ print.xafty_network <- function(x, ...) {
   cat("\n")
   cat("\U1F332 ", "Projects (", length(projects), "):\n", sep = "")
 
-  if(length(projects) > 0) {
-    cat("   \u2502")
-    cat("\n")
-  } else {
+  if(length(projects) == 0) {
     cat("\U1F4A1 ", "Hint: Add a project to your network like this: network$add_project(\"my_project_name\")\n", sep = "")
   }
 
   for(i in seq_along(projects)) {
     project <- projects[i]
-    print_project(project = project, network = x)
-  }
-
-  if(length(projects) > 1) {
-    print_joins(projects, network = x)
+    print_project_summary(project = project, network = x)
   }
 }
 
-print_project <- function(project, network) {
+print_project_summary <- function(project, network) {
   df_print <- network$settings$projects$print_order
+  df_print_project <- df_print[df_print$project == project, ]
   project_env <- network[[project]]
   ruleset <- project_env$ruleset
   contents <- names(project_env$variables)
   variables_classified <- vapply(contents, \(name) get_variable_link_type(name = name, project = project, network = network), FUN.VALUE = character(1))
   variables <- contents[variables_classified == "query_link"]
+  contexts <- contents[!variables_classified == "query_link"]
 
   is_last_project <- which(df_print$project == project) == nrow(df_print)
 
+  indent <- "  "
   if(!is_last_project) {
-      downwards <- "   \u2502"
-      project_close <- " \u251C" # unclosed project with
+    downwards <- paste0(indent, " \u2502")
+    navigate <- " \u251C" # unclosed project with
   } else {
-    downwards <- "    "
-    project_close <- " \u2514"
+    downwards <- paste0(indent, indent)
+    navigate <- " \u2514"
+  }
+
+  print_variables <- paste0(length(variables), "\U1F331")
+  print_joins <- paste0(length(project_env$joined_projects), "\U1F517")
+  print_contexts <- paste0(length(contexts), "\U1F9E9")
+
+  info_contents <- paste0(c(print_variables, print_joins, print_contexts), collapse = " | ")
+
+  info_text <- if(is.na(df_print_project$info)) "" else paste0(": ", df_print_project$info)
+
+  cat(indent, navigate, "\U1F4C1 ", project, info_text, "\n", sep = "")
+  cat(downwards, " ", "\u2514 ", info_contents, "\n")
+}
+
+#' Print a xafty Project
+#' @description
+#' S3 method to print a xafty network.
+#' @param x an object with the class "xafty_project"
+#' @param ... further arguments passed to or from other methods.
+#' @export
+print.xafty_project <- function(x, ...) {
+  project <- x$settings$name
+  variable_names <- names(x$variables)
+  contents <- lapply(variable_names, \(name) x$ruleset[[x$variables[[name]]]])
+  is_var <- vapply(contents, \(link) is_query_link(link), FUN.VALUE = logical(1))
+  variables <- contents[is_var]
+  contexts <- contents[!is_var]
+
+  indent <- "  "
+  if(length(variables) > 0) {
+    cat("\U1F4C1 Project: ", project, "\n", sep = "")
+  } else {
+    cat("\U1F4C1 Project: ", project, " (empty)\n", sep = "")
   }
 
   if(length(variables) > 0) {
-    cat("  ", project_close, "\U1F4C1 ", project, "\n", sep = "")
-  } else {
-    cat("  ", project_close, "\U1F4C1 ", project, " (empty)\n", sep = "")
-  }
-
-    # Print on Entry
-    on_entry_funcs <- network[[project]]$wrappers$on_entry
-    if(length(on_entry_funcs) > 0) {
-      # print on entry
-      print_on_entry <- paste0(on_entry_funcs, collapse = ", ")
-      cat(downwards, " \U256D ", print_on_entry, "\n", sep = "")
-    }
-
-  if(length(variables) > 0) {
-    classified_contents <- vapply(variables, \(name) ruleset[[project_env$variables[[name]]]]$layer, FUN.VALUE = numeric(1))
-    max_layer <- max(classified_contents)
-    layer_vec <- sort(unique(classified_contents))
+    raw_layer <- vapply(variables, \(link) link$layer, FUN.VALUE = numeric(1))
+    names(raw_layer) <- variable_names
+    max_layer <- max(raw_layer)
+    layer_vec <- sort(unique(raw_layer))
     for (layer in layer_vec) {
-      layer_variables <- paste0(sort(names(classified_contents)[classified_contents == layer]), collapse = ", ")
+      layer_variables <- paste0(sort(names(raw_layer)[raw_layer == layer]), collapse = ", ")
       is_max <- layer == max_layer
       if(!is_max) layer_close <- "\u251C" else layer_close <- "\u2514"
       if(layer > 0) {
-        cat(downwards , "    ", layer_close, " \U1F6E0 Layer ", paste0(layer ,": "), layer_variables, "\n", sep = "")
+        cat(indent, " ", layer_close, " \U1F6E0 Layer ", paste0(layer ,": "), layer_variables, "\n", sep = "")
       } else {
-        cat(downwards , "  ", layer_close, "\U1F331 Root:", layer_variables, "\n")
+        cat(indent, " ", layer_close, " \U1F331 Root:", layer_variables, "\n", sep = "")
       }
     }
   }
 
-  # Print on Entry
-  on_exit_funcs <- network[[project]]$wrappers$on_exit
-  if(length(on_exit_funcs) > 0) {
-    # print on entry
-    print_on_exit <- paste0(on_exit_funcs, collapse = ", ")
-    cat(downwards, " \U2570 ", print_on_exit, "\n", sep = "")
-  }
-  # on exit
-  cat(downwards, "\n")
+  cat("\n")
+
+  print_joins(project_env = x, indent = indent)
+
+  cat("\n")
 }
 
-print_joins <- function(projects, network) {
-  li_joins_project <- sapply(projects, \(project) names(network[[project]]$joined_projects))
-  li_joins_pruned <- li_joins_project[vapply(li_joins_project, \(joins) !length(joins) == 0, FUN.VALUE = logical(1))]
-  if(length(li_joins_pruned) == 0) {
+print_joins <- function(project_env, indent) {
+  joined_projects <- names(project_env$joined_projects)
+  if(length(joined_projects) == 0) {
     cat("\U1F517 ", "Joins:", "(None)\n")
-  } else {
-    projects <- names(li_joins_pruned)
-    li_raw_pairs <- list()
-    for (i in seq_along(projects)) {
-      project <- projects[i]
-      joins <- li_joins_pruned[[project]]
-      li_raw_pairs[[i]] <- lapply(joins, \(join) sort(c(project, join)))
-    }
-    li_raw_pairs <- unlist(li_raw_pairs, recursive = FALSE)
-    li_print_joins <- li_raw_pairs[!duplicated(li_raw_pairs)]
-    cat("\U1F517 ", "Joins (", length(li_print_joins), "):\n", sep = "")
-    for (print_join in li_print_joins) {
-      cat("   \U1F504 ", print_join[1], " \U2194 ", print_join[2], "\n", sep = "")
-    }
+    return(invisible(project_env))
   }
-  cat("\n")
+
+  li_raw_pairs <- list()
+  cat("\U1F517 ", "Joins (", length(joined_projects), "):\n", sep = "")
+  for (i in seq_along(joined_projects)) {
+    project <- joined_projects[i]
+    cat(indent, " ", "\U27A1\uFE0F ", project, sep = "")
+    cat("\n")
+    # TODO: Print available projects exposed from the join!
+  }
 }
 
 eval_args <- function(link, network) {
