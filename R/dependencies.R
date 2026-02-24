@@ -27,7 +27,7 @@ resolve_join_dependencies <- function(network, dag_sm, state_list = NULL) {
   new_paths <- list()
   for (i in seq_along(projects_new)) {
     project_add <- projects_new[i]
-    new_paths[[project_add]] <- greedy_best_first_search(project_add, network, dag_sm = dag_sm, graph = graph)
+    new_paths[[project_add]] <- greedy_best_first_search(project_add = project_add, dag_sm = dag_sm, graph = graph)
   }
   paths <- unique(flatten_list(remove_empty_lists(new_paths)))
   links <- join_dependencies(paths = paths, network = network, dag_sm = dag_sm, state_list = state_list)
@@ -43,18 +43,18 @@ join_dependencies <- function(paths, network, dag_sm, state_list) {
 }
 
 resolve_wrappers <- function(network, dag_sm, state_list) {
-  unresolved <- get_unresolved_wrappers(network = network, dag_sm = dag_sm)
+  contexts <- dag_sm$get("contexts")
+  all_names <- names(contexts)
+  unresolved <- all_names[vapply(all_names, \(name) !contexts[[name]]$resolved, FUN.VALUE = logical(1))]
   if(length(unresolved) == 0) return(dag_sm)
-  projects <- names(unresolved)
   query_list <- list()
-  for(project in projects) {
-    groups <- unresolved[[project]]
-    for (group in groups) {
-      dag_sm$set_wrapper_project(project = project, group = group)
-      query_exit <- resolve_on_exit(group = group, project = project, network = network, dag_sm = dag_sm, state_list = state_list)
-      query_entry <- resolve_on_entry(group = group, project = project, network = network, dag_sm = dag_sm, state_list = state_list)
-      query_list[[paste0(group, ".", project)]] <- merge_queries(query_exit, query_entry)
-    }
+  for(name in unresolved) {
+    dag_sm$resolve_context(name = name)
+    context <- contexts[[name]]
+    project <- context$project
+    group <- context$context
+    query_list[[paste0(name, ".on_exit")]] <- resolve_on_exit(group = group, project = project, network = network, dag_sm = dag_sm, state_list = state_list)
+    query_list[[paste0(name, ".on_entry")]] <- resolve_on_entry(group = group, project = project, network = network, dag_sm = dag_sm, state_list = state_list)
   }
   query_list <- do.call(merge_queries, query_list)
   dag_sm <- resolve_dependencies(query_list = query_list, state_list = state_list, network = network, dag_sm = dag_sm)
@@ -97,8 +97,8 @@ build_join_bridges <- function(network, dag_sm) {
   li_lookup <- sapply(join_path, \(path) {
     from <- path[1]
     to <- path[2]
-    fun_name <- network[[from]]$joined_projects[[to]]
-    link <- network[[from]]$ruleset[[fun_name]]
+    link <- network[[from]]$ruleset$nodes$joins[[to]]$link
+    fun_name <- link$fun_name
     paste0(link$project, ".", fun_name)
   }, simplify = FALSE, USE.NAMES = TRUE)
   list_direct_joins <- li_lookup[names(li_lookup) %in% names(list_join_codes)]

@@ -1,8 +1,8 @@
 
 # Handles correct context for on_entry and on_exit
 clean_wrapper <- function(project, group, order, dag, contexts, network) {
-  entry_funcs <- network[[project]][["groups"]][[group]]$contexts$on_entry
-  exit_funcs <- network[[project]][["groups"]][[group]]$contexts$on_exit
+  entry_funcs <- names(network[[project]]$ruleset$contexts[[group]]$on_entry)
+  exit_funcs <- names(network[[project]]$ruleset$contexts[[group]]$on_exit)
   # Early exit when no wrapper functions are available
   if (length(entry_funcs) == 0 && length(exit_funcs) == 0) return(order)
   prefix <- paste0(group, ".", project, ".")
@@ -77,25 +77,12 @@ clean_wrapper <- function(project, group, order, dag, contexts, network) {
   rebuild_context(project = prefix, order = order, on_entry = entry_nodes, on_exit = exit_nodes)
 }
 
-projects_with_context <- function(projects, network, dag) {
-  li_groups_name <- remove_empty_lists(sapply(projects, \(project) names(network[[project]]$groups), simplify = FALSE, USE.NAMES = TRUE))
-  groups_names <- unlist(li_groups_name, use.names = FALSE)
-  li_groups <- sapply(names(li_groups_name), \(project) paste0(li_groups_name[[project]], ".", project), simplify = FALSE, USE.NAMES = TRUE)
-  reps <- vapply(li_groups, \(groups) length(groups), FUN.VALUE = numeric(1))
-  projects <- rep(names(li_groups), times = reps)
-  group_vec <- unlist(li_groups, use.names = FALSE)
-  df_all_projects <- data.frame(project = projects, group = groups_names, group_project = group_vec)
-  if(nrow(df_all_projects) == 0) return(df_all_projects)
-  df_all_projects[vapply(paste0(df_all_projects$group_project, "."), \(prefix) any(startsWith(names(dag), prefix)), FUN.VALUE = logical(1)), ]
-}
-
-
-clean_all_wrappers <- function(projects, order, dag, network) {
+clean_all_wrappers <- function(wrappers, order, dag, network) {
   # Step 1: find all context ranges (entry .. exit)
-  df_projects <- projects_with_context(projects = projects, dag = dag, network = network)
-  if(nrow(df_projects) <= 0) return(order)
+  context_names <- names(wrappers)
+  if(length(context_names) == 0) return(order)
 
-  li_ranges <- lapply(df_projects$group_project, function(p) {
+  li_ranges <- lapply(context_names, function(p) {
     project. <- paste0(p, ".")
     project_start <- startsWith(order, project.)
     if (any(project_start)) {
@@ -116,11 +103,11 @@ clean_all_wrappers <- function(projects, order, dag, network) {
   projects <- ranges$project
   contexts <-  NULL
   for (project in projects) {
-    row_project <- df_projects[df_projects$group_project == project,]
-    project <- row_project$project
-    group <- row_project$group
-    order <- clean_wrapper(project = project, group = group, order = order, dag = dag, contexts = contexts, network = network)
-    packed_wrappers <- pack_project_wrappers(project = project, group = group, order = order, contexts = contexts)
+    li <- wrappers[[project]]
+    project <- li$project
+    context <- li$context
+    order <- clean_wrapper(project = project, group = context, order = order, dag = dag, contexts = contexts, network = network)
+    packed_wrappers <- pack_project_wrappers(project = project, group = context, order = order, contexts = contexts)
     order <- packed_wrappers$order
     contexts <- packed_wrappers$contexts
   }
@@ -275,11 +262,11 @@ classify_foreign_dependencies <- function(project, group, dag, targets, contexts
   if(!is.null(network)) {
     for (target in targets) {
       name <- gsub(paste0("^", group, "\\.", project, "\\."), replacement = "", x = target)
-      link <- network[[project]]$ruleset[[name]]
+      link <- network[[project]]$ruleset$contexts[[group]]$on_exit[[name]]$link
       if(is.null(link)) next # Is done for tests in "resolve_dependencies"
       node <- build_dependency_codes(link = link, network = network)$node
       # remove on entry
-      deps <- node[[target]][!node[[target]] %in% paste0(prefix, network[[project]][["groups"]][[group]]$contexts$on_entry)]
+      deps <- node[[target]][!node[[target]] %in% paste0(prefix, names(network[[project]]$ruleset$contexts[[group]]$on_entry))]
       dag[[target]] <- deps
     }
   }

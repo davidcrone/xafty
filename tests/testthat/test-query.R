@@ -136,7 +136,7 @@ test_that("A raw query is correctly filled with a project", {
 test_that("Querying a entire porject by name fills the raw query with the project's variables", {
   raw_query_list <- query("customer_data")
   test_query <- fill_raw_query(query_list = raw_query_list, network = test_network)
-  exp <- names(test_network$customer_data$variables)
+  exp <- names((get_all_variables(project = "customer_data", network = test_network)))
   expect_in(test_query[[1]]$select, exp)
   expect_in(test_query[[1]]$from, "customer_data")
 })

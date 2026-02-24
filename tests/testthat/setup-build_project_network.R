@@ -108,5 +108,5 @@ add_column_to_intelligence <- function(data) {
   data
 }
 
-test_network$intelligence$link(add_column_to_intelligence(data = query(map = "id", occupations = "department")))
+test_network$intelligence$link(add_column_to_intelligence(data = query( map = "id", occupations = "department")))
 

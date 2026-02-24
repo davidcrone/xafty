@@ -6,9 +6,9 @@ test_that("Register builds a get node in the network environment correctly", {
     project_env <- init_network(name = "project_env")
     project_env$add_project("test")
     project_env$test$link(test_get_function(arg1 = list(1, 2), arg2 = TRUE, comment = "clear", 1:3))
-    expect_equal(names(project_env$test$variables), c("a", "b"))
-    expect_equal(project_env$test$variables$a, "test_get_function")
-    expect_equal(project_env$test$variables$b, "test_get_function")
+    expect_equal(names(get_all_variables(project = "test", network = project_env)), c("a", "b"))
+    expect_equal(get_all_variables(project = "test", network = project_env)[["a"]], "test_get_function")
+    expect_equal(get_all_variables(project = "test", network = project_env)[["b"]], "test_get_function")
 })
 
 test_that("Register builds a add node in the network environment correctly", {
@@ -24,8 +24,8 @@ test_that("Register builds a add node in the network environment correctly", {
   project_env$add_project("test")
   project_env$test$link(test_get_function(arg1 = list(1, 2), arg2 = TRUE, comment = "clear", 1:3))
   project_env$test$link(test_add_function(arg1 = test_get_function()), update = TRUE)
-  expect_equal(names(project_env$test$variables), c("a", "b", "c"))
-  expect_equal(project_env$test$variables$c, "test_add_function")
+  expect_equal(names(get_all_variables(project = "test", network = project_env)), c("a", "b", "c"))
+  expect_equal(get_all_variables(project = "test", network = project_env)[["c"]], "test_add_function")
 })
 
 test_that("Register builds a join node in the network environment correctly", {
@@ -53,10 +53,10 @@ test_that("Register builds a join node in the network environment correctly", {
   project_env$test2$link(test2_get_function())
   project_env$test$link(test_join_function(data_left = query(test = "a"), data_right = query(test2 = "a")), vars = character(0), direction = "both")
 
-  expect_equal(names(project_env$test$joined_projects), "test2")
-  expect_equal(names(project_env$test2$joined_projects), "test")
-  expect_equal(project_env$test2$joined_projects$test, "test_join_function")
-  expect_equal(project_env$test$joined_projects$test2, "test_join_function")
+  expect_equal(names(project_env$test$ruleset$nodes$joins), "test2")
+  expect_equal(names(project_env$test2$ruleset$nodes$joins), "test")
+  expect_equal(project_env$test$ruleset$nodes$joins$test2$link$fun_name, "test_join_function")
+  expect_equal(project_env$test2$ruleset$nodes$joins$test$link$fun_name, "test_join_function")
 })
 
 test_that("One-directional joins (default) correctly only register the join in the indexed project", {
@@ -64,10 +64,10 @@ test_that("One-directional joins (default) correctly only register the join in t
   network$test$link(get_sample_data())
   network$test2$link(get_additional_info())
   network$test$link(join_datasets(main_data = query(test = c("id")), extra_data = query(test2 = "id")))
-  expect_equal(names(network$test$joined_projects), "test2")
-  expect_equal(names(network$test2$joined_projects), character(0))
-  expect_equal(network$test2$joined_projects$test, NULL)
-  expect_equal(network$test$joined_projects$test2, "join_datasets")
+  expect_equal(names(network$test$ruleset$nodes$joins), "test2")
+  expect_equal(names(network$test2$ruleset$nodes$joins), NULL)
+  expect_equal(network$test2$ruleset$nodes$joins$test$link$fun_name,  NULL)
+  expect_equal(network$test$ruleset$nodes$joins$test2$link$fun_name, "join_datasets")
 })
 
 test_that("register add also works with xafty link instead of passing data into the to be registered function", {
@@ -149,28 +149,27 @@ test_that("It is possible to register a variable with interpolated state, keepin
     data
   }
   test_network$test_data$link(add_data(data = query(test_data = "data.{year}")))
-  expect_equal(test_network$test_data$ruleset$add_data$variables, expected = "data.2027")
-  expect_equal(test_network$test_data$ruleset$add_data$args$data, expected = query(test_data = "data.{year}"))
+  expect_equal(test_network$test_data$ruleset$nodes$links$add_data$variables, expected = "data.2027")
+  expect_equal(test_network$test_data$ruleset$nodes$links$add_data$args$data, expected = query(test_data = "data.{year}"))
 })
 
 test_that("Updating a function with revised variable names removes all legacy variable names of that function", {
   network <- init_network("test", projects = "test_proj")
   network$test_proj$link(get_sample_data(), vars = c("i", "name", "score"))
   network$test_proj$link(get_sample_data(), vars = c("id", "name", "score"), update = TRUE)
-  expect_in(names(network$test_proj$variables), c("id", "name", "score"))
+  expect_in(names(get_all_variables(project = "test_proj", network = network)), c("id", "name", "score"))
 })
 
 test_that("Registering on_entry creates a on_entry function in wrappers", {
   test_network <- init_network("test_network", projects = "customer_data")
-  test_network$customer_data$add_group("group")
   remove_redundant_data <- function(data, values = FALSE) {
     data
   }
-  test_network$customer_data$on_entry(name = "remove_redundant", fun = remove_redundant_data(data = "{.data}"), group = "group")
-  expect_identical(test_network$customer_data[["groups"]]$group$contexts$on_entry, "remove_redundant_data")
-  expect_identical(test_network$customer_data[["groups"]]$group$contexts$on_exit, NULL)
-  expect_identical(test_network$customer_data$ruleset$remove_redundant_data$args$data, "{.data}")
-  expect_identical(test_network$customer_data$ruleset$remove_redundant_data$args$values, FALSE)
+  test_network$customer_data$add_context("group", on_entry = remove_redundant_data(data = "{.data}"))
+  expect_identical(names(test_network$customer_data$ruleset$contexts$group$on_entry), "remove_redundant_data")
+  expect_identical(names(test_network$customer_data$ruleset$contexts$group$on_exit), NULL)
+  expect_identical(test_network$customer_data$ruleset$contexts$group$on_entry$remove_redundant_data$link$args$data, "{.data}")
+  expect_identical(test_network$customer_data$ruleset$contexts$group$on_entry$remove_redundant_data$link$args$values, FALSE)
 })
 
 test_that("Registering on_entry creates a on_entry function in wrappers", {
@@ -178,27 +177,27 @@ test_that("Registering on_entry creates a on_entry function in wrappers", {
   add_redundant_data <- function(data, values = FALSE) {
     data
   }
-  test_network$customer_data$on_exit(name = "add_redundant", fun = add_redundant_data(data = "{.data}"), group = "group")
-  expect_identical(test_network$customer_data[["groups"]]$group$contexts$on_entry, NULL)
-  expect_identical(test_network$customer_data[["groups"]]$group$contexts$on_exit, "add_redundant_data")
-  expect_identical(test_network$customer_data$ruleset$add_redundant_data$args$data, "{.data}")
-  expect_identical(test_network$customer_data$ruleset$add_redundant_data$args$values, FALSE)
+  test_network$customer_data$add_context(name = "group", on_exit = add_redundant_data(data = "{.data}"))
+  expect_identical(names(test_network$customer_data$ruleset$contexts$group$on_entry), NULL)
+  expect_identical(names(test_network$customer_data$ruleset$contexts$group$on_exit), "add_redundant_data")
+  expect_identical(test_network$customer_data$ruleset$contexts$group$on_exit$add_redundant_data$link$args$data, "{.data}")
+  expect_identical(test_network$customer_data$ruleset$contexts$group$on_exit$add_redundant_data$link$args$values, FALSE)
 })
 
 test_that("Registering a on_entry with the same name twice, does not create a duplicate entries in wrappers", {
   test_network <- init_network("test_network", projects = "customer_data")
-  test_network$customer_data$on_entry(reorder_cars_by_color(cars = "test"), name = "reorder", update = TRUE, group = "group")
-  test_network$customer_data$on_entry(reorder_cars_by_color(cars = "test"), name = "reorder", update = TRUE, group = "group")
-  expect_length(test_network$customer_data[["groups"]]$group$contexts$on_entry, 1)
-  expect_equal(test_network$customer_data[["groups"]]$group$contexts$on_entry, "reorder_cars_by_color")
+  test_network$customer_data$add_context("group", on_entry = reorder_cars_by_color(cars = "test"))
+  test_network$customer_data$add_context("group", on_entry = reorder_cars_by_color(cars = "test"), update = TRUE)
+  expect_length(test_network$customer_data$ruleset$contexts$group$on_entry, 1)
+  expect_equal(names(test_network$customer_data$ruleset$contexts$group$on_entry), "reorder_cars_by_color")
 })
 
 test_that("Registering a on_exit with the same name twice, does not create a duplicate entries in wrappers", {
   test_network <- init_network("test_network", projects = "customer_data")
-  test_network$customer_data$on_exit(reorder_cars_by_color(cars = "test"), name = "reorder", update = TRUE, group = "group")
-  test_network$customer_data$on_exit(reorder_cars_by_color(cars = "test"), name = "reorder", update = TRUE, group = "group")
-  expect_length(test_network$customer_data[["groups"]]$group$contexts$on_exit, 1)
-  expect_equal(test_network$customer_data[["groups"]]$group$contexts$on_exit, "reorder_cars_by_color")
+  test_network$customer_data$add_context("group", on_exit = reorder_cars_by_color(cars = "test"))
+  test_network$customer_data$add_context("group", on_exit = reorder_cars_by_color(cars = "test"), update = TRUE)
+  expect_length(test_network$customer_data$ruleset$contexts$group$on_exit, 1)
+  expect_equal(names(test_network$customer_data$ruleset$contexts$group$on_exit), "reorder_cars_by_color")
 })
 
 test_that("Registering a link with a group adds the group value correctly to the link list", {
@@ -206,8 +205,8 @@ test_that("Registering a link with a group adds the group value correctly to the
   test_network$customer_data$add_group("test_group")
   test_network$customer_data$link(get_sample_data())
   test_network$customer_data$link(add_score_category(data = query(customer_data = c("score", "name"))), group = "test_group")
-  expect_identical(test_network$customer_data$groups$test_group$variables, "category")
-  expect_identical(test_network$customer_data$ruleset$add_score_category$group, "test_group")
+  expect_identical(test_network$customer_data$ruleset$groups$test_group$variables, "category")
+  expect_identical(names(test_network$customer_data$ruleset$groups), "test_group")
 })
 
 test_that("Updating a link with a group removed correctly deletes the variables from the group entry", {

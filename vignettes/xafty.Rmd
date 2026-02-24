@@ -90,16 +90,19 @@ To let our network grow, we simply query the data we need from the network, writ
 
 ``` {r}
 
-# 1. retrieve data from the network
+# 1. Check what variables you have available in the project
+network$mtcars
+
+# 2. retrieve data from the network
 data <- query(mtcars = c("hp", "wt")) |> nascent(network)
 
-# 2. write the transformation step
+# 3. write the transformation step
 add_power_to_weight <- function(data) {
   data$power_to_weight <- data$hp / data$wt
   data
 }
 
-# 3. register the step to the network
+# 4. register the step back into the network
 network$mtcars$link(add_power_to_weight(data = query(mtcars = c("hp", "wt"))))
 
 ```
@@ -113,6 +116,7 @@ network$mtcars$link(fun = add_power_to_weight(data = query(mtcars = c("hp", "wt"
                    vars = "power_to_weight", update = TRUE)
 # Note: Setting update = TRUE prevents the network from asking
 # whether an already registered function should be updated.
+network$mtcars
 ```
 
 Each transformation step (e.g. the function `add_power_to_weight`) in a xafty network is written as a **"pass-through"** function. Such a function must satisfy the following requirements:
@@ -140,6 +144,8 @@ get_engine_details <- function() {
 }
 
 network$engine$link(get_engine_details())
+
+network
 ```
 
 The join is then added to the network as another transformation step. We tell the network that we wish to register a join by passing two separate query-calls to the function:
@@ -150,11 +156,11 @@ join_engine_details <- function(mtcars, engine) {
   joined
 }
 
-network$engine$link(join_engine_details(mtcars = query(mtcars = "vs"),
-                                        engine = query(engine = "vs")))
+network$mtcars$link(join_engine_details(mtcars = query(mtcars = "vs"),
+                                        engine = query(engine = "vs")), direction = "one")
 ```
 
-At the moment, joins are treated as symmetrical operations. As a result, the network supports only one join definition for each pair of projects. Moreover, the network assumes that the join is performed between the projects that appear first in the corresponding `xafty::query()` call.
+By default, we create a one-directional join (a left join) from project engine to mtcars using the link function in the mtcars project. If we want to establish a bi-directional join (for example, an inner join), we must set the direction parameter of the link function to "both".
 
 To declare that a function depends on a join, register it using a single `xafty::query()` call that includes at least two different projects with root nodes:
 

@@ -190,6 +190,9 @@ xafty_network$mtcars$link(join_engine_details(mtcars = query(mtcars = "vs"),
 # Inspect the network
 xafty_network
 
+# Inspect a project
+xafty_network$mtcars
+
 # Pull data as needed from the network in the desired column order
 query(hp, wt, vs, type, power_to_weight) |>  
   from(mtcars) |> 
@@ -222,10 +225,14 @@ query(type, hp) |> from(mtcars) |> nascent(xafty_network)
 
 ➜ In network pipelines, intermediate steps are just as accessible as final data products. This makes it easy to “branch off” from these intermediate steps and reuse them, rather than starting from a blank slate, as is common in many data analytics projects.
 
-Finally, create our plot, we simply query the data we need from the network and run the plot:
+Finally, to create our plot, we simply query the data we need from the network and pass it to our plot function:
 
 ``` r
-data <- query(power_to_weight, type) |> nascent(xafty_network)
+data <- query(power_to_weight, type) |> 
+          where(hp >= 100) |> 
+          from(mtcars) |> 
+          nascent(xafty_network)
+
 plot_mtcars(mtcars = data)
 
 ```

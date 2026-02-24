@@ -53,10 +53,11 @@ build_query_dag <- function(globals, network) {
 resolve_function_stack <- function(dag_sm, network) {
   dag_sm <- build_join_bridges(network = network, dag_sm = dag_sm)
   dag <- dag_sm$get_codes()
+  contexts <- dag_sm$get("contexts")
   projects <- get_projects(dag_sm$get_query())
   stack_sorted <- toposort::topological_sort(dag, dependency_type = "follows")
   stack_prepared <- remove_join_helpers(stack_sorted)
-  correct_wrappers <- clean_all_wrappers(projects = projects, order = stack_prepared, dag = dag, network = network)
+  correct_wrappers <- clean_all_wrappers(wrappers = contexts, order = stack_prepared, dag = dag, network = network)
   correct_wrappers
 }
 
@@ -65,8 +66,7 @@ remove_join_helpers <- function(stack_sorted) {
 }
 
 get_join_functions <- function(from, to, network, sm, state_list = NULL) {
-  fun_name <- network[[from]]$joined_projects[[to]]
-  link <- network[[from]]$ruleset[[fun_name]]
+  link <- network[[from]]$ruleset$nodes$joins[[to]]$link
   link <- interpolate_link_queries(link = link, state_list = state_list, network = network)
   code <- build_dependency_codes(link = link, network = network)
   sm$set_nodes(link = link, code = code)
@@ -87,7 +87,7 @@ build_centered_graph <- function(queue, network, graph = list()) {
   if(length(queue) == 0) return(graph)
   new_queue <- list()
   for(project in queue) {
-    joins <- names(network[[project]]$joined_projects)
+    joins <- names(network[[project]]$ruleset$nodes$joins)
     new_queue[[project]] <- joins[!joins %in% names(graph)]
     graph[[project]] <- joins
   }
@@ -106,7 +106,7 @@ get_unjoined_projects <- function(dag_sm, network) {
   projects_new[projects_new != dag_sm$get_main_project()]
 }
 
-greedy_best_first_search <- function(project_add, network, dag_sm, graph) {
+greedy_best_first_search <- function(project_add, dag_sm, graph) {
   join_path <- dag_sm$get_join_path()
   start <- dag_sm$get_main_project()
   linear_path <- bfs_traversal(graph = graph, start = start, end = project_add)
@@ -145,14 +145,8 @@ get_new_elements <- function(join_path, new_path) {
 
 get_chatty_link_from_network <- function(name, project, network) {
   validate_query(name = name, project = project, network = network)
-  func_name <- network[[project]]$variables[[name]]
-  network[[project]]$ruleset[[func_name]]
-}
-
-get_chatty_func_name_from_network <- function(name, project, network) {
-  validate_query(name = name, project = project, network = network)
-  columns_subset <- network[[project]]$variables[[name]]
-  columns_subset
+  func_name <- get_function_name(name = name, project = project, network = network)
+  get_link(name = func_name, project = project, network = network)
 }
 
 execute_stack <- function(link, mask, data_sm, default_states) {
@@ -232,10 +226,10 @@ initialize_join_path <- function(join_path, network, dag_sm, state_list = NULL) 
 }
 
 resolve_on_entry <- function(group, project, network, dag_sm, state_list) {
-  func_names <- network[[project]][["groups"]][[group]]$contexts$on_entry
+  func_names <- names(network[[project]]$ruleset$contexts[[group]]$on_entry)
   if(is.null(func_names)) return(NULL)
   dag <- dag_sm$get_codes()
-  links <- lapply(func_names, \(func_name) network[[project]]$ruleset[[func_name]])
+  links <- lapply(func_names, \(func_name) network[[project]]$ruleset$contexts[[group]]$on_entry[[func_name]]$link)
   for (i in seq_along(links)) {
     link <- links[[i]]
     node <- build_on_entry_node(link = link, network = network, dag = dag)
@@ -289,9 +283,9 @@ get_all_non_project_codes <- function(project, codes) {
 }
 
 resolve_on_exit <- function(group, project, network, dag_sm, state_list) {
-  func_names <- network[[project]][["groups"]][[group]]$contexts$on_exit
+  func_names <- names(network[[project]]$ruleset$contexts[[group]]$on_exit)
   if(is.null(func_names)) return(NULL)
-  links <- lapply(func_names, \(func_name) network[[project]]$ruleset[[func_name]])
+  links <- lapply(func_names, \(func_name) network[[project]]$ruleset$contexts[[group]]$on_exit[[func_name]]$link)
   dag <- dag_sm$get_codes()
   for (i in seq_along(links)) {
     link <- links[[i]]

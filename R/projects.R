@@ -14,86 +14,90 @@
 #' }
 #' @export
 init_network <- function(name, projects = NULL) {
-  network_env <- new.env() # This is the network where all projects will be merged together
-  network_env$settings <- settings(name = name)
-  network_env$states <- list()
-  add_project <- create_add_project(network_env = network_env)
-  save_project <- create_save_project(network_env = network_env)
-  add_state <- create_add_state(network_env = network_env)
-  assign("add_project", add_project, envir = network_env)
-  assign("save", save_project, envir = network_env)
-  assign("add_state", add_state, envir = network_env)
-  class(network_env) <- c("environment", "xafty_network")
+  network <- new.env() # This is the network where all projects will be merged together
+  network$settings <- settings(name = name)
+  network$states <- list()
+  add_project <- create_add_project(network = network)
+  save_project <- create_save_project(network = network)
+  add_state <- create_add_state(network = network)
+  assign("add_project", add_project, envir = network)
+  assign("save", save_project, envir = network)
+  assign("add_state", add_state, envir = network)
+  class(network) <- c("environment", "xafty_network")
 
   if(!is.null(projects)) {
     for (project in projects) {
-      network_env$add_project(project)
+      network$add_project(project)
     }
   }
-  network_env
+  network
 }
 
-create_add_project <- function(network_env) {
-  force(network_env)
+create_add_project <- function(network) {
+  force(network)
   add_project <- function(name, info = NULL, ...) {
-    validate_project_name(name = name, network = network_env)
-    .network_env <- add_new_project(project = name, network_env = network_env,
-                                    func_types = c("link", "on_entry", "on_exit"))
-    .network_env <- set_project_print_order(projects = name, network = .network_env)
-    .network_env <- set_project_info(project = name, info = info, network = network_env)
-    invisible(.network_env)
+    validate_project_name(name = name, network = network)
+    network <- add_new_project(project = name, network = network)
+    network <- set_project_print_order(projects = name, network = network)
+    network <- set_project_info(project = name, info = info, network = network)
+    invisible(network)
   }
   add_project
 }
 
-create_save_project <- function(network_env) {
+add_new_project <- function(project, network) {
+  project_env <- new.env()
+  class(project_env) <- c("environment", "xafty_project")
+  network[[project]] <- project_env
+  network[[project]][["ruleset"]] <- list(
+    nodes = list(
+      variables = list(), links = list(), joins = list()
+    ),
+    contexts = list(),
+    groups = list(),
+    settings = settings(name = project)
+  )
+  network[[project]][["add_group"]] <- create_add_group(project = project, network = network)
+  network[[project]][["add_context"]] <- create_add_context(project = project, network = network)
+  network[[project]][["link"]] <- compose_link_function(project = project, network = network, func_type = "link")
+  invisible(network)
+}
+
+create_save_project <- function(network) {
   save_project <- function(file_name, path) {
     full_path <- paste0(path, "/", file_name, ".rds")
-    save(network_env, file = full_path)
+    save(network, file = full_path)
   }
   save_project
 }
 
-add_new_project <- function(project, network_env, func_types) {
-  env_names <- c("variables", "joined_projects", "groups") # These will be environments for frequent look-ups during the nascent process
-  project_env <- new.env() # This is the environment, where all code will be organized
-  class(project_env) <- c("environment", "xafty_project")
-  network_env[[project]] <- project_env
-  network_env[[project]][["ruleset"]] <- list()
-  network_env[[project]][["settings"]] <- settings(name = project)
-  network_env[[project]][["add_group"]] <- create_add_group(project = project, network = network_env)
-  for (env_name in env_names) {
-    assign(env_name, new.env(), envir = project_env)
-  }
-  link_funs <- bundle_link_functions(project = project, network = network_env)
-  for (lp in func_types) {
-    assign(lp, link_funs[[lp]], envir = project_env)
-  }
-  invisible(network_env)
-}
-
 create_add_group <- function(project, network) {
-  add_group <- function(name, vars = NULL, on_entry = NULL, on_exit = NULL) {
+  add_group <- function(name, vars = NULL) {
     group_container <- list(
-      variables = vars,
-      contexts = list(
-        on_entry = on_entry,
-        on_exit = on_exit
-      )
+      variables = vars
     )
-    network[[project]][["groups"]][[name]] <- group_container
+    network[[project]][["ruleset"]][["groups"]][[name]] <- group_container
   }
   add_group
 }
 
-create_add_context <- function(project, network, func_type = NULL) {
+create_add_context <- function(project, network) {
   force(project)
   force(network)
-  force(func_type)
-  add_context <- function(fun, name = NULL, group, update = FALSE, ...) {
-    quosure <- rlang::enquo(fun)
-    register(quosure = quosure, link_type = "context", network = network,
-             project = project, name = name, update = update, func_type = func_type, group = group, ...)
+  add_context <- function(name, on_entry = NULL, on_exit = NULL, overwrite = FALSE, ...) {
+    enquo_on_exit <- rlang::enquo(on_exit)
+    on_exit <- rlang::quo_get_expr(enquo_on_exit)
+    enquo_on_entry <- rlang::enquo(on_entry)
+    on_entry <- rlang::quo_get_expr(enquo_on_entry)
+    if(is.null(on_entry) & is.null(on_exit)) stop("Please provide an on_entry or an on_exit function")
+    if(!is.null(on_entry)) {
+      register(quosure = enquo_on_entry, link_type = "context", func_type = "entry", network = network,
+               project = project, name = name,  overwrite = overwrite, ...)
+    }
+    if(!is.null(on_exit)) {
+      register(quosure = enquo_on_exit, link_type = "context", func_type = "exit", network = network,
+               project = project, name = name, overwrite = overwrite, ...)
+    }
   }
   add_context
 }
@@ -101,26 +105,15 @@ create_add_context <- function(project, network, func_type = NULL) {
 compose_link_function <- function(project, network, func_type) {
   force(project)
   force(network)
-  link <- function(fun, name = NULL, vars = NULL, group = NULL, update = FALSE, direction = "one", ...) {
+  link <- function(fun, name = NULL, vars = NULL, attach_context = NULL, group = NULL, update = FALSE, direction = "one", ...) {
     .dots <- list(...)
     quosure <- rlang::enquo(fun)
     register(quosure = quosure, link_type = "query", network = network, project = project,
-             vars = vars, name = name, update = update, func_type = func_type, direction = direction, group = group, ... = .dots)
+             vars = vars, name = name, update = update, func_type = func_type, direction = direction,
+             group = group, attach_context = attach_context, ... = .dots)
   }
   link
 }
-
-bundle_link_functions <- function(project, network) {
-  link_fun <- compose_link_function(project = project, network = network, func_type = "link")
-  on_entry_fun <- create_add_context(project = project, network = network, func_type = "entry")
-  on_exit_fun <- create_add_context(project = project, network = network, func_type = "exit")
-  list(
-    "on_entry" = on_entry_fun,
-    "link" = link_fun,
-    "on_exit" = on_exit_fun
-  )
-}
-
 
 #' Merge networks into one
 #' @description
@@ -130,12 +123,14 @@ bundle_link_functions <- function(project, network) {
 #' @returns A 'xafty_network' environment
 #' @export
 merge_networks <- function(name, ...) {
-  new_network_env <- init_network(name = name)
   passed_networks <- list(...)
   li_projects <- lapply(passed_networks, \(network_env) {
     network_names <- names(network_env)
     network_names[vapply(network_names, \(nn) is.environment(network_env[[nn]]), FUN.VALUE = logical(1))]
   })
+
+  projects <- unlist(li_projects)
+  new_network_env <- init_network(name = name, projects = projects)
   # TODO: merge network must also merge print order of all merged projects
   # TODO: States with the same name from different networks need to be handled here
   li_states <- lapply(passed_networks, \(network_env) network_env$states)
@@ -143,23 +138,14 @@ merge_networks <- function(name, ...) {
   new_network_env$states <- li_states
 
   index <- seq_along(passed_networks)
-  lapply(index, \(i) {
-    vec_projects <-  li_projects[[i]]
-    if(length(vec_projects) <= 0) return(NULL)
-    network_env <- passed_networks[[i]]
-    for (project in vec_projects) {
-      link_funs <- bundle_link_functions(project = project, network = new_network_env)
-      link_names <- "link"
-      project_env <- network_env[[project]]
-      rm(list = link_names, envir = project_env)
-      for (lp in link_names) {
-        assign(lp, link_funs[[lp]], envir = project_env)
-      }
-      assign(project, project_env, envir = new_network_env)
+  for (i in index) {
+    projects <-  li_projects[[i]]
+    network <- passed_networks[[i]]
+    for (project in projects) {
+      ruleset <- network[[project]]$ruleset
+      new_network_env[[project]]$ruleset <- ruleset
     }
-    invisible(TRUE)
-  })
-
+  }
   class(new_network_env) <- c("xafty_network", "environment")
   new_network_env
 }

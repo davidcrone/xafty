@@ -61,7 +61,7 @@ build_tree <- function(network) {
   tree_env <- new.env()
   tree_env$query <- query()
   tree_env$joins <- list()
-  tree_env$wrappers <- list()
+  tree_env$contexts <- list()
   tree_env$network$settings <- network$settings
   tree_env$network$states <- network$states
 
@@ -87,12 +87,28 @@ build_tree <- function(network) {
     for (join in names(joins)) {
       set_join(id = join, projects = joins[[join]])
     }
+
+    #set context to unresolved
+    context <- link$context
+    if(!length(context) == 0 & inherits(link, "query_link")) {
+      project <- link$project
+      name <- paste0(context, ".", project)
+      tree_env$contexts[[name]] <- list(
+        context = context,
+        project = project,
+        resolved = FALSE
+      )
+    }
   }
 
-  append_deps <- function(name, deps) {
-    tree_env$codes[[name]] <- deps
+  resolve_context <- function(name) {
+    tree_env$contexts[[name]]$resolved <- TRUE
   }
 
+  get <- function(what = NULL) {
+    if(is.null(what)) return(paste0("Available elements: ", paste0(names(tree_env), collapse = ", ")))
+    tree_env[[what]]
+  }
   get_codes <- function() {
     tree_env$codes
   }
@@ -146,20 +162,11 @@ build_tree <- function(network) {
     tree_env$network
   }
 
-  set_wrapper_project <- function(project, group) {
-    current_groups <- tree_env$wrappers[[project]]
-    tree_env$wrappers[[project]] <- unique(c(current_groups, group))
-  }
-
-  get_wrapper_project <- function(project) {
-    tree_env$wrappers[[project]]
-  }
-
   list(
+    get = get,
     set_main_project = set_main_project,
     get_main_project = get_main_project,
     set_nodes = set_nodes,
-    append_deps = append_deps,
     get_codes = get_codes,
     get_links = get_links,
     get_query = get_query,
@@ -171,7 +178,6 @@ build_tree <- function(network) {
     set_mask = set_mask,
     get_mask = get_mask,
     get_network_state = get_network_state,
-    set_wrapper_project = set_wrapper_project,
-    get_wrapper_project = get_wrapper_project
+    resolve_context = resolve_context
   )
 }

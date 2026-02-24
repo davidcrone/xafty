@@ -27,11 +27,8 @@ print_project_summary <- function(project, network) {
   df_print <- network$settings$projects$print_order
   df_print_project <- df_print[df_print$project == project, ]
   project_env <- network[[project]]
-  ruleset <- project_env$ruleset
-  contents <- names(project_env$variables)
-  variables_classified <- vapply(contents, \(name) get_variable_link_type(name = name, project = project, network = network), FUN.VALUE = character(1))
-  variables <- contents[variables_classified == "query_link"]
-  contexts <- contents[!variables_classified == "query_link"]
+  variables <- names(project_env$ruleset$nodes$variables)
+  contexts <- names(project_env$ruleset$contexts)
 
   is_last_project <- which(df_print$project == project) == nrow(df_print)
 
@@ -64,11 +61,8 @@ print_project_summary <- function(project, network) {
 #' @export
 print.xafty_project <- function(x, ...) {
   project <- x$settings$name
-  variable_names <- names(x$variables)
-  contents <- lapply(variable_names, \(name) x$ruleset[[x$variables[[name]]]])
-  is_var <- vapply(contents, \(link) is_query_link(link), FUN.VALUE = logical(1))
-  variables <- contents[is_var]
-  contexts <- contents[!is_var]
+  variables <- names(x$ruleset$nodes$variables)
+  contexts <- names(x$ruleset$contexts)
 
   indent <- "  "
   if(length(variables) > 0) {
@@ -78,8 +72,8 @@ print.xafty_project <- function(x, ...) {
   }
 
   if(length(variables) > 0) {
-    raw_layer <- vapply(variables, \(link) link$layer, FUN.VALUE = numeric(1))
-    names(raw_layer) <- variable_names
+    func_names <- vapply(variables, \(name) x$ruleset$nodes$variables[[name]], FUN.VALUE = character(1))
+    raw_layer <- vapply(func_names, \(name) x$ruleset$nodes$links[[name]]$layer, FUN.VALUE = numeric(1))
     max_layer <- max(raw_layer)
     layer_vec <- sort(unique(raw_layer))
     for (layer in layer_vec) {
@@ -202,11 +196,11 @@ build_dependency_codes <- function(link, network) {
 
 build_on_entry_dependencies <- function(link, network, fun_code) {
   project <- link$project
-  group <- link$group
-  if(is.null(group)) return(character(0))
-  on_entry_funcs <- network[[project]][["groups"]][[group]]$contexts$on_entry
+  context <- link$context
+  if(is.null(context)) return(character(0))
+  on_entry_funcs <- names(network[[project]]$ruleset$contexts[[context]]$on_entry)
   if(is.null(on_entry_funcs)) return(character(0))
-  on_entry_codes <- paste0(group, ".", project, ".", on_entry_funcs)
+  on_entry_codes <- paste0(context, ".", project, ".", on_entry_funcs)
   # If the fun_code is itself is a wrapper function, it should only get on_entry codes as dependencies
   # that were registered earlier
   if(fun_code %in% on_entry_codes) {
@@ -218,11 +212,11 @@ build_on_entry_dependencies <- function(link, network, fun_code) {
 
 # The function builds the dependencies for on_entry nodes
 build_on_entry_node <- function(link, network, dag) {
-  project <- paste0(link$group, ".", link$project)
+  project <- paste0(link$context, ".", link$project)
   li_on_entry_node <- build_dependency_codes(link, network = network)
   on_entry_node <- li_on_entry_node$node
   on_entry_code <- names(on_entry_node)
-  project_dag <- dag[grepl(paste0("^", link$group, "\\.", link$project, "\\."), names(dag))]
+  project_dag <- dag[grepl(paste0("^", link$context, "\\.", link$project, "\\."), names(dag))]
   # Adds foreign project nodes that wrapper nodes depend on; unique is necessary since the package toposort cannot work with
   # duplicated dependencies in a single node
   foreign_deps <- unique(get_all_non_project_codes(project = project, codes = project_dag))
@@ -237,14 +231,15 @@ build_on_entry_node <- function(link, network, dag) {
 }
 
 build_on_exit_node <- function(link, network, dag) {
-  project <- paste0(link$group, ".", link$project)
+  project <- paste0(link$context, ".", link$project)
   li_on_exit_node <- build_dependency_codes(link, network = network)
   on_exit_node <- li_on_exit_node$node
   on_exit_code <- names(on_exit_node)
-  deps_project <- names(dag)[grepl(paste0("^", link$group, "\\.", link$project, "\\."), names(dag))]
+  deps_project <- names(dag)[grepl(paste0("^", link$context, "\\.", link$project, "\\."), names(dag))]
 
   # Adding on exit functions registered earlier from wrapper project as dependencies
-  on_exit_codes <- paste0(project, ".", network[[link$project]][["groups"]][[link$group]]$contexts$on_exit)
+  on_exit_funcs <- names(network[[link$project]]$ruleset$contexts[[link$context]]$on_exit)
+  on_exit_codes <- paste0(project, ".", on_exit_funcs)
   pos <- which(on_exit_code == on_exit_codes) - 1
   if(pos == 0) exit_deps <- character(0) else exit_deps <- on_exit_codes[1:pos]
 
@@ -459,8 +454,8 @@ is_object_link <- function(link) {
 }
 
 build_fun_code <- function(link) {
-  if(is.null(link$group)) group <- character(0) else group <- paste0(link$group, ".")
-  paste0(group, link$project, ".", link$fun_name)
+  if(is.null(link$context)) context <- character(0) else context <- paste0(link$context, ".")
+  paste0(context, link$project, ".", link$fun_name)
 }
 
 bfs_traversal <- function(graph, start, end) {
@@ -555,4 +550,17 @@ build_.data_link <- function(link, node, dag_sm) {
     }
   }, simplify = FALSE, USE.NAMES = TRUE)
   link
+}
+
+#' Returns all Variable Names from a Project
+get_all_variables <- function(project, network) {
+  network[[project]]$ruleset$nodes$variables
+}
+
+get_function_name <- function(name, project, network) {
+  network[[project]]$ruleset$nodes$variables[[name]]
+}
+
+get_link <- function(name, project, network) {
+  network[[project]]$ruleset$nodes$links[[name]]
 }

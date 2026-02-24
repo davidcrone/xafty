@@ -63,21 +63,25 @@ test_that("Querying a project with star retrieves all columns associated with th
   test_state_1$customer_data$link(get_sample_data())
   test_state_1$customer_data$link(add_score_category(data = query(customer_data = "score")))
   test_data <- query(customer_data = "*") |> nascent(test_state_1)
-  expected_data <- structure(list(score = c(85, 92, 78, 90, 88), id = 1:5,
-                            name = c("Alice", "Bob", "Charlie", "Diana", "Eve"),
-                            category = c("Low", "High", "Low", "High", "Low")),
-                             row.names = c(NA, -5L), class = "data.frame")
+  expected_data <- structure(list(
+    id = 1:5,
+    name = c("Alice", "Bob", "Charlie", "Diana", "Eve"),
+    score = c(85, 92, 78, 90, 88),
+    category = c("Low", "High", "Low", "High", "Low")),
+    row.names = c(NA, -5L), class = "data.frame")
   expect_identical(test_data, expected_data)
 })
 
 test_that("querying with * retrieves all data from a project", {
   test_data <- query(customer_data = "*") |> nascent(test_network)
-  expected_data <- structure(list(mean_nickname = c("SmartHRAlice", "DumbITBob",
-    "DumbFinanceCharlie", "SmartMarketingDiana", "DumbSalesEve"),
-    score = c(85, 92, 78, 90, 88), id = 1:5, name = c("Alice",
-    "Bob", "Charlie", "Diana", "Eve"), category = c("Low", "High",
-    "Low", "High", "Low"), nickname = c("HRAlice", "ITBob", "FinanceCharlie",
-    "MarketingDiana", "SalesEve")), row.names = c(NA, -5L), class = "data.frame")
+  expected_data <- structure(list(
+    id = 1:5,
+    name = c("Alice", "Bob", "Charlie", "Diana", "Eve"),
+    score = c(85, 92, 78, 90, 88),
+    category = c("Low", "High", "Low", "High", "Low"),
+    nickname = c("HRAlice", "ITBob", "FinanceCharlie", "MarketingDiana", "SalesEve"),
+    mean_nickname = c("SmartHRAlice", "DumbITBob", "DumbFinanceCharlie", "SmartMarketingDiana", "DumbSalesEve")),
+    row.names = c(NA, -5L), class = "data.frame")
   expect_identical(test_data, expected_data)
 })
 
@@ -259,9 +263,8 @@ test_that("On entry is correctly interweaved into the dag and evaluates properly
   }
   test_network <- init_network(name = "test_network", projects = "customer_data")
   test_network$customer_data$link(get_sample_data())
-  test_network$customer_data$add_group("occupations")
-  test_network$customer_data$on_entry(increase_score(data = "{.data}"), "increase_score", group = "occupations")
-  test_network$customer_data$link(add_score_category(data = query(customer_data = "score")), group = "occupations")
+  test_network$customer_data$add_context("occupations", on_entry = increase_score(data = "{.data}"))
+  test_network$customer_data$link(add_score_category(data = query(customer_data = "score")), attach_context = "occupations")
 
   test_data <- query(customer_data = c("name", "category")) |> nascent(test_network)
   expected_data <- structure(list(name = c("Alice", "Bob", "Charlie", "Diana", "Eve"),
@@ -275,7 +278,7 @@ test_that("Two entry functions are correctly interpolated int the dag and proper
   test_network$customer_data$link(get_sample_data())
   # Here we added name as a dependency, even though add_score_category does not depends on name, but the function
   # decrease_score_of_hated_pupil does
-  test_network$customer_data$link(add_score_category(data = query(customer_data = c("score", "name"))), group = "group")
+  test_network$customer_data$link(add_score_category(data = query(customer_data = c("score", "name"))), attach_context = "group")
   increase_score <- function(data = "{.data}") {
     data$score <- data$score + 100
     data
@@ -284,8 +287,8 @@ test_that("Two entry functions are correctly interpolated int the dag and proper
     data$score[data$name == "Alice"] <- 10
     data
   }
-  test_network$customer_data$on_entry(name = "increase_score", fun =increase_score(), group = "group")
-  test_network$customer_data$on_entry(name = "manipulate_score", fun = decrease_score_of_hated_pupil(), group = "group")
+  test_network$customer_data$add_context("group", on_entry = increase_score(), on_exit = NULL)
+  test_network$customer_data$add_context("group", on_entry = decrease_score_of_hated_pupil(), on_exit = NULL)
   test_data <- query(customer_data = "name", customer_data = "category") |> nascent(test_network)
   expected_data <- structure(list(name = c("Alice", "Bob", "Charlie", "Diana", "Eve"),
                                   category = c("Low", "High", "High", "High", "High")),
@@ -296,7 +299,7 @@ test_that("Two entry functions are correctly interpolated int the dag and proper
 test_that("On entry is correctly interpolated into the dag and evaluates properly", {
   test_network <- init_network(name = "test_network", projects = c("customer_data"))
   test_network$customer_data$link(get_sample_data())
-  test_network$customer_data$link(add_score_category(data = query(customer_data = "score")), group = "group")
+  test_network$customer_data$link(add_score_category(data = query(customer_data = "score")), attach_context = "group")
   increase_score <- function(data = "{.data}") {
     data$score <- data$score + 100
     data
@@ -305,8 +308,7 @@ test_that("On entry is correctly interpolated into the dag and evaluates properl
     data$score <- data$score - 100
     data
   }
-  test_network$customer_data$on_entry(name = "increase_score", fun = increase_score(), group = "group")
-  test_network$customer_data$on_exit(name = "decrease_score", fun = decrease_score(query(customer_data = "score")), group = "group")
+  test_network$customer_data$add_context("group", on_entry = increase_score(), on_exit = decrease_score(query(customer_data = "score")))
   test_data <- query(customer_data = c("name", "score", "category")) |> nascent(test_network)
   expected_data <- structure(list(name = c("Alice", "Bob", "Charlie", "Diana", "Eve"),
   score = c(85, 92, 78, 90, 88),
@@ -317,22 +319,21 @@ test_that("On entry is correctly interpolated into the dag and evaluates properl
 test_that("Both on entry and on exit get data passed to them using {.data}", {
   test_network <- init_network(name = "test_network", projects = c("customer_data"))
   test_network$customer_data$link(get_sample_data())
-  test_network$customer_data$link(add_score_category(data = query(customer_data = "score")), group = "group")
+  test_network$customer_data$link(add_score_category(data = query(customer_data = "score")), attach_context = "group")
   increase_score <- function(data = "{.data}") {
     data
   }
   decrease_score <- function(data = "{.data}") {
     data
   }
-  test_network$customer_data$on_entry(name = "increase_score", fun = increase_score(), group = "group")
-  test_network$customer_data$on_exit(name = "decrease_score", fun = decrease_score(), group = "group")
+  test_network$customer_data$add_context("group", on_entry = increase_score(), on_exit = decrease_score())
   expect_no_error(nascent(query(customer_data = c("name", "score", "category")), test_network))
 })
 
 test_that("On entry is correctly interpolated into the dag and evaluates properly", {
   test_network <- init_network(name = "test_network", projects = "customer_data")
   test_network$customer_data$link(get_sample_data())
-  test_network$customer_data$link(add_score_category(data = query(customer_data = "score")), group = "group")
+  test_network$customer_data$link(add_score_category(data = query(customer_data = "score")), attach_context = "group")
   increase_score <- function(data = "{.data}") {
     data$score <- data$score + 100
     data
@@ -341,8 +342,7 @@ test_that("On entry is correctly interpolated into the dag and evaluates properl
     data$score <- data$score - 100
     data
   }
-  test_network$customer_data$on_entry(name = "increase_score", fun = increase_score(), group = "group")
-  test_network$customer_data$on_exit(name = "decrease_score", fun = decrease_score(query(customer_data = "score")), group = "group")
+  test_network$customer_data$add_context("group", on_entry = increase_score(), on_exit = decrease_score(query(customer_data = "score")))
   add_has_passed <- function(data = query(customer_data = "category")) {
     data$has_passed <- ifelse(data$category == "High", TRUE, FALSE)
     data
@@ -361,8 +361,8 @@ test_that("Dependencies in on_entry are correctly resolved", {
   on_entry_network <- init_network("on_entry", projects = c("cars"))
   on_entry_network$cars$link(test_get_car_data(conn = TRUE))
   on_entry_network$cars$link(test_add_car_color(data = query(cars = c("Has_Drivers_License", "Name", "Car"))))
-  on_entry_network$cars$on_entry(reorder_cars_by_color(cars = query(cars = "Car_Color")), group = "group")
-  on_entry_network$cars$link(add_tries_data_license(data = query(cars = "Name")), group = "group")
+  on_entry_network$cars$add_context("group", on_entry = reorder_cars_by_color(cars = query(cars = "Car_Color")))
+  on_entry_network$cars$link(add_tries_data_license(data = query(cars = "Name")), attach_context = "group")
   test_data <- nascent(query(cars = "Tries"), on_entry_network)
   expect_data <- structure(list(Tries = c(1L, 2L, 5L)), row.names = c(NA, -3L), class = "data.frame")
   expect_identical(test_data, expect_data)
@@ -372,8 +372,8 @@ test_that("Dependencies in on_exit are correctly resolved", {
   on_exit_network <- init_network("on_exit", projects = c("cars"))
   on_exit_network$cars$link(test_get_car_data(conn = TRUE))
   on_exit_network$cars$link(test_add_car_color(data = query(cars = c("Has_Drivers_License", "Name", "Car"))))
-  on_exit_network$cars$on_exit(reorder_cars_by_color(cars = query(cars = "Car_Color")), group = "group")
-  on_exit_network$cars$link(add_tries_data_license(data = query(cars = "Name")), group = "group")
+  on_exit_network$cars$add_context("group", on_exit = reorder_cars_by_color(cars = query(cars = "Car_Color")))
+  on_exit_network$cars$link(add_tries_data_license(data = query(cars = "Name")), attach_context = "group")
   test_data <- nascent(query(cars = "Tries"), on_exit_network)
   expect_data <- structure(list(Tries = c(1L, 2L, 5L)), row.names = c(2L, 3L, 1L), class = "data.frame")
   expect_identical(test_data, expect_data)
@@ -384,9 +384,9 @@ test_that("on_exit function does not take duplicated dependencies", {
   network <- init_network("on_exit", projects = "cars")
   network$cars$link(test_get_car_data(conn = TRUE))
   network$cars$link(test_add_car_color(data = query(cars = c("Has_Drivers_License", "Name", "Car"))))
-  network$cars$on_entry(reorder_cars_by_color(cars = query(cars = "Car_Color")), group = "group")
-  network$cars$on_exit(reorder_cars_by_color2(cars = query(cars = "Car_Color")), group = "group")
-  network$cars$link(add_tries_data_license(data = query(cars = "Name")), group = "group")
+  network$cars$add_context("group", on_entry = reorder_cars_by_color(cars = query(cars = "Car_Color")),
+                           on_exit = reorder_cars_by_color2(cars = query(cars = "Car_Color")))
+  network$cars$link(add_tries_data_license(data = query(cars = "Name")), attach_context = "group")
   test_data <- nascent(query(cars = "Tries"), network)
   expect_data <- structure(list(Tries = c(1L, 2L, 5L)), row.names = c(1L, 2L, 3L), class = "data.frame")
   expect_identical(test_data, expect_data)
@@ -401,10 +401,10 @@ test_that("fucntion in context depending on another function of the same context
   network <- init_network("on_exit", projects = "cars")
   network$cars$link(test_get_car_data(conn = TRUE))
   network$cars$link(test_add_car_color(data = query(cars = c("Has_Drivers_License", "Name", "Car"))))
-  network$cars$on_entry(reorder_cars_by_color(cars = query(cars = "Car_Color")), group = "group")
-  network$cars$on_exit(reorder_cars_by_color2(cars = query(cars = "Car_Color")), group = "group")
-  network$cars$link(add_tries_data_license(data = query(cars = "Name")), group = "group")
-  network$cars$link(add_tries_data_license2(data = query(cars = "Tries")), vars = c("Tries2"), group = "group")
+  network$cars$add_context("group", on_entry = reorder_cars_by_color(cars = query(cars = "Car_Color")),
+                           on_exit = reorder_cars_by_color2(cars = query(cars = "Car_Color")))
+  network$cars$link(add_tries_data_license(data = query(cars = "Name")), attach_context = "group")
+  network$cars$link(add_tries_data_license2(data = query(cars = "Tries")), vars = c("Tries2"), attach_context = "group")
   test_data <- query(cars = c("Tries2")) |> nascent(network)
   expect_data <- structure(list(Tries2 = c(2, 3, 6)), row.names = c(1L, 2L, 3L), class = "data.frame")
   expect_identical(test_data, expect_data)
@@ -419,23 +419,24 @@ test_that("foreign function dependend on function with context and needed by a f
   network <- init_network("on_exit", projects = "cars")
   network$cars$link(test_get_car_data(conn = TRUE))
   network$cars$link(test_add_car_color(data = query(cars = c("Has_Drivers_License", "Name", "Car"))))
-  network$cars$on_entry(reorder_cars_by_color(cars = query(cars = "Car_Color")), group = "group")
-  network$cars$on_exit(reorder_cars_by_color2(cars = query(cars = "Car_Color")), group = "group")
-  network$cars$link(add_tries_data_license(data = query(cars = "Name")), group = "group")
+  network$cars$add_context("group", on_entry = reorder_cars_by_color(cars = query(cars = "Car_Color")),
+                           on_exit = reorder_cars_by_color2(cars = query(cars = "Car_Color")))
+  network$cars$link(add_tries_data_license(data = query(cars = "Name")), attach_context = "group")
   network$cars$link(add_id_to_car(data = query(cars = "Car_Color", cars = "Tries")))
-  network$cars$link(add_tries_data_license2(data = query(cars = c("ID"), cars = "Tries")), group = "group")
+  network$cars$link(add_tries_data_license2(data = query(cars = c("ID"), cars = "Tries")), attach_context = "group")
   test_data <- nascent(query(cars = c("Tries2")), network)
   expect_data <- structure(list(Tries2 = c(2, 3, 6)), row.names = c(1L, 3L, 2L), class = "data.frame")
   expect_identical(test_data, expect_data)
 })
 
-test_that("Star (*) select only retrieves queries and not objects or contexts", {
+test_that("Star (*) throws an informative error when no variables are present in the project", {
   on_entry_network <- init_network("on_entry", projects = "cars")
+  expect_error(nascent(query(cars = "*"), on_entry_network), regexp = "No variables found")
   on_entry_network$cars$link(test_get_car_data(conn = TRUE))
   on_entry_network$cars$link(test_add_car_color(data = query(cars = c("Has_Drivers_License", "Name", "Car"))))
-  on_entry_network$cars$on_entry(reorder_cars_by_color(cars = query(cars = "Car_Color")), group = "group")
-  expect_error(nascent(query(group = "*"), on_entry_network), regexp = "Star select")
-  on_entry_network$cars$link(add_tries_data_license(data = query(cars = "Name")), group = "group")
+  on_entry_network$cars$add_context("group", on_entry = reorder_cars_by_color(cars = query(cars = "Car_Color")))
+
+  on_entry_network$cars$link(add_tries_data_license(data = query(cars = "Name")), attach_context = "group")
   test_data <- nascent(query(cars = "Tries"), on_entry_network)
   expect_data <- structure(list(Tries = c(1L, 2L, 5L)), row.names = c(NA, -3L), class = "data.frame")
   expect_identical(test_data, expect_data)
@@ -454,10 +455,10 @@ test_that("on_entry/on_exit depend on variable with context from a new project a
   }
   network <- init_network("test", projects = "base")
   network$base$link(get_sample_data())
-  network$base$on_entry(pass_through(data = "{.data}"), group = "dependend")
-  network$base$link(add_score_category(data = query(base = "score")), group = "dependend")
-  network$base$on_entry(pass_through2(data = query(base = "category")), group = "queried")
-  network$base$link(add_score_category2(data = query(base = "score")), group = "queried")
+  network$base$add_context("dependend", on_entry = pass_through(data = "{.data}"))
+  network$base$link(add_score_category(data = query(base = "score")), attach_context = "dependend")
+  network$base$add_context("queried", on_entry = pass_through2(data = query(base = "category")))
+  network$base$link(add_score_category2(data = query(base = "score")), attach_context = "queried")
   data_test <- query(base = "category2") |> nascent(network)
   data_exp <- structure(list(category2 = c("Low", "High", "Low", "High", "Low"
   )), row.names = c(NA, -5L), class = "data.frame")
