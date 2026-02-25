@@ -86,10 +86,8 @@ network
 #> 📊 intro_network 
 #> 
 #> 🌲 Projects (1):
-#>    │
 #>    └📁 mtcars
-#>         └ 🌱 Root: am, carb, cyl, disp, drat, gear, hp, mpg, qsec, vs, wt 
-#> 
+#>        └  11🌱 | 0🔗 | 0🧩
 
 # Querying a project by its name, will return all variables from that project
 mtcars <- query("mtcars") |> nascent(network)
@@ -118,16 +116,23 @@ register the function again into the network:
 
 ``` r
 
-# 1. retrieve data from the network
+# 1. Check what variables you have available in the project
+network$mtcars
+#> 📁 Project: 
+#>    └ 🌱 Root:am, carb, cyl, disp, drat, gear, hp, mpg, qsec, vs, wt
+#> 
+#> 🔗  Joins: (None)
+
+# 2. retrieve data from the network
 data <- query(mtcars = c("hp", "wt")) |> nascent(network)
 
-# 2. write the transformation step
+# 3. write the transformation step
 add_power_to_weight <- function(data) {
   data$power_to_weight <- data$hp / data$wt
   data
 }
 
-# 3. register the step to the network
+# 4. register the step back into the network
 network$mtcars$link(add_power_to_weight(data = query(mtcars = c("hp", "wt"))))
 ```
 
@@ -149,6 +154,12 @@ network$mtcars$link(fun = add_power_to_weight(data = query(mtcars = c("hp", "wt"
                    vars = "power_to_weight", update = TRUE)
 # Note: Setting update = TRUE prevents the network from asking
 # whether an already registered function should be updated.
+network$mtcars
+#> 📁 Project: 
+#>    ├ 🌱 Root:am, carb, cyl, disp, drat, gear, hp, mpg, qsec, vs, wt
+#>    └ 🛠 Layer 1: power_to_weight
+#> 
+#> 🔗  Joins: (None)
 ```
 
 Each transformation step (e.g. the function `add_power_to_weight`) in a
@@ -192,6 +203,16 @@ get_engine_details <- function() {
 }
 
 network$engine$link(get_engine_details())
+
+network
+#> ---
+#> 📊 intro_network 
+#> 
+#> 🌲 Projects (2):
+#>    ├📁 mtcars
+#>    │   └  12🌱 | 0🔗 | 0🧩 
+#>    └📁 engine
+#>        └  2🌱 | 0🔗 | 0🧩
 ```
 
 The join is then added to the network as another transformation step. We
@@ -204,16 +225,14 @@ join_engine_details <- function(mtcars, engine) {
   joined
 }
 
-network$engine$link(join_engine_details(mtcars = query(mtcars = "vs"),
-                                        engine = query(engine = "vs")))
+network$mtcars$link(join_engine_details(mtcars = query(mtcars = "vs"),
+                                        engine = query(engine = "vs")), direction = "one")
 ```
 
-At the moment, joins are treated as symmetrical operations. As a result,
-the network supports only one join definition for each pair of projects.
-Moreover, the network assumes that the join is performed between the
-projects that appear first in the corresponding
-[`xafty::query()`](https://davidcrone.github.io/xafty/reference/query.md)
-call.
+By default, we create a one-directional join (a left join) from project
+engine to mtcars using the link function in the mtcars project. If we
+want to establish a bi-directional join (for example, an inner join), we
+must set the direction parameter of the link function to “both”.
 
 To declare that a function depends on a join, register it using a single
 [`xafty::query()`](https://davidcrone.github.io/xafty/reference/query.md)
@@ -267,34 +286,27 @@ add_mean_hp_per_gear <- function(data) {
 }
 ```
 
-Next, we create a new project that we will use to attach the context to:
+Next, we create a new context that we will attach to the variable:
 
 ``` r
-network$add_project("per_gear")
+network$mtcars$add_context("per_gear", 
+                           on_entry = group_by_gear(data = query(mtcars = "gear")), 
+                           on_exit = ungroup_data(data = "{.data}"))
 ```
 
-We tell the project to apply grouping whenever data enters a node:
-
-``` r
-network$per_gear$on_entry(group_by_gear(data = query(mtcars = "gear")))
-```
-
-And to remove grouping once a node completes its computation:
-
-``` r
-network$per_gear$on_exit(ungroup_data(data = "{.data}"))
-```
+Using the on_entry and on_exit hooks, we specify when the functions
+should run.
 
 Setting the parameter to `{.data}`, will pass the entire data.frame to
 the parameter. Currently, this works only with entry and exit nodes.
 
-Now, all nodes registered in `per_gear` will inherit this grouping
-behavior when they run.
+Now, we register the node and attach the context `per_gear` to it so it
+inherits the grouping behavior when they run.
 
 ``` r
-network$per_gear$link(add_mean_hp_per_gear(data = query(mtcars = "hp")))
+network$mtcars$link(add_mean_hp_per_gear(data = query(mtcars = "hp")), attach_context = "per_gear")
 
-data <- query(mtcars = "gear", per_gear = "mean_hp_per_gear") |> 
+data <- query(mtcars = c("gear", "mean_hp_per_gear")) |> 
   nascent(network)
 
 head(data)
@@ -309,12 +321,6 @@ head(data)
 #> 6     3            176.
 ```
 
-A project may have multiple `on_entry()` or `on_exit()` functions. All
-entry and exit hooks are applied in the order they were registered. This
-allows us to layer context-setting operations, such as grouping,
-arranging, or reshaping, without embedding them directly into individual
-transformation functions.
-
 ### Filtering
 
 xafty handles filters through the
@@ -322,7 +328,7 @@ xafty handles filters through the
 function:
 
 ``` r
-data <- query(per_gear = "mean_hp_per_gear", engine = "type") |> 
+data <- query(mtcars = "mean_hp_per_gear", engine = "type") |> 
   xafty::where(type == "Straight") |> 
   nascent(network)
 
@@ -354,7 +360,7 @@ constructs the directed acyclic graph for a given query and returns a
 list-object that describes the full pipeline:
 
 ``` r
-  dag <- query(mtcars = c("gear"), per_gear = "mean_hp_per_gear", engine = "type") |> 
+  dag <- query(mtcars = c("gear", "mean_hp_per_gear"), engine = "type") |> 
           build_dag(network)
 ```
 
@@ -363,9 +369,12 @@ the assembled pipeline.
 
 ``` r
   dag$execution_order
-#> [1] "mtcars.get_mtcars"             "engine.get_engine_details"    
-#> [3] "engine.join_engine_details"    "per_gear.group_by_gear"       
-#> [5] "per_gear.add_mean_hp_per_gear" "per_gear.ungroup_data"
+#> [1] "mtcars.get_mtcars"                   
+#> [2] "engine.get_engine_details"           
+#> [3] "mtcars.join_engine_details"          
+#> [4] "per_gear.mtcars.group_by_gear"       
+#> [5] "per_gear.mtcars.add_mean_hp_per_gear"
+#> [6] "per_gear.mtcars.ungroup_data"
 ```
 
 xafty also supports a digestible way how contents of a network are
@@ -373,26 +382,13 @@ printed. Simply pass your network object to the console to use this
 feature:
 
 ``` r
-  network
-#> ---
-#> 📊 intro_network 
+  network$mtcars
+#> 📁 Project: 
+#>    ├ 🌱 Root:am, carb, cyl, disp, drat, gear, hp, mpg, qsec, vs, wt
+#>    └ 🛠 Layer 1: combined_label, mean_hp_per_gear, power_to_weight
 #> 
-#> 🌲 Projects (3):
-#>    │
-#>    ├📁 mtcars
-#>    │    ├ 🌱 Root: am, carb, cyl, disp, drat, gear, hp, mpg, qsec, vs, wt 
-#>    │    └ 🛠 Layer 1: combined_label, power_to_weight
-#>    │ 
-#>    ├📁 engine
-#>    │    └ 🌱 Root: type, vs 
-#>    │ 
-#>    └📁 per_gear
-#>      ╭ group_by_gear
-#>         └ 🛠 Layer 1: mean_hp_per_gear
-#>      ╰ ungroup_data
-#>      
 #> 🔗 Joins (1):
-#>    🔄 engine ↔ mtcars
+#>    ➡️ engine
 ```
 
 ## States

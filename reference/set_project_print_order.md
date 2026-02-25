@@ -52,13 +52,10 @@ print(xafty_network) # Prints Project2 first, then Project1
 #> 📊 change_order 
 #> 
 #> 🌲 Projects (2):
-#>    │
-#>    ├📁 Project2 (empty)
-#>    │ 
-#>    └📁 Project1 (empty)
-#>      
-#> 🔗  Joins: (None)
-#> 
+#>    ├📁 Project2
+#>    │   └  0🌱 | 0🔗 | 0🧩 
+#>    └📁 Project1
+#>        └  0🌱 | 0🔗 | 0🧩 
 
 # Change the print order
 set_project_print_order(
@@ -71,11 +68,8 @@ print(xafty_network)
 #> 📊 change_order 
 #> 
 #> 🌲 Projects (2):
-#>    │
-#>    ├📁 Project1 (empty)
-#>    │ 
-#>    └📁 Project2 (empty)
-#>      
-#> 🔗  Joins: (None)
-#> 
+#>    ├📁 Project1
+#>    │   └  0🌱 | 0🔗 | 0🧩 
+#>    └📁 Project2
+#>        └  0🌱 | 0🔗 | 0🧩 
 ```

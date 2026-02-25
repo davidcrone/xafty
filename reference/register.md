@@ -30,7 +30,7 @@ register(quosure, project, network, link_type, ...)
 
 - ...:
 
-  Unused. Configurations of the link type.
+  Configurations and advanced use when registering a new link
 
 ## Value
 

@@ -236,19 +236,23 @@ xafty_network
 #> 📊 example_network 
 #> 
 #> 🌲 Projects (2):
-#>    │
-#>    ├─📁 mtcars
-#>    |    ├─ 🌱 Root: am, carb, cyl, disp, drat, gear, hp, mpg, qsec, vs, wt 
-#>    |    └─ 🛠 Layer 1: power_to_weight
-#>    | 
-#>    └─📁 engine
-#>         └─ 🌱 Root: type, vs 
-#>      
+#>    ├📁 mtcars
+#>    │   └  12🌱 | 1🔗 | 0🧩 
+#>    └📁 engine
+#>        └  2🌱 | 0🔗 | 0🧩
+
+# Inspect a project
+xafty_network$mtcars
+#> 📁 Project: mtcars
+#>    ├ 🌱 Root:am, carb, cyl, disp, drat, gear, hp, mpg, qsec, vs, wt
+#>    └ 🛠 Layer 1: power_to_weight
+#> 
 #> 🔗 Joins (1):
-#>    🔄 engine ↔ mtcars
+#>    ➡️ engine
 
 # Pull data as needed from the network in the desired column order
 query(hp, wt, vs, type, power_to_weight) |>  
+  from(mtcars) |> 
   nascent(xafty_network) |> 
   head()
 #>    hp    wt vs    type power_to_weight
@@ -280,7 +284,7 @@ For example, if we use the above network to query the following
 variables:
 
 ``` r
-query(hp, type) |> nascent(xafty_network)
+query(type, hp) |> from(mtcars) |> nascent(xafty_network)
 ```
 
 **The resulting pipeline can be represented as follows:**
@@ -298,11 +302,15 @@ final data products. This makes it easy to “branch off” from these
 intermediate steps and reuse them, rather than starting from a blank
 slate, as is common in many data analytics projects.
 
-Finally, create our plot, we simply query the data we need from the
-network and run the plot:
+Finally, to create our plot, we simply query the data we need from the
+network and pass it to our plot function:
 
 ``` r
-data <- query(type, power_to_weight) |> nascent(xafty_network)
+data <- query(power_to_weight, type) |> 
+          where(hp >= 100) |> 
+          from(mtcars) |> 
+          nascent(xafty_network)
+
 plot_mtcars(mtcars = data)
 ```
 
@@ -317,7 +325,7 @@ being quite feature rich:
 - Context on entry/exit for each project, similar to
   `dplyr::group_by() / ungroup()`, enabling wrapping for lossless
   transformations
-- Project selection with `xafty::query(project_name)` to request all
+- Project selection with `xafty::query(<<project_name>>)` to request all
   variables from a project using the project’s name
 - Inspection tools, such as
   [`xafty::build_dag()`](https://davidcrone.github.io/xafty/reference/build_dag.md),

@@ -20,7 +20,7 @@ to_script(dag, file = NULL)
 
 - file:
 
-  A file name to write to
+  An R-script file to write to
 
 ## Value
 

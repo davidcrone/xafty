@@ -8,6 +8,8 @@
   : Build an 'Evaluable' Data Pipeline Object
 - [`evaluate_dag()`](https://davidcrone.github.io/xafty/reference/evaluate_dag.md)
   : Evaluate a Network Pipeline
+- [`from()`](https://davidcrone.github.io/xafty/reference/from.md) :
+  Specify the Main Project for a Query
 - [`get_function_package()`](https://davidcrone.github.io/xafty/reference/get_function_package.md)
   : Get the Package Name of a Function
 - [`init_network()`](https://davidcrone.github.io/xafty/reference/init_network.md)
@@ -18,6 +20,8 @@
   : Retrieve Data from a xafty network
 - [`print(`*`<xafty_network>`*`)`](https://davidcrone.github.io/xafty/reference/print.xafty_network.md)
   : Print a xafty Network
+- [`print(`*`<xafty_project>`*`)`](https://davidcrone.github.io/xafty/reference/print.xafty_project.md)
+  : Print a xafty Project
 - [`query()`](https://davidcrone.github.io/xafty/reference/query.md) :
   Build a xafty Query
 - [`register()`](https://davidcrone.github.io/xafty/reference/register.md)

@@ -2,7 +2,7 @@
 
 The state of a xafty query is passed to arguments that were declared as
 xafty states by passing a single character vector wrapped into
-curley_braces into the argument
+`{curley_braces}` into the argument
 
 ## Usage
 

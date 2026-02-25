@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">xafty</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.8</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,6 +33,7 @@
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="articles/xafty.html">Get started</a></li>
 <li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
+<li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
 <li class="nav-item"><form class="form-inline" role="search">
@@ -232,19 +233,23 @@ Diagram illustrating a network pipeline, where each step is a node connected acc
 <span><span class="co">#&gt; 📊 example_network </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; 🌲 Projects (2):</span></span>
-<span><span class="co">#&gt;    │</span></span>
-<span><span class="co">#&gt;    ├─📁 mtcars</span></span>
-<span><span class="co">#&gt;    |    ├─ 🌱 Root: am, carb, cyl, disp, drat, gear, hp, mpg, qsec, vs, wt </span></span>
-<span><span class="co">#&gt;    |    └─ 🛠 Layer 1: power_to_weight</span></span>
-<span><span class="co">#&gt;    | </span></span>
-<span><span class="co">#&gt;    └─📁 engine</span></span>
-<span><span class="co">#&gt;         └─ 🌱 Root: type, vs </span></span>
-<span><span class="co">#&gt;      </span></span>
+<span><span class="co">#&gt;    ├📁 mtcars</span></span>
+<span><span class="co">#&gt;    │   └  12🌱 | 1🔗 | 0🧩 </span></span>
+<span><span class="co">#&gt;    └📁 engine</span></span>
+<span><span class="co">#&gt;        └  2🌱 | 0🔗 | 0🧩</span></span>
+<span></span>
+<span><span class="co"># Inspect a project</span></span>
+<span><span class="va">xafty_network</span><span class="op">$</span><span class="va">mtcars</span></span>
+<span><span class="co">#&gt; 📁 Project: mtcars</span></span>
+<span><span class="co">#&gt;    ├ 🌱 Root:am, carb, cyl, disp, drat, gear, hp, mpg, qsec, vs, wt</span></span>
+<span><span class="co">#&gt;    └ 🛠 Layer 1: power_to_weight</span></span>
+<span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; 🔗 Joins (1):</span></span>
-<span><span class="co">#&gt;    🔄 engine ↔ mtcars</span></span>
+<span><span class="co">#&gt;    ➡️ engine</span></span>
 <span></span>
 <span><span class="co"># Pull data as needed from the network in the desired column order</span></span>
 <span><span class="fu"><a href="reference/query.html">query</a></span><span class="op">(</span><span class="va">hp</span>, <span class="va">wt</span>, <span class="va">vs</span>, <span class="va">type</span>, <span class="va">power_to_weight</span><span class="op">)</span> <span class="op">|&gt;</span>  </span>
+<span>  <span class="fu"><a href="reference/from.html">from</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="reference/nascent.html">nascent</a></span><span class="op">(</span><span class="va">xafty_network</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    hp    wt vs    type power_to_weight</span></span>
@@ -264,15 +269,19 @@ Diagram illustrating a network pipeline, where each step is a node connected acc
 </ol>
 <p>For example, if we use the above network to query the following variables:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="reference/query.html">query</a></span><span class="op">(</span><span class="va">hp</span>, <span class="va">type</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="reference/nascent.html">nascent</a></span><span class="op">(</span><span class="va">xafty_network</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="reference/query.html">query</a></span><span class="op">(</span><span class="va">type</span>, <span class="va">hp</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="reference/from.html">from</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="reference/nascent.html">nascent</a></span><span class="op">(</span><span class="va">xafty_network</span><span class="op">)</span></span></code></pre></div>
 <p><strong>The resulting pipeline can be represented as follows:</strong></p>
 <figure><img src="reference/figures/Example_Sub_Pipeline.png" alt="Diagram illustrating the “collapsed” pipeline from a xafty network"><figcaption aria-hidden="true">
 Diagram illustrating the “collapsed” pipeline from a xafty network
 </figcaption></figure><p>➜ Pipelines are no longer assembled manually. You simply query the data you need and let the system do the orchestration.</p>
 <p>➜ In network pipelines, intermediate steps are just as accessible as final data products. This makes it easy to “branch off” from these intermediate steps and reuse them, rather than starting from a blank slate, as is common in many data analytics projects.</p>
-<p>Finally, create our plot, we simply query the data we need from the network and run the plot:</p>
+<p>Finally, to create our plot, we simply query the data we need from the network and pass it to our plot function:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/query.html">query</a></span><span class="op">(</span><span class="va">type</span>, <span class="va">power_to_weight</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="reference/nascent.html">nascent</a></span><span class="op">(</span><span class="va">xafty_network</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/query.html">query</a></span><span class="op">(</span><span class="va">power_to_weight</span>, <span class="va">type</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>          <span class="fu"><a href="reference/where.html">where</a></span><span class="op">(</span><span class="va">hp</span> <span class="op">&gt;=</span> <span class="fl">100</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>          <span class="fu"><a href="reference/from.html">from</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>          <span class="fu"><a href="reference/nascent.html">nascent</a></span><span class="op">(</span><span class="va">xafty_network</span><span class="op">)</span></span>
+<span></span>
 <span><span class="fu">plot_mtcars</span><span class="op">(</span>mtcars <span class="op">=</span> <span class="va">data</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
@@ -283,7 +292,7 @@ Diagram illustrating the “collapsed” pipeline from a xafty network
 <ul>
 <li>Programming with <a href="https://github.com/andybega/states" class="external-link">states</a>, passed alongside queries via <code><a href="reference/with_state.html">xafty::with_state()</a></code>.</li>
 <li>Context on entry/exit for each project, similar to <code>dplyr::group_by() / ungroup()</code>, enabling wrapping for lossless transformations</li>
-<li>Project selection with <code>xafty::query(project_name)</code> to request all variables from a project using the project’s name</li>
+<li>Project selection with <code>xafty::query(&lt;&lt;project_name&gt;&gt;)</code> to request all variables from a project using the project’s name</li>
 <li>Inspection tools, such as <code><a href="reference/build_dag.html">xafty::build_dag()</a></code>, to view the internal dependency graph.</li>
 <li>Debugging tools, such as <code><a href="reference/to_script.html">xafty::to_script</a></code>, which allows you to write the entire pipeline as a linear script</li>
 </ul>
