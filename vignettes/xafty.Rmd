@@ -204,43 +204,34 @@ add_mean_hp_per_gear <- function(data) {
 
 ```
 
-Next, we create a new project that we will use to attach the context to:
+Next, we create a new context that we will attach to the variable:
 ``` {r}
-network$add_project("per_gear")
+network$mtcars$add_context("per_gear", 
+                           on_entry = group_by_gear(data = query(mtcars = "gear")), 
+                           on_exit = ungroup_data(data = "{.data}"))
 ```
 
-We tell the project to apply grouping whenever data enters a node:
+Using the on_entry and on_exit hooks, we specify when the functions should run.
 
-``` {r}
-network$per_gear$on_entry(group_by_gear(data = query(mtcars = "gear")))
-```
-
-And to remove grouping once a node completes its computation:
-
-``` {r}
-network$per_gear$on_exit(ungroup_data(data = "{.data}"))
-```
 Setting the parameter to `{.data}`, will pass the entire data.frame to the parameter. Currently, this works only with entry and exit nodes. 
 
-Now, all nodes registered in `per_gear` will inherit this grouping behavior when they run.
+Now, we register the node and attach the context `per_gear` to it so it inherits the grouping behavior when they run.
 
 ``` {r}
-network$per_gear$link(add_mean_hp_per_gear(data = query(mtcars = "hp")))
+network$mtcars$link(add_mean_hp_per_gear(data = query(mtcars = "hp")), attach_context = "per_gear")
 
-data <- query(mtcars = "gear", per_gear = "mean_hp_per_gear") |> 
+data <- query(mtcars = c("gear", "mean_hp_per_gear")) |> 
   nascent(network)
 
 head(data)
 ```
-
-A project may have multiple `on_entry()` or `on_exit()` functions. All entry and exit hooks are applied in the order they were registered. This allows us to layer context-setting operations, such as grouping, arranging, or reshaping, without embedding them directly into individual transformation functions.
 
 ## Filtering
 
 xafty handles filters through the `xafty::where` function:
 
 ``` {r}
-data <- query(per_gear = "mean_hp_per_gear", engine = "type") |> 
+data <- query(mtcars = "mean_hp_per_gear", engine = "type") |> 
   xafty::where(type == "Straight") |> 
   nascent(network)
 
@@ -256,7 +247,7 @@ As your network grows, it becomes increasingly important to understand how xafty
 The function `build_dag()` constructs the directed acyclic graph for a given query and returns a list-object that describes the full pipeline:
 
 ``` {r}
-  dag <- query(mtcars = c("gear"), per_gear = "mean_hp_per_gear", engine = "type") |> 
+  dag <- query(mtcars = c("gear", "mean_hp_per_gear"), engine = "type") |> 
           build_dag(network)
 ```
 
@@ -269,7 +260,7 @@ For example, the element `dag$execution_order` shows the exact order of the asse
 xafty also supports a digestible way how contents of a network are printed. Simply pass your network object to the console to use this feature:
 
 ``` {r}
-  network
+  network$mtcars
 ```
 
 # States

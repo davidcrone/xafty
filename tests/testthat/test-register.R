@@ -237,17 +237,3 @@ test_that("Register detects a cycle, when a dependency of the context is attache
   on_entry_network$cars$on_entry(reorder_cars_by_color(cars = query(cars = "Car_Color")), group = "group")
   on_entry_network$cars$link(test_add_car_color(data = query(cars = c("Has_Drivers_License", "Name", "Car"))), group = "group")
 })
-
-# test_that("Registering context creates the correct entry in ruleset and network", {
-#   test_network <- init_network(name = "test_network", projects = "intelligence")
-#   test_network$intelligence$get(intelligence_date())
-#   filter_active_customers <- function(data) {
-#     data[data$intelligence > 100, , drop = FALSE]
-#   }
-#   test_network$intelligence$add_context("active_customers", filter_active_customers(data = query(intelligence = "intelligence")))
-#   link <- test_network$intelligence$ruleset$filter_active_customers
-#   expect_equal(link$fun_name, "filter_active_customers")
-#   expect_equal(link$args$data, query(intelligence = "intelligence"))
-#   expect_equal(link$name, "active_customers")
-#   expect_equal(test_network$intelligence$variables$active_customers, "filter_active_customers")
-# })
