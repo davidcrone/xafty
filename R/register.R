@@ -308,13 +308,8 @@ validate_network_integrity <- function(link, network) {
   for (query in flat_queries) {
     project <- query$from
     selection <- query$select
-    if (is_object_variable(selection)) {
-      col <- get_squared_variable(selection)
+    for (col in selection) {
       validate_query(name = col, project = project, network = network)
-    } else {
-      for (col in selection) {
-        validate_query(name = col, project = project, network = network)
-      }
     }
   }
 }

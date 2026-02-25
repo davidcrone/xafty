@@ -5,7 +5,7 @@
 #' for debugging purposes to see on which step the pipeline fails. The function creates a single file which can be run from
 #' top to bottom as it would be evaluated in nascent()
 #' @param dag A directed acyclic graph object obtained by build_dag()
-#' @param file A file name to write to
+#' @param file An R-script file to write to
 #' @returns TRUE (invisibly)
 #' @export
 to_script <- function(dag, file = NULL) {

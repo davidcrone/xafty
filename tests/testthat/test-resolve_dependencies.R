@@ -27,6 +27,7 @@ test_that("resolve dependencies works with an add link", {
 test_that("resolve_dependencies can correctly resolve a join link", {
   network <- test_network
   dag_sm <- build_tree(network)
+  dag_sm$set_main_project("customer_data")
   query <- query(customer_data = "category", occupations = "department")
   globals <- dots_to_query(network, query)
   sm <- resolve_dependencies(query_list = globals$internal, state_list = globals$states, network = network, dag_sm = dag_sm)
@@ -42,6 +43,7 @@ test_that("resolve_dependencies can correctly resolve a join link", {
 test_that("resolve_dependencies can correctly resolve a column that depends on two projects", {
   network <- test_network
   dag_sm <- build_tree(network)
+  dag_sm$set_main_project("customer_data")
   query <- query(customer_data = c("name", "nickname"), occupations = "department")
   globals <- dots_to_query(network, query)
   sm <- resolve_dependencies(query_list = globals$internal, state_list = globals$states, network = network, dag_sm = dag_sm)
@@ -59,6 +61,7 @@ test_that("resolve_dependencies can correctly resolve a column that depends on t
   network <- test_network
   query <- query(customer_data = "nickname")
   dag_sm <- build_tree(network)
+  dag_sm$set_main_project("customer_data")
   globals <- dots_to_query(network, query)
   sm <- resolve_dependencies(query_list = globals$internal, state_list = globals$states, network = network, dag_sm = dag_sm)
   query <- sm$get_query()

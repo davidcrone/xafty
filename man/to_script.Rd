@@ -9,7 +9,7 @@ to_script(dag, file = NULL)
 \arguments{
 \item{dag}{A directed acyclic graph object obtained by build_dag()}
 
-\item{file}{A file name to write to}
+\item{file}{An R-script file to write to}
 }
 \value{
 TRUE (invisibly)

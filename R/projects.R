@@ -160,7 +160,7 @@ validate_project_name <- function(name, network) {
   if(any(name %in% existing_projects)) stop(paste0("Project '", name, "' exists already in network"))
 }
 
-create_add_state <- function(network_env) {
+create_add_state <- function(network) {
   add_state <- function(name, allowed = NULL, example = NULL, default = NULL, documentation = NULL) {
     if(length(name) == 0 | length(name) > 1) stop("Please enter the state's name.")
     if(!is_curly_character(name)) {
@@ -169,14 +169,14 @@ create_add_state <- function(network_env) {
       test_name <- name
     }
     if(!is_state_variable(test_name)) stop("Please enter a valid state name")
-    existing_states <- names(network_env$states)
+    existing_states <- names(network$states)
     state_exists <- name %in% existing_states
     user_choice <- "y"
     if(state_exists){
-      user_choice <- readline(paste0("State '", name, "' was already added to the network '",  network_env$settings$network_name,"'. Would you like to update? (y/n): "))
+      user_choice <- readline(paste0("State '", name, "' was already added to the network '",  network$settings$network_name,"'. Would you like to update? (y/n): "))
     }
     if(user_choice == "y" | user_choice == "Y") {
-      network_env$states[[name]] <- list(
+      network$states[[name]] <- list(
         allowed = allowed,
         example = example,
         default = default,

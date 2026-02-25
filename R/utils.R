@@ -96,7 +96,7 @@ print.xafty_project <- function(x, ...) {
 }
 
 print_joins <- function(project_env, indent) {
-  joined_projects <- names(project_env$joined_projects)
+  joined_projects <- names(project_env$ruleset$nodes$joins)
   if(length(joined_projects) == 0) {
     cat("\U1F517 ", "Joins:", "(None)\n")
     return(invisible(project_env))
@@ -339,13 +339,6 @@ is_state_variable <- function(arg) {
   is_valid_variable_name(match = match)
 }
 
-is_object_variable <- function(arg) {
-  if(!is.character(arg) || length(arg) != 1) return(FALSE)
-  if(!is_squared_variable(arg)) return(FALSE)
-  match <- get_squared_variable(arg)
-  is_valid_variable_name(match)
-}
-
 get_join_project <- function(link) {
   from <- link$project
   query_lists <- get_queries(link, which = "xafty_query")
@@ -449,10 +442,6 @@ is_context_link <- function(link) {
   inherits(link, "context_link")
 }
 
-is_object_link <- function(link) {
-  inherits(link, "object_link")
-}
-
 build_fun_code <- function(link) {
   if(is.null(link$context)) context <- character(0) else context <- paste0(link$context, ".")
   paste0(context, link$project, ".", link$fun_name)
@@ -512,20 +501,8 @@ project_needs_join <- function(project, query_list, network) {
 
 check_link_type <- function(link) {
   if (is_query_link(link)) return("query_link")
-  if (is_object_link(link)) return("object_link")
   if (is_context_link(link)) return("context_link")
   "unknown_link"
-}
-
-get_variable_link_type <- function(name, project, network) {
-  link <-  get_chatty_link_from_network(name = name, project = project, network = network)
-  check_link_type(link)
-}
-
-remove_context_queries <- function(query_list) {
-  keep <- !vapply(query_list, \(e) inherits(e, "context_query"), logical(1))
-  query_list <- query_list[keep]
-  query_list
 }
 
 # Checks whether a link argument has {.data}, this is used when the argument simply needs the data without a certain
@@ -552,7 +529,7 @@ build_.data_link <- function(link, node, dag_sm) {
   link
 }
 
-#' Returns all Variable Names from a Project
+# Returns all Variable Names from a Project
 get_all_variables <- function(project, network) {
   network[[project]]$ruleset$nodes$variables
 }

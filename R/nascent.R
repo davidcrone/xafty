@@ -102,7 +102,6 @@ get_unjoined_projects <- function(dag_sm, network) {
   projects_non <- projects[!projects %in% projects_joined]
   project_main <- dag_sm$get_main_project()
   projects_new <- projects_non[vapply(projects_non, project_needs_join, network = network, query_list = query_list, FUN.VALUE = logical(1))]
-  if(is.null(project_main)) dag_sm$set_main_project(projects_new[[1]])
   projects_new[projects_new != dag_sm$get_main_project()]
 }
 

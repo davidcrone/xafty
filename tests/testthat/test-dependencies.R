@@ -33,6 +33,7 @@ test_that("dependencies from two projects can be retrieved and hidden dependenci
   query_list <- query(customer_data = "category", occupations = "department")
   dag_sm <- build_tree(test_network)
   globals <- dots_to_query(test_network, query_list)
+  dag_sm$set_main_project("customer_data")
   sm <- resolve_dependencies(query_list = globals$internal, state_list = globals$states, network = test_network, dag_sm = dag_sm)
   expected_query <- query(customer_data = c("category", "score", "name", "id"), occupations = c("department", "id"))
   expect_identical(sm$get_query(), expected_query)
