@@ -22,7 +22,8 @@ dependencies <- function(query_list, state_list = NULL, network, dag_sm = build_
 resolve_join_dependencies <- function(network, dag_sm, state_list = NULL) {
   projects_new <- get_unjoined_projects(dag_sm = dag_sm, network = network)
   if(length(projects_new) == 0) return(dag_sm)
-  graph <- build_join_graph(network = network, dag_sm = dag_sm)
+  main_project <- dag_sm$get_main_project()
+  graph <- build_join_graph(main_project = main_project, network = network)
   ## add project to a given join path
   new_paths <- list()
   for (i in seq_along(projects_new)) {

@@ -77,10 +77,27 @@ get_join_functions <- function(from, to, network, sm, state_list = NULL) {
   link
 }
 
-build_join_graph <- function(network, dag_sm) {
-  project_main <- dag_sm$get_main_project()
-  graph <- build_centered_graph(queue = project_main, network = network)
+build_join_graph <- function(main_project, network) {
+  graph <- build_centered_graph(queue = main_project, network = network)
+  graph <- remove_empty_lists(graph)
   graph
+}
+
+build_exported_variables <- function(project, graph, network) {
+  joins <- graph[[project]]
+  if(is.null(joins)) return(list())
+  out <- sapply(joins, \(join) list(
+    exported = get_exported_variables(from = project, to = join, network = network),
+    joins = build_exported_variables(project = join, graph = graph, network = network)
+    ), simplify = FALSE, USE.NAMES = TRUE)
+  out
+}
+
+get_exported_variables <- function(from, to, network) {
+  exported <- network[[from]]$ruleset$nodes$joins[[to]]$link$variables
+  # When the join link variable is length null, it is assumed that the link is "pass-through"
+  if(length(exported) == 0) return(names(network[[to]]$ruleset$nodes$variables))
+  exported
 }
 
 build_centered_graph <- function(queue, network, graph = list()) {
@@ -88,8 +105,9 @@ build_centered_graph <- function(queue, network, graph = list()) {
   new_queue <- list()
   for(project in queue) {
     joins <- names(network[[project]]$ruleset$nodes$joins)
-    new_queue[[project]] <- joins[!joins %in% names(graph)]
-    graph[[project]] <- joins
+    new_projects <- joins[!joins %in% names(graph)]
+    new_queue[[project]] <- new_projects
+    graph[[project]] <- new_projects
   }
   queue <- unlist(new_queue)
   build_centered_graph(queue = queue, network = network, graph = graph)
@@ -100,7 +118,6 @@ get_unjoined_projects <- function(dag_sm, network) {
   projects <- get_projects(query_list)
   projects_joined <- unique(unlist(dag_sm$get_join_path()))
   projects_non <- projects[!projects %in% projects_joined]
-  project_main <- dag_sm$get_main_project()
   projects_new <- projects_non[vapply(projects_non, project_needs_join, network = network, query_list = query_list, FUN.VALUE = logical(1))]
   projects_new[projects_new != dag_sm$get_main_project()]
 }

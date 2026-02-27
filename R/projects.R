@@ -55,7 +55,8 @@ add_new_project <- function(project, network) {
     ),
     contexts = list(),
     groups = list(),
-    settings = settings(name = project)
+    settings = settings(name = project),
+    graph = list()
   )
   network[[project]][["add_group"]] <- create_add_group(project = project, network = network)
   network[[project]][["add_context"]] <- create_add_context(project = project, network = network)
@@ -161,7 +162,7 @@ validate_project_name <- function(name, network) {
 }
 
 create_add_state <- function(network) {
-  add_state <- function(name, allowed = NULL, example = NULL, default = NULL, documentation = NULL) {
+  add_state <- function(name, title = NULL, allowed = NULL, example = NULL, default = NULL, documentation = NULL) {
     if(length(name) == 0 | length(name) > 1) stop("Please enter the state's name.")
     if(!is_curly_character(name)) {
       test_name <- paste0("{", name, "}")
@@ -177,6 +178,7 @@ create_add_state <- function(network) {
     }
     if(user_choice == "y" | user_choice == "Y") {
       network$states[[name]] <- list(
+        title = title,
         allowed = allowed,
         example = example,
         default = default,

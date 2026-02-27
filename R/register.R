@@ -118,10 +118,9 @@ add_to_network <- function(link, project, network, ...) {
       } else {
         exported <- NULL
       }
-      network[[from]]$ruleset$nodes$joins[[to]] <- list(
-        link = link,
-        exported = exported
-      )
+      joins_to <- names(network[[to]]$ruleset$nodes$joins)
+
+      network[[from]]$ruleset$nodes$joins[[to]] <- list(link = link)
       if(!is.null(.dots[["direction"]])) {
         if(.dots[["direction"]] == "both") {
           if(length(variables) == 0) {
@@ -132,10 +131,7 @@ add_to_network <- function(link, project, network, ...) {
           }
           link_to <- link
           link_to$project <- to
-          network[[to]]$ruleset$nodes$joins[[from]] <- list(
-            link = link_to,
-            variables = exported
-          )
+          network[[to]]$ruleset$nodes$joins[[from]] <- list(link = link_to)
         }
       }
     }
@@ -159,6 +155,12 @@ add_to_network <- function(link, project, network, ...) {
       network[[project]]$ruleset$contexts[[context]]$on_exit[[fun_name]] <- li_on_exit
     }
   }
+
+  if(length(network[[project]]$ruleset$nodes$joins)) {
+    centered_graph <- build_join_graph(main_project = project, network = network)
+    network[[project]]$ruleset$graph <- build_exported_variables(project = project, graph = centered_graph, network = network)
+  }
+
   invisible(network)
 }
 

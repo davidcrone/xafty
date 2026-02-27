@@ -83,7 +83,7 @@ print.xafty_project <- function(x, ...) {
       if(layer > 0) {
         cat(indent, " ", layer_close, " \U1F6E0 Layer ", paste0(layer ,": "), layer_variables, "\n", sep = "")
       } else {
-        cat(indent, " ", layer_close, " \U1F331 Root:", layer_variables, "\n", sep = "")
+        cat(indent, " ", layer_close, " \U1F331 Root: ", layer_variables, "\n", sep = "")
       }
     }
   }
@@ -102,13 +102,19 @@ print_joins <- function(project_env, indent) {
     return(invisible(project_env))
   }
 
-  li_raw_pairs <- list()
-  cat("\U1F517 ", "Joins (", length(joined_projects), "):\n", sep = "")
-  for (i in seq_along(joined_projects)) {
-    project <- joined_projects[i]
-    cat(indent, " ", "\U27A1\uFE0F ", project, sep = "")
-    cat("\n")
-    # TODO: Print available projects exposed from the join!
+  joins <- project_env$ruleset$graph
+  cat("\U1F517 ", "Joins (", length(joins), "):\n", sep = "")
+  print_join_recursive(joins = joins, indent = indent)
+}
+
+print_join_recursive <- function(joins, indent) {
+  projects <- names(joins)
+  for (project in projects) {
+    variables <- joins[[project]]$exported
+    cat(indent, " ", "\U27A1\uFE0F ", project, "\n", sep = "")
+    cat(indent, "    ", "\u2514 ", paste0(variables, collapse = ", "), "\n", sep = "")
+    if(length(joins[[project]]$joins) == 0) next
+    print_join_recursive(joins = joins[[project]]$joins, indent = paste0(indent, indent))
   }
 }
 
