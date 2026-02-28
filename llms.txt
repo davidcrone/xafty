@@ -225,8 +225,9 @@ xafty_network$mtcars$link(add_power_to_weight(mtcars = query(mtcars = c("hp", "w
 ## Register the function `get_engine_details()` in project "engine" ##
 xafty_network$engine$link(get_engine_details())
 
-# Finally, we register the join between the two projects, 
-# by passing two separate queries to the respective parameters
+# Finally, we register the (left-) join on mtcars, 
+# by using the link function from the mtcars project and 
+# passing two separate queries to the respective parameters
 xafty_network$mtcars$link(join_engine_details(mtcars = query(mtcars = "vs"),
                                               engine = query(engine = "vs")))
 
@@ -234,6 +235,7 @@ xafty_network$mtcars$link(join_engine_details(mtcars = query(mtcars = "vs"),
 xafty_network
 #> ---
 #> 📊 example_network 
+#> 
 #> 
 #> 🌲 Projects (2):
 #>    ├📁 mtcars
@@ -243,12 +245,13 @@ xafty_network
 
 # Inspect a project
 xafty_network$mtcars
-#> 📁 Project: mtcars
-#>    ├ 🌱 Root:am, carb, cyl, disp, drat, gear, hp, mpg, qsec, vs, wt
+#> 📁 Project: 
+#>    ├ 🌱 Root: am, carb, cyl, disp, drat, gear, hp, mpg, qsec, vs, wt
 #>    └ 🛠 Layer 1: power_to_weight
 #> 
 #> 🔗 Joins (1):
 #>    ➡️ engine
+#>       └ type, vs
 
 # Pull data as needed from the network in the desired column order
 query(hp, wt, vs, type, power_to_weight) |>  

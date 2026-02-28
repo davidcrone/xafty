@@ -222,8 +222,9 @@ Diagram illustrating a network pipeline, where each step is a node connected acc
 <span><span class="co">## Register the function `get_engine_details()` in project "engine" ##</span></span>
 <span><span class="va">xafty_network</span><span class="op">$</span><span class="va">engine</span><span class="op">$</span><span class="fu">link</span><span class="op">(</span><span class="fu">get_engine_details</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Finally, we register the join between the two projects, </span></span>
-<span><span class="co"># by passing two separate queries to the respective parameters</span></span>
+<span><span class="co"># Finally, we register the (left-) join on mtcars, </span></span>
+<span><span class="co"># by using the link function from the mtcars project and </span></span>
+<span><span class="co"># passing two separate queries to the respective parameters</span></span>
 <span><span class="va">xafty_network</span><span class="op">$</span><span class="va">mtcars</span><span class="op">$</span><span class="fu">link</span><span class="op">(</span><span class="fu">join_engine_details</span><span class="op">(</span>mtcars <span class="op">=</span> <span class="fu"><a href="reference/query.html">query</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="st">"vs"</span><span class="op">)</span>,</span>
 <span>                                              engine <span class="op">=</span> <span class="fu"><a href="reference/query.html">query</a></span><span class="op">(</span>engine <span class="op">=</span> <span class="st">"vs"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
@@ -231,6 +232,7 @@ Diagram illustrating a network pipeline, where each step is a node connected acc
 <span><span class="va">xafty_network</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; 📊 example_network </span></span>
+<span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; 🌲 Projects (2):</span></span>
 <span><span class="co">#&gt;    ├📁 mtcars</span></span>
@@ -240,12 +242,13 @@ Diagram illustrating a network pipeline, where each step is a node connected acc
 <span></span>
 <span><span class="co"># Inspect a project</span></span>
 <span><span class="va">xafty_network</span><span class="op">$</span><span class="va">mtcars</span></span>
-<span><span class="co">#&gt; 📁 Project: mtcars</span></span>
-<span><span class="co">#&gt;    ├ 🌱 Root:am, carb, cyl, disp, drat, gear, hp, mpg, qsec, vs, wt</span></span>
+<span><span class="co">#&gt; 📁 Project: </span></span>
+<span><span class="co">#&gt;    ├ 🌱 Root: am, carb, cyl, disp, drat, gear, hp, mpg, qsec, vs, wt</span></span>
 <span><span class="co">#&gt;    └ 🛠 Layer 1: power_to_weight</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; 🔗 Joins (1):</span></span>
 <span><span class="co">#&gt;    ➡️ engine</span></span>
+<span><span class="co">#&gt;       └ type, vs</span></span>
 <span></span>
 <span><span class="co"># Pull data as needed from the network in the desired column order</span></span>
 <span><span class="fu"><a href="reference/query.html">query</a></span><span class="op">(</span><span class="va">hp</span>, <span class="va">wt</span>, <span class="va">vs</span>, <span class="va">type</span>, <span class="va">power_to_weight</span><span class="op">)</span> <span class="op">|&gt;</span>  </span>
