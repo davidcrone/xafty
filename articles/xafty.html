@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">xafty</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -127,6 +127,7 @@ the network for our desired variables:</p>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; 📊 intro_network </span></span>
 <span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; 🌲 Projects (1):</span></span>
 <span><span class="co">#&gt;    └📁 mtcars</span></span>
 <span><span class="co">#&gt;        └  11🌱 | 0🔗 | 0🧩</span></span>
@@ -159,7 +160,7 @@ register the function again into the network:</p>
 <span><span class="co"># 1. Check what variables you have available in the project</span></span>
 <span><span class="va">network</span><span class="op">$</span><span class="va">mtcars</span></span>
 <span><span class="co">#&gt; 📁 Project: </span></span>
-<span><span class="co">#&gt;    └ 🌱 Root:am, carb, cyl, disp, drat, gear, hp, mpg, qsec, vs, wt</span></span>
+<span><span class="co">#&gt;    └ 🌱 Root: am, carb, cyl, disp, drat, gear, hp, mpg, qsec, vs, wt</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; 🔗  Joins: (None)</span></span>
 <span></span>
@@ -190,7 +191,7 @@ using the parameter <code>vars</code>:</p>
 <span><span class="co"># whether an already registered function should be updated.</span></span>
 <span><span class="va">network</span><span class="op">$</span><span class="va">mtcars</span></span>
 <span><span class="co">#&gt; 📁 Project: </span></span>
-<span><span class="co">#&gt;    ├ 🌱 Root:am, carb, cyl, disp, drat, gear, hp, mpg, qsec, vs, wt</span></span>
+<span><span class="co">#&gt;    ├ 🌱 Root: am, carb, cyl, disp, drat, gear, hp, mpg, qsec, vs, wt</span></span>
 <span><span class="co">#&gt;    └ 🛠 Layer 1: power_to_weight</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; 🔗  Joins: (None)</span></span></code></pre></div>
@@ -241,6 +242,7 @@ with another root node:</p>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; 📊 intro_network </span></span>
 <span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; 🌲 Projects (2):</span></span>
 <span><span class="co">#&gt;    ├📁 mtcars</span></span>
 <span><span class="co">#&gt;    │   └  12🌱 | 0🔗 | 0🧩 </span></span>
@@ -256,7 +258,16 @@ separate query-calls to the function:</p>
 <span><span class="op">}</span></span>
 <span></span>
 <span><span class="va">network</span><span class="op">$</span><span class="va">mtcars</span><span class="op">$</span><span class="fu">link</span><span class="op">(</span><span class="fu">join_engine_details</span><span class="op">(</span>mtcars <span class="op">=</span> <span class="fu"><a href="../reference/query.html">query</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="st">"vs"</span><span class="op">)</span>,</span>
-<span>                                        engine <span class="op">=</span> <span class="fu"><a href="../reference/query.html">query</a></span><span class="op">(</span>engine <span class="op">=</span> <span class="st">"vs"</span><span class="op">)</span><span class="op">)</span>, direction <span class="op">=</span> <span class="st">"one"</span><span class="op">)</span></span></code></pre></div>
+<span>                                        engine <span class="op">=</span> <span class="fu"><a href="../reference/query.html">query</a></span><span class="op">(</span>engine <span class="op">=</span> <span class="st">"vs"</span><span class="op">)</span><span class="op">)</span>, direction <span class="op">=</span> <span class="st">"one"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">network</span><span class="op">$</span><span class="va">mtcars</span></span>
+<span><span class="co">#&gt; 📁 Project: </span></span>
+<span><span class="co">#&gt;    ├ 🌱 Root: am, carb, cyl, disp, drat, gear, hp, mpg, qsec, vs, wt</span></span>
+<span><span class="co">#&gt;    └ 🛠 Layer 1: power_to_weight</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; 🔗 Joins (1):</span></span>
+<span><span class="co">#&gt;    ➡️ engine</span></span>
+<span><span class="co">#&gt;       └ type, vs</span></span></code></pre></div>
 <p>By default, we create a one-directional join (a left join) from
 project engine to mtcars using the link function in the mtcars project.
 If we want to establish a bi-directional join (for example, an inner
@@ -391,11 +402,12 @@ feature:</p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span>  <span class="va">network</span><span class="op">$</span><span class="va">mtcars</span></span>
 <span><span class="co">#&gt; 📁 Project: </span></span>
-<span><span class="co">#&gt;    ├ 🌱 Root:am, carb, cyl, disp, drat, gear, hp, mpg, qsec, vs, wt</span></span>
+<span><span class="co">#&gt;    ├ 🌱 Root: am, carb, cyl, disp, drat, gear, hp, mpg, qsec, vs, wt</span></span>
 <span><span class="co">#&gt;    └ 🛠 Layer 1: combined_label, mean_hp_per_gear, power_to_weight</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; 🔗 Joins (1):</span></span>
-<span><span class="co">#&gt;    ➡️ engine</span></span></code></pre></div>
+<span><span class="co">#&gt;    ➡️ engine</span></span>
+<span><span class="co">#&gt;       └ type, vs</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">

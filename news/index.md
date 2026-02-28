@@ -1,5 +1,13 @@
 # Changelog
 
+## xafty 0.4.1
+
+### New Features
+
+- Printing a network now shows available states
+- Printing a project now shows all available variables through direct
+  and indirect joins
+
 ## xafty 0.4.0
 
 ### New Features
@@ -11,6 +19,6 @@
   project
 - Networks and projects now print differently giving adequate summary
   statistics for each
-- One-directional joins are now supported and set as the default. Joinen
-  Bi-directional is now possible when setting the parameter `direction`
-  to ‘both’ when linking a join
+- One-directional joins are now supported and set as the default.
+  Joining bi-directional is now done by setting the parameter
+  `direction` to ‘both’ upon linking the join

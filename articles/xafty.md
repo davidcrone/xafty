@@ -85,6 +85,7 @@ network
 #> ---
 #> 📊 intro_network 
 #> 
+#> 
 #> 🌲 Projects (1):
 #>    └📁 mtcars
 #>        └  11🌱 | 0🔗 | 0🧩
@@ -119,7 +120,7 @@ register the function again into the network:
 # 1. Check what variables you have available in the project
 network$mtcars
 #> 📁 Project: 
-#>    └ 🌱 Root:am, carb, cyl, disp, drat, gear, hp, mpg, qsec, vs, wt
+#>    └ 🌱 Root: am, carb, cyl, disp, drat, gear, hp, mpg, qsec, vs, wt
 #> 
 #> 🔗  Joins: (None)
 
@@ -156,7 +157,7 @@ network$mtcars$link(fun = add_power_to_weight(data = query(mtcars = c("hp", "wt"
 # whether an already registered function should be updated.
 network$mtcars
 #> 📁 Project: 
-#>    ├ 🌱 Root:am, carb, cyl, disp, drat, gear, hp, mpg, qsec, vs, wt
+#>    ├ 🌱 Root: am, carb, cyl, disp, drat, gear, hp, mpg, qsec, vs, wt
 #>    └ 🛠 Layer 1: power_to_weight
 #> 
 #> 🔗  Joins: (None)
@@ -208,6 +209,7 @@ network
 #> ---
 #> 📊 intro_network 
 #> 
+#> 
 #> 🌲 Projects (2):
 #>    ├📁 mtcars
 #>    │   └  12🌱 | 0🔗 | 0🧩 
@@ -227,6 +229,15 @@ join_engine_details <- function(mtcars, engine) {
 
 network$mtcars$link(join_engine_details(mtcars = query(mtcars = "vs"),
                                         engine = query(engine = "vs")), direction = "one")
+
+network$mtcars
+#> 📁 Project: 
+#>    ├ 🌱 Root: am, carb, cyl, disp, drat, gear, hp, mpg, qsec, vs, wt
+#>    └ 🛠 Layer 1: power_to_weight
+#> 
+#> 🔗 Joins (1):
+#>    ➡️ engine
+#>       └ type, vs
 ```
 
 By default, we create a one-directional join (a left join) from project
@@ -384,11 +395,12 @@ feature:
 ``` r
   network$mtcars
 #> 📁 Project: 
-#>    ├ 🌱 Root:am, carb, cyl, disp, drat, gear, hp, mpg, qsec, vs, wt
+#>    ├ 🌱 Root: am, carb, cyl, disp, drat, gear, hp, mpg, qsec, vs, wt
 #>    └ 🛠 Layer 1: combined_label, mean_hp_per_gear, power_to_weight
 #> 
 #> 🔗 Joins (1):
 #>    ➡️ engine
+#>       └ type, vs
 ```
 
 ## States
