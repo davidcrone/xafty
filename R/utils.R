@@ -11,6 +11,8 @@ print.xafty_network <- function(x, ...) {
   cat("---\n")
   cat("\U1F4CA", network_name, "\n")
   cat("\n")
+  print_states(network = x)
+  cat("\n")
   cat("\U1F332 ", "Projects (", length(projects), "):\n", sep = "")
 
   if(length(projects) == 0) {
@@ -23,12 +25,36 @@ print.xafty_network <- function(x, ...) {
   }
 }
 
+print_states <- function(network) {
+  states <- network$states
+  state_names <- names(states)
+  n_states <- length(states)
+  if(n_states == 0) return(invisible(NULL))
+  emoji <- "\u2699\uFE0F"
+  indent <- "  "
+  cat(emoji, " ", "States (", n_states, "):\n", sep = "")
+  for (name in state_names) {
+    is_last_state <- name == state_names[n_states]
+    if(!is_last_state) {
+      navigate <- " \u251C" # unclosed project with
+    } else {
+      navigate <- " \u2514"
+    }
+    state <- states[[name]]
+    info_title <- if(is.null(state$title)) "" else paste0(": ", state$title)
+    info_default <- if(is.null(state$default)) "NULL" else paste0(state$default)
+    print_state <- paste0(" ", name, info_title, " (default: ", info_default, ")")
+    cat(indent, navigate, print_state, "\n", sep = "")
+  }
+}
+
 print_project_summary <- function(project, network) {
   df_print <- network$settings$projects$print_order
   df_print_project <- df_print[df_print$project == project, ]
   project_env <- network[[project]]
   variables <- names(project_env$ruleset$nodes$variables)
   contexts <- names(project_env$ruleset$contexts)
+  joins <- names(project_env$ruleset$nodes$joins)
 
   is_last_project <- which(df_print$project == project) == nrow(df_print)
 
@@ -42,7 +68,7 @@ print_project_summary <- function(project, network) {
   }
 
   print_variables <- paste0(length(variables), "\U1F331")
-  print_joins <- paste0(length(project_env$joined_projects), "\U1F517")
+  print_joins <- paste0(length(joins), "\U1F517")
   print_contexts <- paste0(length(contexts), "\U1F9E9")
 
   info_contents <- paste0(c(print_variables, print_joins, print_contexts), collapse = " | ")

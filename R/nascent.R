@@ -77,6 +77,21 @@ get_join_functions <- function(from, to, network, sm, state_list = NULL) {
   link
 }
 
+get_affect_projects_by_join <- function(changed, network) {
+  full_graph <-   remove_empty_lists(build_full_join_graph(network = network))
+  projects_graph <- names(full_graph)
+  projects <- projects_graph[!projects_graph %in% changed]
+  affected <- vapply(projects, \(project) length(bfs_traversal(graph = full_graph, start = project, end = changed)) > 0, FUN.VALUE = logical(1))
+  projects[affected]
+}
+
+build_full_join_graph <- function(network) {
+  names_network <- names(network)
+  projects <- names_network[vapply(names_network, \(project) is.environment(network[[project]]), FUN.VALUE = logical(1))]
+  project_pairs <- sapply(projects, \(project) names(network[[project]]$ruleset$nodes$joins), simplify = FALSE, USE.NAMES = TRUE)
+  project_pairs
+}
+
 build_join_graph <- function(main_project, network) {
   graph <- build_centered_graph(queue = main_project, network = network)
   graph <- remove_empty_lists(graph)

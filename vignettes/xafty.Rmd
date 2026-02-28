@@ -158,6 +158,8 @@ join_engine_details <- function(mtcars, engine) {
 
 network$mtcars$link(join_engine_details(mtcars = query(mtcars = "vs"),
                                         engine = query(engine = "vs")), direction = "one")
+
+network$mtcars
 ```
 
 By default, we create a one-directional join (a left join) from project engine to mtcars using the link function in the mtcars project. If we want to establish a bi-directional join (for example, an inner join), we must set the direction parameter of the link function to "both".

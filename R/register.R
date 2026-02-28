@@ -121,6 +121,7 @@ add_to_network <- function(link, project, network, ...) {
       joins_to <- names(network[[to]]$ruleset$nodes$joins)
 
       network[[from]]$ruleset$nodes$joins[[to]] <- list(link = link)
+      network <- update_print_join_graph(changed = from, network = network)
       if(!is.null(.dots[["direction"]])) {
         if(.dots[["direction"]] == "both") {
           if(length(variables) == 0) {
@@ -132,6 +133,7 @@ add_to_network <- function(link, project, network, ...) {
           link_to <- link
           link_to$project <- to
           network[[to]]$ruleset$nodes$joins[[from]] <- list(link = link_to)
+          network <- update_print_join_graph(changed = to, network = network)
         }
       }
     }
@@ -156,12 +158,17 @@ add_to_network <- function(link, project, network, ...) {
     }
   }
 
-  if(length(network[[project]]$ruleset$nodes$joins)) {
+  invisible(network)
+}
+
+update_print_join_graph <- function(changed, network) {
+  affected <- get_affect_projects_by_join(changed = changed, network = network)
+  updates <- c(changed, affected)
+  for (project in updates) {
     centered_graph <- build_join_graph(main_project = project, network = network)
     network[[project]]$ruleset$graph <- build_exported_variables(project = project, graph = centered_graph, network = network)
   }
-
-  invisible(network)
+  network
 }
 
 #' Get the Package Name of a Function
