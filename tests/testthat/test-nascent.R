@@ -475,7 +475,7 @@ test_that("Simple where filter can be nascented and filters NA values", {
   expect_identical(data$name, c("Alice", "Diana"))
 })
 
-test_that("join_dependencies can be resolved as delat adding joins to the join path instead of rewriting it", {
+test_that("join_dependencies can be resolved by adding joins to the join path instead of rewriting it", {
   join_func <- function(join, other) {
     merge(join, other, by = "id", all.x = TRUE)
   }
@@ -490,4 +490,25 @@ test_that("join_dependencies can be resolved as delat adding joins to the join p
   test_data <- query(join3 = "id", join2 = "name") |> nascent(network)
   exp_data <- data.frame(id = 1:5, name = c("Alice", "Bob", "Charlie", "Diana", "Eve"))
   expect_identical(test_data, exp_data)
+})
+
+test_that("resolve on_exit can be done iterativly avoiding cycles created when a context needs a variable with another context", {
+  pass_through3 <- pass_through2 <- pass_through
+  test_add_car_color2 <- function(data) {
+    data$Car_Color2 <- c("Silver", "Black", "Blue_Grey")
+    data
+  }
+  network <- init_network("test", projects = c("wrapper"))
+  network$wrapper$link(test_get_car_data(conn = TRUE))
+  network$wrapper$add_context("reorder", on_entry = pass_through3(data = "{.data}"), on_exit = pass_through(data = "{.data}"))
+  network$wrapper$link(test_add_car_color(data = query(wrapper = c("Has_Drivers_License", "Name", "Car"))), attach_context = "reorder")
+  network$wrapper$link(test_add_car_color2(data = query(wrapper = c("Has_Drivers_License", "Name", "Car"))), attach_context = "reorder")
+
+  # Context B: depends on output from context A (uses {.data} which includes Tries from context A's function)
+  network$wrapper$add_context("transform", on_entry = pass_through2(data = query(wrapper = "Car_Color2")))
+  network$wrapper$link(add_tries_data_license(data = query(wrapper = c("Name"))), attach_context = "transform")
+
+  test_data <- nascent(query(wrapper = c("Car_Color", "Tries")), network)
+  # Verify both contexts applied correctly in proper order
+  expect_equal(test_data$Tries, c(5L, 1L, 2L))
 })

@@ -10,7 +10,6 @@ print.xafty_network <- function(x, ...) {
   projects <- x$settings$projects$print_order$project
   cat("---\n")
   cat("\U1F4CA", network_name, "\n")
-  cat("\n")
   print_states(network = x)
   cat("\n")
   cat("\U1F332 ", "Projects (", length(projects), "):\n", sep = "")
@@ -32,6 +31,7 @@ print_states <- function(network) {
   if(n_states == 0) return(invisible(NULL))
   emoji <- "\u2699\uFE0F"
   indent <- "  "
+  cat("\n")
   cat(emoji, " ", "States (", n_states, "):\n", sep = "")
   for (name in state_names) {
     is_last_state <- name == state_names[n_states]
@@ -252,7 +252,7 @@ build_on_entry_node <- function(link, network, dag) {
   # Adds foreign project nodes that wrapper nodes depend on; unique is necessary since the package toposort cannot work with
   # duplicated dependencies in a single node
   foreign_deps <- unique(get_all_non_project_codes(project = project, codes = project_dag))
-  # removes foreign nodes that depend on wrapper nodes, avoids cycles
+  # removes foreign nodes that depend on nodes inside the context, avoids cycles
   wrapper_node_deps <- filter_targets_without_prefix(project = project, targets = foreign_deps, dag = dag)
   deps <- unique(c(on_entry_node[[on_entry_code]], wrapper_node_deps))
   node <- setNames(list(deps), on_entry_code)
@@ -274,7 +274,6 @@ build_on_exit_node <- function(link, network, dag) {
   on_exit_codes <- paste0(project, ".", on_exit_funcs)
   pos <- which(on_exit_code == on_exit_codes) - 1
   if(pos == 0) exit_deps <- character(0) else exit_deps <- on_exit_codes[1:pos]
-
   deps <- unique(c(on_exit_node[[on_exit_code]], deps_project, exit_deps))
   node <- setNames(list(deps), on_exit_code)
   list(

@@ -318,6 +318,8 @@ resolve_on_exit <- function(group, project, network, dag_sm, state_list) {
   if(is.null(func_names)) return(NULL)
   links <- lapply(func_names, \(func_name) network[[project]]$ruleset$contexts[[group]]$on_exit[[func_name]]$link)
   dag <- dag_sm$get_codes()
+  # Removes the on_exit variables from dag on possible recursive iteration to avoid cyclic dependency
+  dag <- dag[!names(dag) %in% vapply(links, build_fun_code, character(1))]
   for (i in seq_along(links)) {
     link <- links[[i]]
     node <- build_on_exit_node(link = link, network = network, dag = dag)

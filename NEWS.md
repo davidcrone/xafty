@@ -1,3 +1,9 @@
+# xafty 0.4.2
+
+## Bugfixes
+
+* Fixed a bug where recursive dependency resolution for on_exit nodes would create a cycle
+
 # xafty 0.4.1
 
 ## New Features
