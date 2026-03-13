@@ -85,7 +85,7 @@ create_add_group <- function(project, network) {
 create_add_context <- function(project, network) {
   force(project)
   force(network)
-  add_context <- function(name, on_entry = NULL, on_exit = NULL, overwrite = FALSE, ...) {
+  add_context <- function(name, on_entry = NULL, on_exit = NULL, update = FALSE, ...) {
     enquo_on_exit <- rlang::enquo(on_exit)
     on_exit <- rlang::quo_get_expr(enquo_on_exit)
     enquo_on_entry <- rlang::enquo(on_entry)
@@ -93,11 +93,11 @@ create_add_context <- function(project, network) {
     if(is.null(on_entry) & is.null(on_exit)) stop("Please provide an on_entry or an on_exit function")
     if(!is.null(on_entry)) {
       register(quosure = enquo_on_entry, link_type = "context", func_type = "entry", network = network,
-               project = project, name = name,  overwrite = overwrite, ...)
+               project = project, name = name,  update = update, ...)
     }
     if(!is.null(on_exit)) {
       register(quosure = enquo_on_exit, link_type = "context", func_type = "exit", network = network,
-               project = project, name = name, overwrite = overwrite, ...)
+               project = project, name = name, update = update, ...)
     }
   }
   add_context

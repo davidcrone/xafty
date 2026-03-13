@@ -1,5 +1,10 @@
 # xafty 0.4.2
 
+## New Features
+
+* Context pollution now raises a warning upon registering a node that leads to a polluted context
+* An error is now raised when attempting to register a node with a context that is not yet present in the network
+
 ## Bugfixes
 
 * Fixed a bug where recursive dependency resolution for on_exit nodes would create a cycle

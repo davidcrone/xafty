@@ -16,7 +16,6 @@ clean_wrapper <- function(project, group, order, dag, contexts, network) {
   if(all(is_project_sub)) return(order)
   entry_nodes <- if (!is.null(entry_funcs)) paste0(prefix, entry_funcs) else character(0)
   exit_nodes  <- if (!is.null(exit_funcs))  paste0(prefix, exit_funcs)  else character(0)
-
   # Handle on exit nodes which may depend on a foreign function
   li_classified <- classify_foreign_dependencies(project = project,
                                                  group = group,

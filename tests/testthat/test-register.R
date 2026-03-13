@@ -220,20 +220,35 @@ test_that("Updating a link with a group removed correctly deletes the variables 
 })
 
 test_that("Adding a polluted on_exit context node informs the user with a warning", {
-  skip("Need to find a good way to test for pollution when registering an on exit function")
+  add_score_category2 <- add_score_category
   pass_through2 <- pass_through
-  test_network <- init_network("test_network", projects = c("customer_data", "polluted"))
-  test_network$customer_data$get(get_sample_data())
-  test_network$polluted$on_entry(pass_through(data = "{.data}"))
-  test_network$polluted$add(add_score_category(data = query(customer_data = "score")))
-  test_network$customer_data$add(add_score_category(data = query(customer_data = "score", polluted = "category")), vars = "category")
-  expect_warning(test_network$polluted$on_exit(pass_through2(data = query(customer_data  = "category"))))
+  test_network <- init_network("test_network", projects = c("customer_data"))
+  test_network$customer_data$link(get_sample_data())
+  test_network$customer_data$add_context("polluted", on_entry = pass_through(data = "{.data}"))
+  test_network$customer_data$link(add_score_category2(data = query(customer_data = "score")), vars = "category2", attach_context = "polluted")
+  test_network$customer_data$link(add_score_category(data = query(customer_data = "category2")), vars = "category")
+
+  expect_warning(test_network$customer_data$add_context("polluted", on_entry = pass_through(data = "{.data}"),
+                                                                    on_exit = pass_through2(data = query(customer_data = "category")), update = TRUE)
+                 )
 })
 
-test_that("Register detects a cycle, when a dependency of the context is attached to the dependency", {
+test_that("Polluting a context upon updating a dependency throws a warning", {
   skip("Not implemented yet!")
+  add_score_category2 <- add_score_category
+  pass_through2 <- pass_through
+  test_network <- init_network("test_network", projects = c("customer_data"))
+  test_network$customer_data$link(get_sample_data())
+  test_network$customer_data$link(add_score_category(data = query(customer_data = "score")), vars = "category")
+  test_network$customer_data$add_context("polluted", on_entry = pass_through(data = "{.data}"), on_exit = pass_through2(data = query(customer_data = "category")))
+  test_network$customer_data$link(add_score_category2(data = query(customer_data = "score")), vars = "category2", attach_context = "polluted")
+  expect_warning(
+    test_network$customer_data$link(add_score_category(data = query(customer_data = c("score", "category2"))), vars = "category", update = TRUE)
+  )
+})
+
+test_that("Register raises an error when a node is registered with context that has not yet been added to the network", {
   on_entry_network <- init_network("on_entry", projects = c("cars"))
   on_entry_network$cars$link(test_get_car_data(conn = TRUE))
-  on_entry_network$cars$on_entry(reorder_cars_by_color(cars = query(cars = "Car_Color")), group = "group")
-  on_entry_network$cars$link(test_add_car_color(data = query(cars = c("Has_Drivers_License", "Name", "Car"))), group = "group")
+  expect_error(on_entry_network$cars$link(test_add_car_color(data = query(cars = c("Has_Drivers_License", "Name", "Car"))), attach_context = "group"))
 })

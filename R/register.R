@@ -15,6 +15,8 @@ register <- function(quosure, project, network, link_type, ...) {
   add_to_settings(link = link, network = network, ... = ...)
   add_to_ruleset(link = link, network = network, ... = ...)
   add_to_network(link = link, project = project, network = network, ... = ...)
+  # Check for polluted context
+  check_polluted_context(link = link, network = network)
   invisible(network)
 }
 
@@ -311,6 +313,22 @@ unpack_query <- function(args) {
 }
 
 validate_network_integrity <- function(link, network) {
+  check_context_presence(link = link, network = network)
+  check_query_presence(link = link, network = network)
+}
+
+check_context_presence <- function(link, network) {
+  if(length(link$context) == 0 || inherits(link, "context_link")) return(invisible(TRUE))
+  project <- link$project
+  context_name <- link$context
+  context <- network[[project]]$ruleset$contexts[[context_name]]
+  if(is.null(context)) stop(paste0("Node ", link$fun_name, " was attached to context '", context_name,
+                                   "' but context '", context_name, "' has yet not been created in project '", link$project, "'.",
+                                   "Please create the context first, before attaching it to nodes."))
+  invisible(TRUE)
+}
+
+check_query_presence <- function(link, network) {
   queries <- get_queries(link, temper = TRUE, network = network)
   if(length(queries) <= 0) return(invisible(TRUE))
   flat_queries <- flatten_list(queries)
@@ -333,6 +351,37 @@ validate_query <- function(name, project, network) {
     stop(paste0("Variable: ", name, " is not contained in project: ", project))
   }
   invisible(TRUE)
+}
+
+check_polluted_context <- function(link, network) {
+  if(length(link$context) <= 0) return(invisible(TRUE))
+  project <- link$project
+  context <- link$context
+  if(link$type == "exit") {
+    exit_query <- get_queries(link)
+  } else {
+    exit_link <- network[[project]]$ruleset$contexts[[context]]$on_exit$link
+    if(is.null(exit_link)) return(invisible(TRUE))
+    exit_query <- get_queries(exit_link)
+  }
+  if(length(exit_query) == 0) return(invisible(TRUE))
+  exit_node <- build_fun_code(link)
+  dag <- build_dag(exit_query[[1]], network)
+  order <- dag$execution_order
+  prefix <- paste0(context, ".", project, ".")
+  is_project <- which(startsWith(order, prefix))
+  if(length(is_project) == 0) return(invisible(TRUE))
+  start_pos <- min(is_project)
+  end_pos <- max(is_project)
+  projects_extract <- order[start_pos:end_pos]
+  li_classified <- classify_foreign_dependencies(project = project,
+                                                 group = context,
+                                                 dag = dag$dag[projects_extract],
+                                                 targets = exit_node,
+                                                 contexts = NULL,
+                                                 stop_at = character(0),
+                                                 network = network)
+  if(length(li_classified$pollution)) warning(paste0("Created polluted context for ", context)) else return(invisible(TRUE))
 }
 
 determine_link_type <- function(args, link_type) {
