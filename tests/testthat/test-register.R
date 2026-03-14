@@ -16,14 +16,14 @@ test_that("Register builds a add node in the network environment correctly", {
     data.frame(a = c(1:10),
                b = sample(c("1", "2", "3"), size = 10, replace = TRUE))
   }
-  test_add_function <- function(arg1) {
+  test_add_function <- function(arg1, arg2) {
     arg1$c <- rep(c("value1", "value2"), 5, each = TRUE)
     arg1
   }
   project_env <- init_network(name = "project_env")
   project_env$add_project("test")
   project_env$test$link(test_get_function(arg1 = list(1, 2), arg2 = TRUE, comment = "clear", 1:3))
-  project_env$test$link(test_add_function(arg1 = test_get_function()), update = TRUE)
+  project_env$test$link(test_add_function(arg1 = test_get_function(), arg2 = query(test = c("a", "b"))), update = TRUE)
   expect_equal(names(get_all_variables(project = "test", network = project_env)), c("a", "b", "c"))
   expect_equal(get_all_variables(project = "test", network = project_env)[["c"]], "test_add_function")
 })
@@ -47,7 +47,7 @@ test_that("Register builds a join node in the network environment correctly", {
   project_env <- init_network(name = "project_env")
   project_env$add_project("test")
   project_env$test$link(test_get_function(arg1 = list(1, 2), arg2 = TRUE, comment = "clear", 1:3), vars = c("a", "b"))
-  project_env$test$link(test_add_function(arg1 = test_get_function()), update = TRUE)
+  project_env$test$link(test_add_function(arg1 = query(test = c("a", "b"))), update = TRUE)
 
   project_env$add_project("test2")
   project_env$test2$link(test2_get_function())
@@ -251,4 +251,13 @@ test_that("Register raises an error when a node is registered with context that 
   on_entry_network <- init_network("on_entry", projects = c("cars"))
   on_entry_network$cars$link(test_get_car_data(conn = TRUE))
   expect_warning(on_entry_network$cars$link(test_add_car_color(data = query(cars = c("Has_Drivers_License", "Name", "Car"))), attach_context = "group"))
+})
+
+test_that("Registering the same variable name in the same project through different nodes, raises an error", {
+  test_add_car_color2 <- test_add_car_color
+  network <- init_network("network", projects = "cars")
+  network$cars$link(test_get_car_data(conn = TRUE))
+  network$cars$link(test_add_car_color(data = query(cars = "Car")))
+  expect_error(network$cars$link(test_add_car_color2(data = query(cars = "Car"))))
+  expect_no_error(network$cars$link(test_get_car_data(conn = TRUE), update = TRUE))
 })

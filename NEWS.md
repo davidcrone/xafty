@@ -2,6 +2,7 @@
 
 ## New Features
 
+* An error is now raised upon registering a new node that adds the same variable names to the project
 * A warning is now raised upon registering a node that creates to a polluted context
 * A warning is now raised when attempting to register a node with a context that is not yet present in the network
 

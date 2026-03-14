@@ -11,7 +11,7 @@
 #' @export
 register <- function(quosure, project, network, link_type, ...) {
   link <- create_link(quosure = quosure, project = project, link_type = link_type, network = network, ... = ...)
-  validate_network_integrity(link = link, network = network)
+  validate_network_integrity(link = link, network = network, ... = ...)
   add_to_settings(link = link, network = network, ... = ...)
   add_to_ruleset(link = link, network = network, ... = ...)
   add_to_network(link = link, project = project, network = network, ... = ...)
@@ -312,12 +312,14 @@ unpack_query <- function(args) {
   }, simplify = FALSE, USE.NAMES = TRUE)
 }
 
-validate_network_integrity <- function(link, network) {
+validate_network_integrity <- function(link, network, ...) {
+  check_variable_duplicates(link = link, network = network)
   check_context_presence(link = link, network = network)
   check_query_presence(link = link, network = network)
 }
 
 check_context_presence <- function(link, network) {
+  # Only check when node is a query link and has a context attached to it
   if(length(link$context) == 0 || inherits(link, "context_link")) return(invisible(TRUE))
   project <- link$project
   context_name <- link$context
@@ -338,6 +340,24 @@ check_query_presence <- function(link, network) {
       validate_query(name = col, project = project, network = network)
     }
   }
+}
+
+check_variable_duplicates <- function(link, network) {
+  if(length(link$variables) == 0) return(invisible(TRUE))
+  project <- link$project
+  added <- link$variables
+  current <- names(network[[project]]$ruleset$nodes$variables)
+  exist <- added[added %in% current]
+  if(length(exist) == 0) return(invisible(TRUE))
+  fun_exist <- vapply(exist, \(var) network[[project]]$ruleset$nodes$variables[[var]], FUN.VALUE = character(1))
+  fun_added <- link$fun_name
+  duplicates <- fun_exist[!fun_exist == fun_added]
+  if(length(duplicates) > 0) {
+    vec_error <-  paste0("Variable: '", names(duplicates), "' is already added through node: '", duplicates, "'")
+    error <- paste0(vec_error, collapse = "\n  ")
+    stop(error)
+  }
+  invisible(TRUE)
 }
 
 validate_query <- function(name, project, network) {
