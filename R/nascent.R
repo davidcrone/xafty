@@ -37,14 +37,13 @@ build_query_dag <- function(globals, network) {
     links = dag_sm$get("links"),
     dag = dag_sm$get("codes")[execution_order],
     query = dag_sm$get("query"),
+    states = dag_sm$get("states"),
     execution_order = execution_order,
     start_query = globals$internal,
     order_query = globals$order,
     where_query = globals$where,
     join_path = dag_sm$get_join_path(),
-    masked_columns = dag_sm$get("masks"),
-    network_states = dag_sm$get("states"),
-    query_states = globals$states
+    masked_columns = dag_sm$get("masks")
   )
   class(dag) <- c("list", "query_dag")
   dag
@@ -182,9 +181,9 @@ get_chatty_link_from_network <- function(name, project, network) {
   get_link(name = func_name, project = project, network = network)
 }
 
-execute_stack <- function(link, mask, data_sm, default_states) {
+execute_stack <- function(link, mask, data_sm) {
   projects <- unique(c(link$project, get_lead_projects(link, which = "xafty_query")))
-  executable_args <- build_executable_args(link = link, data_sm = data_sm, mask = mask, default_states = default_states)
+  executable_args <- build_executable_args(link = link, data_sm = data_sm, mask = mask)
   # Doing this to avoid too much memory use, is this necessary?
   for (project in projects) {
     if(!is.null(data_sm$get_data_key(project))) {
@@ -220,15 +219,14 @@ execute_stack <- function(link, mask, data_sm, default_states) {
 #' @export
 evaluate_dag <- function(dag) {
   data_sm <- data_sm()
-  data_sm <- set_states(states = dag$query_states, data_sm = data_sm)
+  data_sm <- set_states(states = dag$states, data_sm = data_sm)
   links <- dag$links
   execution_order <- dag$execution_order
   mask <- dag$masked_columns
-  default_states <- dag$network_states
   for (i in seq_along(execution_order)) {
     code <- execution_order[i]
     link <- links[[code]]
-    execute_stack(link = link, mask = mask, data_sm = data_sm, default_states = default_states)
+    execute_stack(link = link, mask = mask, data_sm = data_sm)
   }
   data_key <- get_data_key(data_sm = data_sm, dag = dag)
   data <- data_sm$get_data_by_key(data_key)

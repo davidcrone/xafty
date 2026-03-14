@@ -170,6 +170,7 @@ create_add_state <- function(network) {
       test_name <- name
     }
     if(!is_state_variable(test_name)) stop("Please enter a valid state name")
+    if(name == "xafty_global_default") stop("Variable name 'xafty_global_default' is reserved, please choose another name for your state.")
     existing_states <- names(network$states)
     state_exists <- name %in% existing_states
     user_choice <- "y"

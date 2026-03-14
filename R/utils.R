@@ -377,7 +377,7 @@ get_join_project <- function(link) {
   joins_to
 }
 
-build_executable_args <- function(link, data_sm, mask, default_states) {
+build_executable_args <- function(link, data_sm, mask) {
   args <- link$args
   executable_args <- list()
   object_types <- get_xafty_objects_vec(link)
@@ -393,7 +393,6 @@ build_executable_args <- function(link, data_sm, mask, default_states) {
     } else if (xo == "xafty_state") {
       name <- args[[arg_name]]
       data <- data_sm$get_state(name)
-      if(is.null(data)) data <- get_default_state(name = name, network_env = default_states)
     } else if (xo == "none_xafty_object") {
       data <- args[[arg_name]]
     }
@@ -576,16 +575,11 @@ get_link <- function(name, project, network) {
 build_states <- function(states, network) {
   # Prio 1 states set during query
   prio1 <- names(states)
-
   # Prio 2 states from network
   prio2 <- names(network$states)
   prio2 <- prio2[!prio2 %in% prio1]
-
   states2 <- sapply(prio2, \(name) network$states[[name]]$default, simplify = FALSE, USE.NAMES = TRUE)
-
   states <- append(states, states2)
-
-  # TODO: Prevent User from setting a state named 'xafty_global_default'
   states$xafty_global_default <- network$settings$state$global_default
   states
 }

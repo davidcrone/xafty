@@ -41,7 +41,9 @@ data_sm <- function() {
     if(is_curly_character(name)) {
       name <- get_braced_variable(name)
     }
-    state_env$states[[name]]
+   state <- state_env$states[[name]]
+   if(is.null(state)) return(state_env$states$xafty_global_default)
+   state
   }
 
   list(
