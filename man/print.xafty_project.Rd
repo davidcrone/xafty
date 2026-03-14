@@ -12,5 +12,7 @@
 \item{...}{further arguments passed to or from other methods.}
 }
 \description{
-S3 method to print a xafty network.
+S3 method to print a xafty network. Variables can be organized into groups;
+grouped variables are displayed separately while maintaining layer hierarchy within each group.
+Ungrouped variables are displayed using the traditional layer-based organization.
 }

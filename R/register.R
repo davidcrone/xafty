@@ -11,7 +11,8 @@
 #' @param link_type The link_type name of the rulset. Currently "link" and "object" are supported
 #' @param ... Configurations and advanced use when registering a new link. Notable options:
 #'   - `group` (character): Assign the resulting variables to an organizing group for printing purposes.
-#'     If the group doesn't exist, it will be created automatically.
+#'     If the group doesn't exist, it will be created automatically. Updating the node with group set
+#'     to NULL will remove the variables from any previously assigned group.
 #'   - `attach_context` (character): Attach the node to a context wrapper.
 #'   - `update` (logical): Whether to update if the function is already registered.
 #'   - `direction` (character): For joins, "one" or "both" for bidirectional registration.

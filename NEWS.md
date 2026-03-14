@@ -2,6 +2,7 @@
 
 ## New Features
 
+* Printing a project now also will print variables sorted into groups using the group parameter when linking a node
 * An error is now raised upon registering a new node that adds the same variable names to the project
 * An error is now raised when attempting to register a state named 'xafty_global_default'
 * A warning is now raised upon registering a node that creates to a polluted context
