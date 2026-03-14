@@ -259,13 +259,10 @@ resolve_on_entry <- function(group, project, network, dag_sm) {
   if(is.null(func_names)) return(NULL)
   dag <- dag_sm$get("codes")
   links <- lapply(func_names, \(func_name) network[[project]]$ruleset$contexts[[group]]$on_entry[[func_name]]$link)
+  dag <- dag[!names(dag) %in% vapply(links, build_fun_code, character(1))]
   for (i in seq_along(links)) {
     link <- links[[i]]
     node <- build_on_entry_node(link = link, network = network, dag = dag)
-    # Following only needs to be done when an argument of the wrapper has {.data}"
-    if(any(has_.data(link))) {
-      link <- build_.data_link(link = link, node = node$node, dag_sm = dag_sm)
-    }
     dag_sm$set_nodes(link = link, code = node)
   }
   on_entry_query_list <- do.call(merge_queries, get_dependend_queries(links))
@@ -321,9 +318,6 @@ resolve_on_exit <- function(group, project, network, dag_sm) {
   for (i in seq_along(links)) {
     link <- links[[i]]
     node <- build_on_exit_node(link = link, network = network, dag = dag)
-    if(any(has_.data(link))) {
-      link <- build_.data_link(link = link, node = node$node, dag_sm = dag_sm)
-    }
     dag_sm$set_nodes(link = link, code = node)
   }
   on_exit_query_list <- do.call(merge_queries, get_dependend_queries(links))

@@ -392,7 +392,12 @@ build_executable_args <- function(link, data_sm, mask) {
       data <- unscope(data = data, link = link, arg_name = arg_name, mask = mask)
     } else if (xo == "xafty_state") {
       name <- args[[arg_name]]
-      data <- data_sm$get_state(name)
+      if(name == "{.data}") {
+        project <- link$project
+        data <- data_sm$get_data(project = project)
+      } else {
+        data <- data_sm$get_state(name)
+      }
     } else if (xo == "none_xafty_object") {
       data <- args[[arg_name]]
     }
@@ -515,31 +520,6 @@ check_link_type <- function(link) {
   if (is_query_link(link)) return("query_link")
   if (is_context_link(link)) return("context_link")
   "unknown_link"
-}
-
-# Checks whether a link argument has {.data}, this is used when the argument simply needs the data without a certain
-# variable
-has_.data <- function(link) {
-  args <- link$args
-  is_character <- vapply(args, \(arg) is.character(arg), FUN.VALUE = logical(1), USE.NAMES = FALSE)
-  char_args <- args[is_character]
-  vapply(char_args, \(arg) arg == "{.data}", FUN.VALUE = logical(1))
-}
-
-build_.data_link <- function(link, node, dag_sm) {
-  # TODO: .data creates a bug when there are the same variable names in different projects
-  dep_codes <- unlist(node, use.names = FALSE)
-  deps_funcs <- dep_codes[!grepl("^join.", dep_codes)]
-  all_links <- dag_sm$get("links")
-  dep_links <- lapply(deps_funcs, \(code) all_links[[code]])
-  dep_queries <- get_supplied_queries(links = dep_links)
-  link$args <- sapply(link$args, \(arg) {
-    if(!is.character(arg)) return(arg)
-    if(all(arg == "{.data}")) {
-      merge_queries(dep_queries)
-    }
-  }, simplify = FALSE, USE.NAMES = TRUE)
-  link
 }
 
 # Returns all Variable Names from a Project

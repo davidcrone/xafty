@@ -1,3 +1,6 @@
+## TODO: Adding remove node from Project and other remove functions
+## TODO: Adding Cycle Detection and Revert Register, when Cycle is detected
+
 
 #' Register a Function in a Network
 #' @description

@@ -252,7 +252,7 @@ test_that("On entry is correctly interweaved into the dag and evaluates properly
   }
   test_network <- init_network(name = "test_network", projects = "customer_data")
   test_network$customer_data$link(get_sample_data())
-  test_network$customer_data$add_context("occupations", on_entry = increase_score(data = "{.data}"))
+  test_network$customer_data$add_context("occupations", on_entry = increase_score(data = query(customer_data = "score")))
   test_network$customer_data$link(add_score_category(data = query(customer_data = "score")), attach_context = "occupations")
 
   test_data <- query(customer_data = c("name", "category")) |> nascent(test_network)
@@ -263,11 +263,11 @@ test_that("On entry is correctly interweaved into the dag and evaluates properly
 })
 
 test_that("Two entry functions are correctly interpolated int the dag and properly evaluated", {
-  increase_score <- function(data = "{.data}") {
+  increase_score <- function(data) {
     data$score <- data$score + 100
     data
   }
-  decrease_score_of_hated_pupil <- function(data = "{.data}") {
+  decrease_score_of_hated_pupil <- function(data) {
     data$score[data$name == "Alice"] <- 10
     data
   }
@@ -275,8 +275,8 @@ test_that("Two entry functions are correctly interpolated int the dag and proper
   test_network$customer_data$link(get_sample_data())
   # Here we added name as a dependency, even though add_score_category does not depends on name, but the function
   # decrease_score_of_hated_pupil does
-  test_network$customer_data$add_context("group", on_entry = increase_score(), on_exit = NULL)
-  test_network$customer_data$add_context("group", on_entry = decrease_score_of_hated_pupil(), on_exit = NULL)
+  test_network$customer_data$add_context("group", on_entry = increase_score(data = query(customer_data = "score")), on_exit = NULL)
+  test_network$customer_data$add_context("group", on_entry = decrease_score_of_hated_pupil(data = query(customer_data = c("score", "name"))), on_exit = NULL)
   test_network$customer_data$link(add_score_category(data = query(customer_data = c("score", "name"))), attach_context = "group")
   test_data <- query(customer_data = "name", customer_data = "category") |> nascent(test_network)
   expected_data <- structure(list(name = c("Alice", "Bob", "Charlie", "Diana", "Eve"),
@@ -286,17 +286,18 @@ test_that("Two entry functions are correctly interpolated int the dag and proper
 })
 
 test_that("On entry is correctly interpolated into the dag and evaluates properly", {
-  increase_score <- function(data = "{.data}") {
+  increase_score <- function(data) {
     data$score <- data$score + 100
     data
   }
-  decrease_score <- function(data = "{.data}") {
+  decrease_score <- function(data) {
     data$score <- data$score - 100
     data
   }
   test_network <- init_network(name = "test_network", projects = c("customer_data"))
   test_network$customer_data$link(get_sample_data())
-  test_network$customer_data$add_context("group", on_entry = increase_score(), on_exit = decrease_score(query(customer_data = "score")))
+  test_network$customer_data$add_context("group", on_entry = increase_score(data = query(customer_data = "score")),
+                                                  on_exit = decrease_score(data = query(customer_data = "score")))
   test_network$customer_data$link(add_score_category(data = query(customer_data = "score")), attach_context = "group")
 
   test_data <- query(customer_data = c("name", "score", "category")) |> nascent(test_network)
@@ -321,17 +322,17 @@ test_that("Both on entry and on exit get data passed to them using {.data}", {
 })
 
 test_that("On entry is correctly interpolated into the dag and evaluates properly", {
-  increase_score <- function(data = "{.data}") {
+  increase_score <- function(data) {
     data$score <- data$score + 100
     data
   }
-  decrease_score <- function(data = "{.data}") {
+  decrease_score <- function(data) {
     data$score <- data$score - 100
     data
   }
   test_network <- init_network(name = "test_network", projects = "customer_data")
   test_network$customer_data$link(get_sample_data())
-  test_network$customer_data$add_context("group", on_entry = increase_score(), on_exit = decrease_score(query(customer_data = "score")))
+  test_network$customer_data$add_context("group", on_entry = increase_score(query(customer_data = "score")), on_exit = decrease_score(query(customer_data = "score")))
   test_network$customer_data$link(add_score_category(data = query(customer_data = "score")), attach_context = "group")
   add_has_passed <- function(data = query(customer_data = "category")) {
     data$has_passed <- ifelse(data$category == "High", TRUE, FALSE)
