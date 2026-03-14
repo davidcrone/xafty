@@ -62,10 +62,13 @@ build_tree <- function(network) {
   tree_env$joins <- list()
   tree_env$contexts <- list()
   tree_env$network$settings <- network$settings
-  tree_env$network$states <- network$states
 
   set_main_project <- function(project) {
     tree_env$main_project <- project
+  }
+
+  initialize_states <- function(states) {
+    tree_env$states <- states
   }
 
   # Nodes of the directed (hopefully) acyclic graph
@@ -134,20 +137,16 @@ build_tree <- function(network) {
     tree_env$masks <- current_masks
   }
 
-  get_network_state <- function() {
-    tree_env$network
-  }
-
   list(
     get = get,
     set_main_project = set_main_project,
+    initialize_states = initialize_states,
     set_nodes = set_nodes,
     set_query = set_query,
     set_join = set_join,
     set_join_path = set_join_path,
     get_join_path = get_join_path,
     set_mask = set_mask,
-    get_network_state = get_network_state,
     resolve_context = resolve_context
   )
 }

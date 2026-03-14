@@ -233,7 +233,6 @@ create_base_link <- function(quosure, project, link_type = NULL, group, context)
 }
 
 link_add_context <- function(link, name, func_type) {
-  # TODO: Need to warn the user when they create a polluted context
   if(is.null(name) || !is_valid_variable_name(match = name)) stop(paste0("Context name '", name,"' is not a valid variable name"))
   link$name <- paste0(name, ".", link$fun_name)
   link$type <- func_type
@@ -261,7 +260,7 @@ link_add_joins <- function(link, network) {
 
 #Get Dependent Joins for Each Argument
 get_join_dependencies <- function(link, network) {
-  queries_raw <- get_queries(link = link, which = "xafty_query", temper = TRUE, network = network)
+  queries_raw <- get_queries(link = link, which = "xafty_query", temper = TRUE, state_list = build_states(states = list(), network = network), network = network)
   # Merging queries here for the edge case when a user duplicates the project, e.g. query(dupe = "col1", b = "col3", dupe = "col2")
   queries <- sapply(queries_raw, merge_queries, simplify = FALSE, USE.NAMES = TRUE)
   args <- names(queries)
@@ -330,7 +329,7 @@ check_context_presence <- function(link, network) {
 }
 
 check_query_presence <- function(link, network) {
-  queries <- get_queries(link, temper = TRUE, network = network)
+  queries <- get_queries(link, temper = TRUE, state_list = build_states(states = list(), network = network), network = network)
   if(length(queries) <= 0) return(invisible(TRUE))
   flat_queries <- flatten_list(queries)
   for (query in flat_queries) {
@@ -349,7 +348,7 @@ check_variable_duplicates <- function(link, network) {
   current <- names(network[[project]]$ruleset$nodes$variables)
   exist <- added[added %in% current]
   if(length(exist) == 0) return(invisible(TRUE))
-  fun_exist <- vapply(exist, \(var) network[[project]]$ruleset$nodes$variables[[var]], FUN.VALUE = character(1))
+  fun_exist <- vapply(exist, \(name) get_function_name(name = name, project = project, network = network), FUN.VALUE = character(1))
   fun_added <- link$fun_name
   duplicates <- fun_exist[!fun_exist == fun_added]
   if(length(duplicates) > 0) {

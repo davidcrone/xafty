@@ -29,9 +29,9 @@ build_dag <- function(query, network, frame = "main") {
 build_query_dag <- function(globals, network) {
   dag_sm <- build_tree(network = network)
   dag_sm$set_main_project(globals$main)
+  dag_sm$initialize_states(globals$states)
   dag_sm <- initialize_join_path(join_path = globals$join_path, network = network, dag_sm = dag_sm)
-  dag_sm <- resolve_dependencies(query_list = globals$internal, state_list = globals$states,
-                                 network = network, dag_sm = dag_sm)
+  dag_sm <- resolve_dependencies(query_list = globals$internal, network = network, dag_sm = dag_sm)
   execution_order <- resolve_function_stack(dag_sm = dag_sm, network = network)
   dag <- list(
     links = dag_sm$get("links"),
@@ -43,7 +43,7 @@ build_query_dag <- function(globals, network) {
     where_query = globals$where,
     join_path = dag_sm$get_join_path(),
     masked_columns = dag_sm$get("masks"),
-    network_states = dag_sm$get_network_state(),
+    network_states = dag_sm$get("states"),
     query_states = globals$states
   )
   class(dag) <- c("list", "query_dag")
@@ -65,9 +65,9 @@ remove_join_helpers <- function(stack_sorted) {
   stack_sorted[!grepl("^join\\.", stack_sorted)]
 }
 
-get_join_functions <- function(from, to, network, sm, state_list = NULL) {
+get_join_functions <- function(from, to, network, sm) {
   link <- network[[from]]$ruleset$nodes$joins[[to]]$link
-  link <- interpolate_link_queries(link = link, state_list = state_list, network = network)
+  link <- interpolate_link_queries(link = link, state_list = sm$get("states"), network = network)
   code <- build_dependency_codes(link = link, network = network)
   sm$set_nodes(link = link, code = code)
   # Here columns that have the same variable names be joined into one variable will be noted in the mask state variable.
@@ -246,18 +246,18 @@ set_states <- function(states, data_sm) {
   data_sm
 }
 
-initialize_join_path <- function(join_path, network, dag_sm, state_list = NULL) {
+initialize_join_path <- function(join_path, network, dag_sm) {
   if(is.null(join_path)) return(invisible(dag_sm))
   dag_sm$set_join_path(join_path)
   # Resolves dependencies of joins and sets nodes in dag
-  links <- join_dependencies(paths = join_path, network = network, dag_sm = dag_sm, state_list = state_list)
+  links <- join_dependencies(paths = join_path, network = network, dag_sm = dag_sm)
   queries <- get_dependend_queries(links)
   query_list <- do.call(merge_queries, queries)
-  dag_sm <- resolve_dependencies(query_list = query_list, network = network, dag_sm = dag_sm, state_list = state_list)
+  dag_sm <- resolve_dependencies(query_list = query_list, network = network, dag_sm = dag_sm)
   invisible(dag_sm)
 }
 
-resolve_on_entry <- function(group, project, network, dag_sm, state_list) {
+resolve_on_entry <- function(group, project, network, dag_sm) {
   func_names <- names(network[[project]]$ruleset$contexts[[group]]$on_entry)
   if(is.null(func_names)) return(NULL)
   dag <- dag_sm$get("codes")
@@ -314,7 +314,7 @@ get_all_non_project_codes <- function(project, codes) {
   codes[!startsWith(codes, prefix)]
 }
 
-resolve_on_exit <- function(group, project, network, dag_sm, state_list) {
+resolve_on_exit <- function(group, project, network, dag_sm) {
   func_names <- names(network[[project]]$ruleset$contexts[[group]]$on_exit)
   if(is.null(func_names)) return(NULL)
   links <- lapply(func_names, \(func_name) network[[project]]$ruleset$contexts[[group]]$on_exit[[func_name]]$link)

@@ -151,6 +151,8 @@ eval_args <- function(link, network) {
 
 evaluate_arg <- function(arg, xo, network) {
   if(xo %in% c("xafty_object", "xafty_query")) {
+    states <- build_states(states = list(), network = network)
+    arg <- interpolate_state_in_query(query_list = arg, state_list = states, network_env = network)
     nascent(arg, network)
   } else if (xo == "xafty_state") {
     get_default_state(name = arg, network_env = network)
@@ -416,7 +418,7 @@ get_lead_project <- function(query_list) {
 
 get_added_variables <- function(link, network) {
   project <- link$project
-  dep_queries <- get_queries(link, temper = TRUE, network = network)
+  dep_queries <- get_queries(link, temper = TRUE, state_list = build_states(states = list(), network = network), network = network)
   input_column_names <- do.call(c, lapply(dep_queries, get_column_order))
   func_output <- execute_function(link = link, network = network)
   output_column_names <- colnames(func_output)
@@ -546,6 +548,7 @@ has_.data <- function(link) {
 }
 
 build_.data_link <- function(link, node, dag_sm) {
+  # TODO: .data creates a bug when there are the same variable names in different projects
   dep_codes <- unlist(node, use.names = FALSE)
   deps_funcs <- dep_codes[!grepl("^join.", dep_codes)]
   all_links <- dag_sm$get("links")
@@ -571,4 +574,21 @@ get_function_name <- function(name, project, network) {
 
 get_link <- function(name, project, network) {
   network[[project]]$ruleset$nodes$links[[name]]
+}
+
+build_states <- function(states, network) {
+  # Prio 1 states set during query
+  prio1 <- names(states)
+
+  # Prio 2 states from network
+  prio2 <- names(network$states)
+  prio2 <- prio2[!prio2 %in% prio1]
+
+  states2 <- sapply(prio2, \(name) network$states[[name]]$default, simplify = FALSE, USE.NAMES = TRUE)
+
+  states <- append(states, states2)
+
+  # TODO: Prevent User from setting a state named 'xafty_global_default'
+  states$xafty_global_default <- network$settings$state$global_default
+  states
 }

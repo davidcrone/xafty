@@ -195,7 +195,9 @@ dots_to_query <- function(network, ...)  {
   } else {
     stop("Could not parse passed query")
   }
-  query_tempered <- temper_query(query_list = query_list, state_list = state_list, network = network)
+  states <- build_states(states = state_list, network = network)
+
+  query_tempered <- temper_query(query_list = query_list, state_list = states, network = network)
   main <- if(is.null(main)) get_lead_project(query_tempered) else main
   query_order <- remove_where_query(query_tempered)
   query_internal <- merge_queries(remove_where_expr(query_tempered))
@@ -204,7 +206,7 @@ dots_to_query <- function(network, ...)  {
     main = main,
     internal = query_internal,
     order = query_order,
-    states = state_list,
+    states = states,
     join_path = join_path,
     where = get_where(query_tempered)
   )
@@ -232,17 +234,20 @@ interpolate_state_in_query <- function(query_list, state_list, network_env) {
   for (i in seq_along(query_list)) {
     query <- query_list[[i]]
     select <- query$select
+    available <- names(state_list)
     contains_state_logical <- vapply(select, contains_state, FUN.VALUE = logical(1), USE.NAMES = FALSE)
     if(!any(contains_state_logical)) next
     position_states <- which(contains_state_logical)
     state_names <- get_braced_variable(select[contains_state_logical])
     for (j in seq_along(state_names)) {
       name <- state_names[j]
-      inter_value <- state_list[[name]]
-      if(is.null(inter_value)) {
-        inter_value <-  get_default_state(name = name, network_env = network_env)
-        if(is.null(inter_value)) inter_value <- ""
+
+      if(name %in% available) {
+        inter_value <- state_list[[name]]
+      } else {
+        inter_value <- state_list$xafty_global_default
       }
+      if(is.null(inter_value)) inter_value <- ""
       pos <- position_states[j]
       variable_name <- select[pos]
       state_pattern <- paste0("{", name, "}")
