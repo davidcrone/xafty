@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">xafty</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,6 +33,22 @@
       <small>Source: <a href="https://github.com/davidcrone/xafty/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.4.2" id="xafty-042">xafty 0.4.2<a class="anchor" aria-label="anchor" href="#xafty-042"></a></h2>
+<div class="section level3">
+<h3 id="new-features-0-4-2">New Features<a class="anchor" aria-label="anchor" href="#new-features-0-4-2"></a></h3>
+<ul><li>Printing a project now also will print variables sorted into groups using the group parameter when linking a node</li>
+<li>An error is now raised upon registering a new node that adds the same variable names to the project</li>
+<li>An error is now raised when attempting to register a state named ‘xafty_global_default’</li>
+<li>A warning is now raised upon registering a node that creates to a polluted context</li>
+<li>A warning is now raised when attempting to register a node with a context that is not yet present in the network</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bugfixes-0-4-2">Bugfixes<a class="anchor" aria-label="anchor" href="#bugfixes-0-4-2"></a></h3>
+<ul><li>Fixed a bug where recursive dependency resolution for on_exit nodes would create a cycle</li>
+<li>Fixed a bug where {.data} would create duplicated column names in the data.frame during evaluation phase</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.4.1" id="xafty-041">xafty 0.4.1<a class="anchor" aria-label="anchor" href="#xafty-041"></a></h2>
 <div class="section level3">

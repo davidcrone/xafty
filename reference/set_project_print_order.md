@@ -51,7 +51,6 @@ print(xafty_network) # Prints Project2 first, then Project1
 #> ---
 #> 📊 change_order 
 #> 
-#> 
 #> 🌲 Projects (2):
 #>    ├📁 Project2
 #>    │   └  0🌱 | 0🔗 | 0🧩 
@@ -67,7 +66,6 @@ set_project_print_order(
 print(xafty_network)
 #> ---
 #> 📊 change_order 
-#> 
 #> 
 #> 🌲 Projects (2):
 #>    ├📁 Project1

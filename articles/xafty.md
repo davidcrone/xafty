@@ -85,7 +85,6 @@ network
 #> ---
 #> 📊 intro_network 
 #> 
-#> 
 #> 🌲 Projects (1):
 #>    └📁 mtcars
 #>        └  11🌱 | 0🔗 | 0🧩
@@ -209,7 +208,6 @@ network
 #> ---
 #> 📊 intro_network 
 #> 
-#> 
 #> 🌲 Projects (2):
 #>    ├📁 mtcars
 #>    │   └  12🌱 | 0🔗 | 0🧩 
@@ -332,6 +330,55 @@ head(data)
 #> 6     3            176.
 ```
 
+### Variable Grouping for Printing
+
+As your network grows with many variables, printing a project can become
+cluttered and hard to navigate. xafty allows you to organize variables
+into semantic groups for cleaner printing. This is distinct from the
+data grouping discussed above - it’s purely an organizational tool for
+understanding the structure of your project.
+
+You can attach variables to groups using the `group` parameter in the
+`link()` function:
+
+``` r
+# Variables can be assigned to groups during linking
+network$mtcars$link(add_power_to_weight(data = query(mtcars = c("hp", "wt"))), 
+                    vars = "power_to_weight", 
+                    group = "performance_metrics", 
+                    update = TRUE)
+
+network$mtcars$link(add_combined_label(data = query(mtcars = "am", engine = "type")), 
+                    group = "labels",
+                    update = TRUE)
+```
+
+When you print a project with grouped variables, they are displayed
+separately from ungrouped variables, maintaining their layer hierarchy
+within each group:
+
+``` r
+network$mtcars
+#> 📁 Project: 
+#>    ├ 🌱 Root: am, carb, cyl, disp, drat, gear, hp, mpg, qsec, vs, wt
+#>    └ 🛠 Layer 1: mean_hp_per_gear
+#> 
+#>    🏷️ performance_metrics
+#>       └ 🛠 Layer 1: power_to_weight
+#> 
+#>    🏷️ labels
+#>       └ 🛠 Layer 1: combined_label
+#> 
+#> 🔗 Joins (1):
+#>    ➡️ engine
+#>       └ type, vs
+```
+
+Groups are created automatically when you first reference them - there’s
+no need to pre-declare them. Groups appear in the output in the order
+they were first used, making it easy to organize your variables by
+semantic meaning, purpose, or transformation stage.
+
 ### Filtering
 
 xafty handles filters through the
@@ -396,7 +443,13 @@ feature:
   network$mtcars
 #> 📁 Project: 
 #>    ├ 🌱 Root: am, carb, cyl, disp, drat, gear, hp, mpg, qsec, vs, wt
-#>    └ 🛠 Layer 1: combined_label, mean_hp_per_gear, power_to_weight
+#>    └ 🛠 Layer 1: mean_hp_per_gear
+#> 
+#>    🏷️ performance_metrics
+#>       └ 🛠 Layer 1: power_to_weight
+#> 
+#>    🏷️ labels
+#>       └ 🛠 Layer 1: combined_label
 #> 
 #> 🔗 Joins (1):
 #>    ➡️ engine

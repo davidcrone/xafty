@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">xafty</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -64,7 +64,14 @@
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Configurations and advanced use when registering a new link</p></dd>
+<dd><p>Configurations and advanced use when registering a new link. Notable options:
+- `group` (character): Assign the resulting variables to an organizing group for printing purposes.
+  If the group doesn't exist, it will be created automatically. Updating the node with group set
+  to NULL will remove the variables from any previously assigned group.
+- `attach_context` (character): Attach the node to a context wrapper.
+- `update` (logical): Whether to update if the function is already registered.
+- `direction` (character): For joins, "one" or "both" for bidirectional registration.
+- `vars` (character vector): Explicitly specify output variable names.</p></dd>
 
 </dl></div>
     <div class="section level2">
