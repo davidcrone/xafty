@@ -12,7 +12,7 @@ dependencies <- function(query_list, network, dag_sm = build_tree()) {
   # The query is merged with queries dag_sm$set_query whose dependencies have already been resolved
   dag_sm$set_query(query_list)
   links <- get_dependend_links(query_list = query_list, network = network)
-  links <- lapply(links, interpolate_link_queries, network = network, state_list = dag_sm$get("states"))
+  links <- lapply(links, interpolate_link_queries, states = dag_sm$get("states"))
   set_nodes(links = links, network = network, dag_sm = dag_sm)
   queries <- get_dependend_queries(links)
   new_query_list <- do.call(merge_queries, queries)

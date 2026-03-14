@@ -205,12 +205,16 @@ create_link <- function(quosure, project, link_type, network, ...) {
   .dots <- list(...)
   link <- create_base_link(quosure = quosure, project = project, link_type = link_type,
                            group = .dots[["group"]], context = .dots[["attach_context"]])
+  raw_args <- link$args
+  states <- build_states(states = list(), network = network)
+  tempered_link <- interpolate_link_queries(link = link, states = states)
   if (link_type == "query") {
-    link <- link_add_variables(link = link, variable_names = .dots[["vars"]], network = network)
+    tempered_link <- link_add_variables(link = tempered_link, variable_names = .dots[["vars"]], network = network)
   } else if (link_type == "context") {
-    link <- link_add_context(link = link, name = .dots[["name"]], func_type = .dots[["func_type"]])
+    tempered_link <- link_add_context(link = tempered_link, name = .dots[["name"]], func_type = .dots[["func_type"]])
   }
-  link <- link_add_joins(link = link, network = network)
+  link <- link_add_joins(link = tempered_link, network = network)
+  link$args <- raw_args
   link
 }
 
@@ -260,7 +264,7 @@ link_add_joins <- function(link, network) {
 
 #Get Dependent Joins for Each Argument
 get_join_dependencies <- function(link, network) {
-  queries_raw <- get_queries(link = link, which = "xafty_query", temper = TRUE, state_list = build_states(states = list(), network = network), network = network)
+  queries_raw <- get_queries(link = link)
   # Merging queries here for the edge case when a user duplicates the project, e.g. query(dupe = "col1", b = "col3", dupe = "col2")
   queries <- sapply(queries_raw, merge_queries, simplify = FALSE, USE.NAMES = TRUE)
   args <- names(queries)
@@ -268,7 +272,8 @@ get_join_dependencies <- function(link, network) {
   list_join_projects <- sapply(args, \(arg) {
     query_list <- queries[[arg]]
     projects <- list_projects[[arg]]
-    logical_vec <- vapply(projects, \(project) project_needs_join(project = project, query_list = query_list, network = network),
+    logical_vec <- vapply(projects, \(project) project_needs_join(project = project, query_list = query_list, network = network,
+                                                                  states = build_states(states = list(), network = network)),
                           FUN.VALUE = logical(1), USE.NAMES = TRUE)
     projects[logical_vec]
   }, simplify = FALSE, USE.NAMES = TRUE)
@@ -329,7 +334,7 @@ check_context_presence <- function(link, network) {
 }
 
 check_query_presence <- function(link, network) {
-  queries <- get_queries(link, temper = TRUE, state_list = build_states(states = list(), network = network), network = network)
+  queries <- get_queries(link, temper = TRUE, states = build_states(states = list(), network = network))
   if(length(queries) <= 0) return(invisible(TRUE))
   flat_queries <- flatten_list(queries)
   for (query in flat_queries) {
@@ -434,7 +439,7 @@ determine_layer <- function(link, network) {
     xafty_vec <- vapply(link$args, find_xafty_objects, FUN.VALUE = character(1))
     arg_name <- names(xafty_vec)[xafty_vec == "xafty_query"]
     states_list <- sapply(network$states, \(state) state$default, simplify = FALSE, USE.NAMES = TRUE)
-    qry <- interpolate_state_in_query(merge_queries(link$args[[arg_name]]), state_list = states_list, network_env = network)
+    qry <- merge_queries(link$args[[arg_name]])
     is_project <- get_projects(qry) %in% project
     if(!any(is_project)) return(1) # impure non root
     ruleset <- network[[project]]$ruleset

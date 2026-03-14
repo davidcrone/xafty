@@ -151,8 +151,6 @@ eval_args <- function(link, network) {
 
 evaluate_arg <- function(arg, xo, network) {
   if(xo %in% c("xafty_object", "xafty_query")) {
-    states <- build_states(states = list(), network = network)
-    arg <- interpolate_state_in_query(query_list = arg, state_list = states, network_env = network)
     nascent(arg, network)
   } else if (xo == "xafty_state") {
     get_default_state(name = arg, network_env = network)
@@ -196,7 +194,7 @@ validate_link_type <- function(link_type, unpacked) {
 }
 
 build_dependency_codes <- function(link, network) {
-  queries <- get_queries(link, which = c("xafty_query"), temper = FALSE)
+  queries <- get_queries(link)
   fun_code <- build_fun_code(link)
   # Early termination of function execution for a root node
   if (length(queries) == 0) {
@@ -302,8 +300,8 @@ on_exit_codes <- function(link, network) {
   unlist(li_on_exit_codes, use.names = FALSE)
 }
 
-interpolate_link_queries <- function(link, state_list = NULL, network) {
-  interpolated_args <- get_queries(link, temper = TRUE, network = network, state_list = state_list)
+interpolate_link_queries <- function(link, states = list()) {
+  interpolated_args <- get_queries(link, temper = TRUE, states = states)
   if(length(interpolated_args) == 0) return(link)
   arg_names <- names(interpolated_args)
   for (arg_name in arg_names) {
@@ -324,14 +322,13 @@ get_xafty_objects_vec <- function(link) {
   xafty_objects_vec
 }
 
-get_queries <- function(link, which = c("xafty_query", "xafty_object"), temper = FALSE, state_list = NULL, network = NULL) {
+get_queries <- function(link, which = "xafty_query", temper = FALSE, states = list()) {
   xafty_objects_vec <- get_xafty_objects_vec(link)
   arg_names_w_query <- names(xafty_objects_vec)[xafty_objects_vec %in% which]
   if(length(arg_names_w_query) <= 0) return(list())
   arg_w_query <- sapply(arg_names_w_query, \(arg_name) link$args[[arg_name]], simplify = FALSE, USE.NAMES = TRUE)
   if (temper) {
-    if(is.null(network)) stop("To temper a query, a network needs to be provided")
-    arg_w_query <- sapply(arg_w_query, interpolate_state_in_query, state_list = state_list, network_env = network,
+    arg_w_query <- sapply(arg_w_query, interpolate_state_in_query, states = states,
                           simplify = FALSE, USE.NAMES = TRUE)
   }
   arg_w_query
@@ -374,7 +371,7 @@ is_state_variable <- function(arg) {
 
 get_join_project <- function(link) {
   from <- link$project
-  query_lists <- get_queries(link, which = "xafty_query")
+  query_lists <- get_queries(link)
   joins <- vapply(query_lists, get_lead_project, character(1), USE.NAMES = FALSE)
   joins_to <- joins[!joins %in% from]
   joins_to
@@ -418,7 +415,7 @@ get_lead_project <- function(query_list) {
 
 get_added_variables <- function(link, network) {
   project <- link$project
-  dep_queries <- get_queries(link, temper = TRUE, state_list = build_states(states = list(), network = network), network = network)
+  dep_queries <- get_queries(link)
   input_column_names <- do.call(c, lapply(dep_queries, get_column_order))
   func_output <- execute_function(link = link, network = network)
   output_column_names <- colnames(func_output)
@@ -516,7 +513,7 @@ get_default_state <- function(name, network_env) {
 }
 
 # Expects merged queries
-project_needs_join <- function(project, query_list, network) {
+project_needs_join <- function(project, query_list, network, states) {
   links <- lapply(query_list, get_links, network = network)
   deps_projects <- names(links)
   # If no project is dependent on the link's project, the link is only dependent on other projects
@@ -524,12 +521,12 @@ project_needs_join <- function(project, query_list, network) {
   if(!project %in% deps_projects) return(FALSE)
   links_ <- links[[project]]
   query_list_ <- lapply(links_, get_queries,
-         which = "xafty_query", temper = TRUE, network = network)
+         which = "xafty_query", temper = TRUE, states = states)
   # Root node reached?
   if(has_empty_list(query_list_)) return(TRUE)
   query_list <- flatten_list(remove_empty_lists(query_list_))
   query_list <- do.call(merge_queries, query_list)
-  project_needs_join(project = project, query_list = query_list, network = network)
+  project_needs_join(project = project, query_list = query_list, network = network, states = states)
 }
 
 check_link_type <- function(link) {

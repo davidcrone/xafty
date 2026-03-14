@@ -1,6 +1,6 @@
 
 scope <- function(data, link, mask) {
-  dependend_args <- get_queries(link, which = "xafty_query", temper = FALSE)
+  dependend_args <- get_queries(link)
   merged_queries <- do.call(merge_queries, dependend_args)
   colnames_dataset <- colnames(data)
   # This part rescopes columns again that were used as the input of the link-function, it also checks the mask object whether a column

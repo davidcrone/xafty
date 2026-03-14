@@ -126,11 +126,11 @@ add_to_state_query <- function(name, what, state_query) {
   state_query
 }
 
-temper_query <- function(query_list, state_list = NULL, network) {
+temper_query <- function(query_list, states = NULL, network) {
   class_input <- class(query_list)
   query_list <- fill_raw_query(query_list = query_list, network = network)
   query_list <- resolve_star_select(query_list = query_list, network_env = network)
-  query_list <- interpolate_state_in_query(query_list = query_list, state_list = state_list, network_env = network)
+  query_list <- interpolate_state_in_query(query_list = query_list, states = states)
   class(query_list) <- class_input
   query_list
 }
@@ -197,7 +197,7 @@ dots_to_query <- function(network, ...)  {
   }
   states <- build_states(states = state_list, network = network)
 
-  query_tempered <- temper_query(query_list = query_list, state_list = states, network = network)
+  query_tempered <- temper_query(query_list = query_list, states = states, network = network)
   main <- if(is.null(main)) get_lead_project(query_tempered) else main
   query_order <- remove_where_query(query_tempered)
   query_internal <- merge_queries(remove_where_expr(query_tempered))
@@ -230,11 +230,11 @@ resolve_star_select <- function(query_list, network_env) {
   }, simplify = FALSE, USE.NAMES = TRUE)
 }
 
-interpolate_state_in_query <- function(query_list, state_list, network_env) {
+interpolate_state_in_query <- function(query_list, states) {
   for (i in seq_along(query_list)) {
     query <- query_list[[i]]
     select <- query$select
-    available <- names(state_list)
+    available <- names(states)
     contains_state_logical <- vapply(select, contains_state, FUN.VALUE = logical(1), USE.NAMES = FALSE)
     if(!any(contains_state_logical)) next
     position_states <- which(contains_state_logical)
@@ -243,9 +243,9 @@ interpolate_state_in_query <- function(query_list, state_list, network_env) {
       name <- state_names[j]
 
       if(name %in% available) {
-        inter_value <- state_list[[name]]
+        inter_value <- states[[name]]
       } else {
-        inter_value <- state_list$xafty_global_default
+        inter_value <- states$xafty_global_default
       }
       if(is.null(inter_value)) inter_value <- ""
       pos <- position_states[j]

@@ -14,16 +14,18 @@ test_that("project_needs_join correctly identifies that a project needs a join "
 
 test_that("A node from project derived from other projects does not need a join", {
   query_list <- query(customer_data = "score", intelligence = "new_column")
-  test_value1 <- project_needs_join(project = "intelligence", network = test_network, query_list = query_list)
-  test_value2 <- project_needs_join(project = "customer_data", network = test_network, query_list = query_list)
+  states <- build_states(states = list(), network = test_network)
+  test_value1 <- project_needs_join(project = "intelligence", network = test_network, query_list = query_list, states = states)
+  test_value2 <- project_needs_join(project = "customer_data", network = test_network, query_list = query_list, states = states)
   expect_identical(test_value1, FALSE)
   expect_identical(test_value2, TRUE)
 })
 
 test_that("Combining a derived variable with a root node variable from the same project correctly identifies the need of a join", {
   query_list <- query(customer_data = "score", intelligence = c("new_column", "intelligence"))
-  test_value1 <- project_needs_join(project = "intelligence", network = test_network, query_list = query_list)
-  test_value2 <- project_needs_join(project = "customer_data", network = test_network, query_list = query_list)
+  states <- build_states(states = list(), network = test_network)
+  test_value1 <- project_needs_join(project = "intelligence", network = test_network, query_list = query_list, states = states)
+  test_value2 <- project_needs_join(project = "customer_data", network = test_network, query_list = query_list, states = states)
   expect_identical(test_value1, TRUE)
   expect_identical(test_value2, TRUE)
 })

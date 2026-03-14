@@ -67,7 +67,7 @@ remove_join_helpers <- function(stack_sorted) {
 
 get_join_functions <- function(from, to, network, sm) {
   link <- network[[from]]$ruleset$nodes$joins[[to]]$link
-  link <- interpolate_link_queries(link = link, state_list = sm$get("states"), network = network)
+  link <- interpolate_link_queries(link = link, states = sm$get("states"))
   code <- build_dependency_codes(link = link, network = network)
   sm$set_nodes(link = link, code = code)
   # Here columns that have the same variable names be joined into one variable will be noted in the mask state variable.
@@ -133,7 +133,8 @@ get_unjoined_projects <- function(dag_sm, network) {
   projects <- get_projects(query_list)
   projects_joined <- unique(unlist(dag_sm$get_join_path()))
   projects_non <- projects[!projects %in% projects_joined]
-  projects_new <- projects_non[vapply(projects_non, project_needs_join, network = network, query_list = query_list, FUN.VALUE = logical(1))]
+  projects_new <- projects_non[vapply(projects_non, project_needs_join, states = dag_sm$get("states"),
+                                      network = network, query_list = query_list, FUN.VALUE = logical(1))]
   projects_new[projects_new != dag_sm$get("main_project")]
 }
 

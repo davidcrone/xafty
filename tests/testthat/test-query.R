@@ -68,7 +68,7 @@ test_that("interpolate_state_in_query correctly fills the select variable with s
   state_query <- query(project1 = c("population.{year}", "overall_population{fromStateQuery}"), project2 = "default.{state}") |>
     with_state(fromStateQuery = 2023)
   states <- build_states(states = state_query$states, network = network_env)
-  query_test <- interpolate_state_in_query(query_list = state_query$query, state_list = states, network_env = network_env)
+  query_test <- interpolate_state_in_query(query_list = state_query$query, states = states)
   query_expected <- query(project1 = c("population.2019", "overall_population2023"), project2 = "default.2020")
   expect_identical(query_test, query_expected)
 })
@@ -79,7 +79,7 @@ test_that("interpolate_state_in_query correctly fills the select variable with t
   network_env$settings$state$global_default <- 2020
   states <- build_states(states = list(), network = network_env)
   query_list <- query(project1 = c("population.{year}", "overall_population"), project2 = "default.{state}")
-  query_test <- interpolate_state_in_query(query_list = query_list, state_list = states, network_env = network_env)
+  query_test <- interpolate_state_in_query(query_list = query_list, states = states)
   query_expected <- query(project1 = c("population.2019", "overall_population"), project2 = "default.2020")
   expect_identical(query_test, query_expected)
 })
@@ -89,7 +89,7 @@ test_that("interpolate_state_in_query correctly fills the select variable with t
   network_env$add_state("year", default = "2019")
   query_list <- query(project1 = "population.{year}_test", project2 = "default{null}", project3 = "overall_population")
   states <- build_states(states = list(), network = network_env)
-  query_test <- interpolate_state_in_query(query_list = query_list, state_list = states, network_env = network_env)
+  query_test <- interpolate_state_in_query(query_list = query_list, states = states)
   query_expected <- query(project1 = "population.2019_test", project2 = "default", project3 = "overall_population")
   expect_identical(query_test, query_expected)
 })
@@ -100,7 +100,7 @@ test_that("interpolate_state_in_query correctly fills the select variable with t
   network_env$settings$state$global_default <- 2020
   query_list <- query(project1 = c("population.{year}", "overall_population"), project2 = "default.{state}", project1 = "population.alive.{year}")
   states <- build_states(states = list(), network = network_env)
-  query_test <- interpolate_state_in_query(query_list = query_list, state_list = states, network_env = network_env)
+  query_test <- interpolate_state_in_query(query_list = query_list, states = states)
   query_expected <- query(project1 = c("population.2019", "overall_population"), project2 = "default.2020", project1 = "population.alive.2019")
   expect_identical(query_test, query_expected)
 })
