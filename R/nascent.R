@@ -34,15 +34,15 @@ build_query_dag <- function(globals, network) {
                                  network = network, dag_sm = dag_sm)
   execution_order <- resolve_function_stack(dag_sm = dag_sm, network = network)
   dag <- list(
-    links = dag_sm$get_links(),
-    dag = dag_sm$get_codes()[execution_order],
-    query = dag_sm$get_query(),
+    links = dag_sm$get("links"),
+    dag = dag_sm$get("codes")[execution_order],
+    query = dag_sm$get("query"),
     execution_order = execution_order,
     start_query = globals$internal,
     order_query = globals$order,
     where_query = globals$where,
     join_path = dag_sm$get_join_path(),
-    masked_columns = dag_sm$get_mask(),
+    masked_columns = dag_sm$get("masks"),
     network_states = dag_sm$get_network_state(),
     query_states = globals$states
   )
@@ -52,9 +52,9 @@ build_query_dag <- function(globals, network) {
 
 resolve_function_stack <- function(dag_sm, network) {
   dag_sm <- build_join_bridges(network = network, dag_sm = dag_sm)
-  dag <- dag_sm$get_codes()
+  dag <- dag_sm$get("codes")
   contexts <- dag_sm$get("contexts")
-  projects <- get_projects(dag_sm$get_query())
+  projects <- get_projects(dag_sm$get("query"))
   stack_sorted <- toposort::topological_sort(dag, dependency_type = "follows")
   stack_prepared <- remove_join_helpers(stack_sorted)
   correct_wrappers <- clean_all_wrappers(wrappers = contexts, order = stack_prepared, dag = dag, network = network)
@@ -129,19 +129,20 @@ build_centered_graph <- function(queue, network, graph = list()) {
 }
 
 get_unjoined_projects <- function(dag_sm, network) {
-  query_list <- dag_sm$get_query()
+  query_list <- dag_sm$get("query")
   projects <- get_projects(query_list)
   projects_joined <- unique(unlist(dag_sm$get_join_path()))
   projects_non <- projects[!projects %in% projects_joined]
   projects_new <- projects_non[vapply(projects_non, project_needs_join, network = network, query_list = query_list, FUN.VALUE = logical(1))]
-  projects_new[projects_new != dag_sm$get_main_project()]
+  projects_new[projects_new != dag_sm$get("main_project")]
 }
 
 greedy_best_first_search <- function(project_add, dag_sm, graph) {
   join_path <- dag_sm$get_join_path()
-  start <- dag_sm$get_main_project()
+  start <- dag_sm$get("main_project")
   linear_path <- bfs_traversal(graph = graph, start = start, end = project_add)
-  if(length(linear_path) == 0) stop(paste0("building a join path is not possible! Project: ", project_add, " is not accessible from project ", dag_sm$get_main_project()))
+  if(length(linear_path) == 0) stop(paste0("building a join path is not possible! Project: ",
+                                           project_add, " is not accessible from project ", dag_sm$get("main_project")))
   unresolved_paths <- get_unresolved_path(new_path = linear_path, join_path = join_path)
   add_to_join_path(new_paths = unresolved_paths, dag_sm = dag_sm)
   unresolved_paths
@@ -259,7 +260,7 @@ initialize_join_path <- function(join_path, network, dag_sm, state_list = NULL) 
 resolve_on_entry <- function(group, project, network, dag_sm, state_list) {
   func_names <- names(network[[project]]$ruleset$contexts[[group]]$on_entry)
   if(is.null(func_names)) return(NULL)
-  dag <- dag_sm$get_codes()
+  dag <- dag_sm$get("codes")
   links <- lapply(func_names, \(func_name) network[[project]]$ruleset$contexts[[group]]$on_entry[[func_name]]$link)
   for (i in seq_along(links)) {
     link <- links[[i]]
@@ -317,7 +318,7 @@ resolve_on_exit <- function(group, project, network, dag_sm, state_list) {
   func_names <- names(network[[project]]$ruleset$contexts[[group]]$on_exit)
   if(is.null(func_names)) return(NULL)
   links <- lapply(func_names, \(func_name) network[[project]]$ruleset$contexts[[group]]$on_exit[[func_name]]$link)
-  dag <- dag_sm$get_codes()
+  dag <- dag_sm$get("codes")
   # Removes the on_exit variables from dag on possible recursive iteration to avoid cyclic dependency
   dag <- dag[!names(dag) %in% vapply(links, build_fun_code, character(1))]
   for (i in seq_along(links)) {

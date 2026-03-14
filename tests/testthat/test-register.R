@@ -250,5 +250,5 @@ test_that("Polluting a context upon updating a dependency throws a warning", {
 test_that("Register raises an error when a node is registered with context that has not yet been added to the network", {
   on_entry_network <- init_network("on_entry", projects = c("cars"))
   on_entry_network$cars$link(test_get_car_data(conn = TRUE))
-  expect_error(on_entry_network$cars$link(test_add_car_color(data = query(cars = c("Has_Drivers_License", "Name", "Car"))), attach_context = "group"))
+  expect_warning(on_entry_network$cars$link(test_add_car_color(data = query(cars = c("Has_Drivers_License", "Name", "Car"))), attach_context = "group"))
 })

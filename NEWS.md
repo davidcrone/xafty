@@ -2,8 +2,8 @@
 
 ## New Features
 
-* Context pollution now raises a warning upon registering a node that leads to a polluted context
-* An error is now raised when attempting to register a node with a context that is not yet present in the network
+* A warning is now raised upon registering a node that creates to a polluted context
+* A warning is now raised when attempting to register a node with a context that is not yet present in the network
 
 ## Bugfixes
 

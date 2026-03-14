@@ -322,9 +322,8 @@ check_context_presence <- function(link, network) {
   project <- link$project
   context_name <- link$context
   context <- network[[project]]$ruleset$contexts[[context_name]]
-  if(is.null(context)) stop(paste0("Node ", link$fun_name, " was attached to context '", context_name,
-                                   "' but context '", context_name, "' has yet not been created in project '", link$project, "'.",
-                                   "Please create the context first, before attaching it to nodes."))
+  if(is.null(context)) warning(paste0("Node ", link$fun_name, " was attached to context '", context_name,
+                                   "' but context '", context_name, "' has not yet been created in project '", link$project, "'"))
   invisible(TRUE)
 }
 

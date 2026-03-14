@@ -7,7 +7,7 @@ resolve_dependencies <- function(query_list, state_list, network, dag_sm = NULL)
 
 dependencies <- function(query_list, state_list = NULL, network, dag_sm = build_tree()) {
   # removes already visited nodes leading to an eventual termination of the recursive function
-  query_list <- prune_query(query_list = query_list, compare = dag_sm$get_query())
+  query_list <- prune_query(query_list = query_list, compare = dag_sm$get("query"))
   if (length(query_list) == 0) return(dag_sm)
   # The query is merged with queries dag_sm$set_query whose dependencies have already been resolved
   dag_sm$set_query(query_list)
@@ -22,7 +22,7 @@ dependencies <- function(query_list, state_list = NULL, network, dag_sm = build_
 resolve_join_dependencies <- function(network, dag_sm, state_list = NULL) {
   projects_new <- get_unjoined_projects(dag_sm = dag_sm, network = network)
   if(length(projects_new) == 0) return(dag_sm)
-  main_project <- dag_sm$get_main_project()
+  main_project <- dag_sm$get("main_project")
   graph <- build_join_graph(main_project = main_project, network = network)
   ## add project to a given join path
   new_paths <- list()
@@ -65,7 +65,7 @@ resolve_wrappers <- function(network, dag_sm, state_list) {
 }
 
 build_join_bridges <- function(network, dag_sm) {
-  list_join_codes <- dag_sm$get_joins()
+  list_join_codes <- dag_sm$get("joins")
   if(length(list_join_codes) == 0) return(dag_sm)
   join_path <- dag_sm$get_join_path()
   li_lookup <- sapply(join_path, \(path) {

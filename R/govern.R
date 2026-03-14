@@ -52,8 +52,7 @@ data_sm <- function() {
     get_projects_by_key = get_projects_by_key,
     get_data_by_key = get_data_by_key,
     set_states = set_states,
-    get_state = get_state,
-    get_projects = get_projects
+    get_state = get_state
   )
 }
 
@@ -67,10 +66,6 @@ build_tree <- function(network) {
 
   set_main_project <- function(project) {
     tree_env$main_project <- project
-  }
-
-  get_main_project <- function() {
-    tree_env$main_project
   }
 
   # Nodes of the directed (hopefully) acyclic graph
@@ -109,28 +104,13 @@ build_tree <- function(network) {
     if(is.null(what)) return(paste0("Available elements: ", paste0(names(tree_env), collapse = ", ")))
     tree_env[[what]]
   }
-  get_codes <- function() {
-    tree_env$codes
-  }
-
-  get_links <- function() {
-    tree_env$links
-  }
 
   set_query <- function(query) {
     tree_env$query <- merge_queries(tree_env$query, query)
   }
 
-  get_query <- function() {
-    tree_env$query
-  }
-
   set_join <- function(id, projects) {
     tree_env$joins[[id]] <- projects
-  }
-
-  get_joins <- function() {
-    tree_env$joins
   }
 
   set_join_path <- function(path) {
@@ -154,10 +134,6 @@ build_tree <- function(network) {
     tree_env$masks <- current_masks
   }
 
-  get_mask <- function() {
-    tree_env$masks
-  }
-
   get_network_state <- function() {
     tree_env$network
   }
@@ -165,18 +141,12 @@ build_tree <- function(network) {
   list(
     get = get,
     set_main_project = set_main_project,
-    get_main_project = get_main_project,
     set_nodes = set_nodes,
-    get_codes = get_codes,
-    get_links = get_links,
-    get_query = get_query,
     set_query = set_query,
     set_join = set_join,
-    get_joins = get_joins,
     set_join_path = set_join_path,
     get_join_path = get_join_path,
     set_mask = set_mask,
-    get_mask = get_mask,
     get_network_state = get_network_state,
     resolve_context = resolve_context
   )
