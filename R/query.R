@@ -164,6 +164,13 @@ get_projects <- function(query) {
   vapply(query, \(q) q$from, FUN.VALUE = character(1), USE.NAMES = FALSE)
 }
 
+get_join_projects <- function(query_list) {
+  li_projects <- lapply(query_list, get_projects)
+  li_unique <- lapply(li_projects, unique)
+  is_one <- vapply(li_unique, \(projs) length(projs) <= 1, FUN.VALUE = logical(1))
+  li_unique[!is_one]
+}
+
 dots_to_query <- function(network, ...)  {
   query_raw <- list(...)
 

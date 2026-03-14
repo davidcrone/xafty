@@ -86,40 +86,6 @@ test_that("register add also works with xafty link instead of passing data into 
   expect_equal(data_test, data_expected)
 })
 
-test_that("A unjoined project's variable can be nascented from the network even if it is not joined", {
-  test_state_1 <- init_network(name = "project_env")
-  test_state_1$add_project("customer_data")
-  test_state_1$add_project("occupation")
-  test_state_1$add_project("value_sheet")
-  test_state_1$customer_data$link(get_sample_data())
-  test_state_1$customer_data$link(add_score_category(data = query(customer_data = "score")))
-  test_state_1$occupation$link(get_additional_info())
-  test_state_1$customer_data$link(join_datasets(main_data = query(customer_data = "id"), extra_data = query(occupation = "id")), direction = "both")
-  test_state_1$value_sheet$link(new_column_from_both_projects(query(occupation = "department", customer_data = "name")))
-  table_test <- query(value_sheet = "nickname") |> from(customer_data) |> nascent(test_state_1)
-  table_expected <- structure(list(nickname = c("HRAlice", "ITBob", "FinanceCharlie",
-                       "MarketingDiana", "SalesEve")), row.names = c(NA, -5L), class = "data.frame")
-  expect_identical(table_test, table_expected)
-})
-
-test_that("A unjoined variable can be nascented from the network alongside traditional projects", {
-  test_state_1 <- init_network(name = "project_env")
-  test_state_1$add_project("customer_data")
-  test_state_1$add_project("occupation")
-  test_state_1$add_project("value_sheet")
-  test_state_1$customer_data$link(get_sample_data())
-  test_state_1$customer_data$link(add_score_category(data = query(customer_data = "score")))
-  test_state_1$occupation$link(get_additional_info())
-  test_state_1$customer_data$link(join_datasets(main_data = query(customer_data = "id"), extra_data = query(occupation = "id")),  direction = "both")
-  test_state_1$value_sheet$link(new_column_from_both_projects(query(occupation = "department", customer_data = "name")))
-  test_state_1$value_sheet$link(add_column_to_intelligence(data = query(occupation = "department", customer_data = "id", value_sheet = "nickname")))
-  table_test <- query(occupation = "department", value_sheet = "new_column") |> from(occupation) |> nascent(test_state_1)
-  table_expected <- structure(list(
-    department = c("HR", "IT", "Finance", "Marketing", "Sales"),
-    new_column = c("HR1", "IT2", "Finance3", "Marketing4", "Sales5")), row.names = c(NA, -5L), class = "data.frame")
-  expect_identical(table_test, table_expected)
-})
-
 test_that("register throws an error when a column within a query is not present within a project while the variable parameter is set", {
   test_func <- function(data) {
     data

@@ -208,17 +208,17 @@ build_dependency_codes <- function(link, network) {
   # This splits queries from object queries which need a different prefix
   function_codes <- unique(unlist(lapply(queries, get_scoped_function_order, network = network)))
   wrapper_codes <- build_on_entry_dependencies(link = link, network = network, fun_code = fun_code)
-  # TODO: link link$joins$projects may need re computation with function: 'project_needs_join' when a variable name has been interpolated
-  #  -> This would also make a differentiation necessary between a link that has been "tampered" with and one who was not
-  join_code <- character(length(link$joins$projects))
+
+  li_joins <- get_join_projects(query_list = queries)
+  join_codes <- character(length(li_joins))
   joins <- list()
-  for (i in seq_along(link$joins$projects)) {
-    projects <- link$joins$projects[[i]]
+  for (i in seq_along(li_joins)) {
+    projects <- li_joins[[i]]
     join_id <- paste0("join.", paste0(sort(projects), collapse = "."))
-    join_code[i] <- join_id
+    join_codes[i] <- join_id
     joins[[join_id]] <- projects
   }
-  link_dependencies <- c(function_codes, join_code, wrapper_codes)
+  link_dependencies <- c(function_codes, join_codes, wrapper_codes)
   node <- setNames(list(link_dependencies), fun_code)
   list(
     node = node,
@@ -509,23 +509,6 @@ get_default_state <- function(name, network_env) {
   state_registered <- name %in% existing_states
   if(!state_registered) return(network_env$settings$state$global_default)
   network_env$states[[name]]$default
-}
-
-# Expects merged queries
-project_needs_join <- function(project, query_list, network, states) {
-  links <- lapply(query_list, get_links, network = network)
-  deps_projects <- names(links)
-  # If no project is dependent on the link's project, the link is only dependent on other projects
-  # which means the link's project must not be joined
-  if(!project %in% deps_projects) return(FALSE)
-  links_ <- links[[project]]
-  query_list_ <- lapply(links_, get_queries,
-         which = "xafty_query", temper = TRUE, states = states)
-  # Root node reached?
-  if(has_empty_list(query_list_)) return(TRUE)
-  query_list <- flatten_list(remove_empty_lists(query_list_))
-  query_list <- do.call(merge_queries, query_list)
-  project_needs_join(project = project, query_list = query_list, network = network, states = states)
 }
 
 check_link_type <- function(link) {

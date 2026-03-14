@@ -132,9 +132,7 @@ get_unjoined_projects <- function(dag_sm, network) {
   projects <- get_projects(query_list)
   projects_joined <- unique(unlist(dag_sm$get_join_path()))
   projects_non <- projects[!projects %in% projects_joined]
-  projects_new <- projects_non[vapply(projects_non, project_needs_join, states = dag_sm$get("states"),
-                                      network = network, query_list = query_list, FUN.VALUE = logical(1))]
-  projects_new[projects_new != dag_sm$get("main_project")]
+  projects_non[projects_non != dag_sm$get("main_project")]
 }
 
 greedy_best_first_search <- function(project_add, dag_sm, graph) {

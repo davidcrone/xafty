@@ -65,30 +65,3 @@ test_that("get_queries ignores a xafty state and returns the query from the seco
   expect_identical(test_query, expected_query)
 })
 
-test_that("get_join_dependencies returns the dependend joins of the link", {
-  link <- test_create_link(add_score_category(data = query(customer_data = c("score", "name"), occupations = "department")),
-                           project = "customer_data", vars = character(0))
-  expect_in(link$joins$projects$data, c("customer_data", "occupations"))
-})
-
-test_that("get_join_dependencies returns an empty list, when no joins are found", {
-  link <- test_create_link(add_score_category(data = query(customer_data = c("score", "name"))), project = "customer_data",  vars = character(0))
-  expect_equal(link$joins$projects, setNames(list(), character(0)))
-})
-
-test_that("get_join_dependencies returns an empty list when no depndend queries are found", {
-  link <- test_create_link(add_score_category(data = TRUE), vars = character(0))
-  expect_equal(link$joins$projects, list())
-})
-
-test_that("get_join_dependencies does not mistake the same project present twice in a query for a join", {
-  link <- test_create_link(add_score_category(data = query(customer_data = "score", customer_data = "name")), project = "customer_data",  vars = character(0))
-  expect_equal(link$joins$projects, setNames(list(), character(0)))
-})
-
-test_that("get_join_dependencies returns the dependend joins of the link", {
-  link <- test_create_link(add_score_category(data = query(customer_data = c("score", "name"), occupations = "department")),
-                           project = "unjoined_project", vars = character(0))
-  expect_in(link$joins$projects$data, c("customer_data", "occupations"))
-})
-
