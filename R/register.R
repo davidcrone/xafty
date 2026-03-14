@@ -9,7 +9,13 @@
 #' @param project The project name of the project within the network where the function should be registered.
 #' @param network A xafty network.
 #' @param link_type The link_type name of the rulset. Currently "link" and "object" are supported
-#' @param ... Configurations and advanced use when registering a new link
+#' @param ... Configurations and advanced use when registering a new link. Notable options:
+#'   - `group` (character): Assign the resulting variables to an organizing group for printing purposes.
+#'     If the group doesn't exist, it will be created automatically.
+#'   - `attach_context` (character): Attach the node to a context wrapper.
+#'   - `update` (logical): Whether to update if the function is already registered.
+#'   - `direction` (character): For joins, "one" or "both" for bidirectional registration.
+#'   - `vars` (character vector): Explicitly specify output variable names.
 #' @returns A xafty network (invisibly)
 #' @export
 register <- function(quosure, project, network, link_type, ...) {
@@ -67,10 +73,19 @@ add_to_ruleset <- function(link, network, ...) {
     if (update) {
       # Proceed with the update
       # remove the previously registered variables
-      clean_variables <- current_links[[function_name]]$variables
+      current <- current_links[[function_name]]
+      clean_variables <- current$variables
       for (var in clean_variables) {
         network[[project]]$ruleset$nodes$variables[[var]] <- NULL
       }
+
+      # Remove from group to update group
+      if(!is.null(current$group)) {
+        group <- network[[project]]$ruleset$groups[[current$group]]$variables
+        group_vars <- group[!group %in% clean_variables]
+        network[[project]]$ruleset$groups[[current$group]]$variables <- group_vars
+      }
+
       if(exists("user_update")) {
         message(paste0("Updated function '", function_name, "'!"))
       }
@@ -143,6 +158,10 @@ add_to_network <- function(link, project, network, ...) {
       }
     }
     if(!is.null(group)) {
+      # Auto-create group if it doesn't exist
+      if (is.null(network[[project]]$ruleset$groups[[group]])) {
+        network[[project]]$ruleset$groups[[group]] <- list(variables = NULL)
+      }
       current_variables <- network[[project]]$ruleset$groups[[group]]$variables
       network[[project]]$ruleset$groups[[group]]$variables <- c(current_variables, variables)
     }

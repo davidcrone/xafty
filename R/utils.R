@@ -79,9 +79,51 @@ print_project_summary <- function(project, network) {
   cat(downwards, " ", "\u2514 ", info_contents, "\n")
 }
 
+partition_variables_by_group <- function(variables, project_env) {
+  groups <- project_env$ruleset$groups
+  if (length(groups) == 0) {
+    return(list(grouped = list(), ungrouped = variables))
+  }
+  grouped_vars <- sapply(groups, \(group) group$variables, simplify = FALSE, USE.NAMES = TRUE)
+  ungrouped_vars <- variables[!variables %in% unlist(grouped_vars)]
+  list(grouped = grouped_vars, ungrouped = ungrouped_vars)
+}
+
+print_variables_by_group <- function(project_env, group_name, group_variables, indent) {
+  if (length(group_variables) == 0) return(invisible(NULL))
+
+  nodes_variables <- project_env$ruleset$nodes$variables
+  nodes_links <- project_env$ruleset$nodes$links
+
+  func_names <- vapply(group_variables, \(name) nodes_variables[[name]], FUN.VALUE = character(1))
+  raw_layer <- vapply(func_names, \(name) nodes_links[[name]]$layer, FUN.VALUE = numeric(1))
+
+  max_layer <- max(raw_layer)
+  layer_vec <- sort(unique(raw_layer))
+
+  cat(indent, " \U1F3F7\uFE0F ", group_name, "\n", sep = "")
+
+  for (i in seq_along(layer_vec)) {
+    layer <- layer_vec[i]
+    is_last_layer <- i == length(layer_vec)
+    layer_close <- if (is_last_layer) "\u2514" else "\u251C"
+
+    layer_variables <- sort(names(raw_layer)[raw_layer == layer])
+    layer_variables_str <- paste0(layer_variables, collapse = ", ")
+
+    if (layer > 0) {
+      cat(indent, "    ", layer_close, " \U1F6E0 Layer ", paste0(layer, ": "), layer_variables_str, "\n", sep = "")
+    } else {
+      cat(indent, "    ", layer_close, " \U1F331 Root: ", layer_variables_str, "\n", sep = "")
+    }
+  }
+}
+
 #' Print a xafty Project
 #' @description
-#' S3 method to print a xafty network.
+#' S3 method to print a xafty network. Variables can be organized into groups;
+#' grouped variables are displayed separately while maintaining layer hierarchy within each group.
+#' Ungrouped variables are displayed using the traditional layer-based organization.
 #' @param x an object with the class "xafty_project"
 #' @param ... further arguments passed to or from other methods.
 #' @export
@@ -98,19 +140,37 @@ print.xafty_project <- function(x, ...) {
   }
 
   if(length(variables) > 0) {
-    func_names <- vapply(variables, \(name) x$ruleset$nodes$variables[[name]], FUN.VALUE = character(1))
-    raw_layer <- vapply(func_names, \(name) x$ruleset$nodes$links[[name]]$layer, FUN.VALUE = numeric(1))
-    max_layer <- max(raw_layer)
-    layer_vec <- sort(unique(raw_layer))
-    for (layer in layer_vec) {
-      layer_variables <- paste0(sort(names(raw_layer)[raw_layer == layer]), collapse = ", ")
-      is_max <- layer == max_layer
-      if(!is_max) layer_close <- "\u251C" else layer_close <- "\u2514"
-      if(layer > 0) {
-        cat(indent, " ", layer_close, " \U1F6E0 Layer ", paste0(layer ,": "), layer_variables, "\n", sep = "")
-      } else {
-        cat(indent, " ", layer_close, " \U1F331 Root: ", layer_variables, "\n", sep = "")
+    # Partition variables into grouped and ungrouped
+    partition <- partition_variables_by_group(variables = variables, project_env = x)
+    grouped_vars <- partition$grouped
+    ungrouped_vars <- partition$ungrouped
+
+    # Print ungrouped variables using traditional layer-based approach
+    if (length(ungrouped_vars) > 0) {
+      func_names <- vapply(ungrouped_vars, \(name) x$ruleset$nodes$variables[[name]], FUN.VALUE = character(1))
+      raw_layer <- vapply(func_names, \(name) x$ruleset$nodes$links[[name]]$layer, FUN.VALUE = numeric(1))
+      max_layer <- max(raw_layer)
+      layer_vec <- sort(unique(raw_layer))
+      for (layer in layer_vec) {
+        layer_variables <- paste0(sort(names(raw_layer)[raw_layer == layer]), collapse = ", ")
+        is_max <- layer == max_layer
+        if(!is_max) layer_close <- "\u251C" else layer_close <- "\u2514"
+        if(layer > 0) {
+          cat(indent, " ", layer_close, " \U1F6E0 Layer ", paste0(layer ,": "), layer_variables, "\n", sep = "")
+        } else {
+          cat(indent, " ", layer_close, " \U1F331 Root: ", layer_variables, "\n", sep = "")
+        }
       }
+    }
+    # Print grouped variables
+    for (group_name in names(grouped_vars)) {
+      cat("\n")
+      print_variables_by_group(
+        project_env = x,
+        group_name = group_name,
+        group_variables = grouped_vars[[group_name]],
+        indent = indent
+      )
     }
   }
 

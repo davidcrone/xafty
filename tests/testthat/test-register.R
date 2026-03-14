@@ -185,6 +185,25 @@ test_that("Updating a link with a group removed correctly deletes the variables 
   expect_identical(test_network$customer_data$ruleset$add_score_category$group, NULL)
 })
 
+test_that("Registering a link with a group that doesn't exist auto-creates the group", {
+  test_network <- init_network("test_network", projects = "customer_data")
+  test_network$customer_data$link(get_sample_data())
+  # Don't call add_group - let it be auto-created
+  test_network$customer_data$link(add_score_category(data = query(customer_data = c("score", "name"))), group = "auto_group", update = TRUE)
+  expect_identical(test_network$customer_data$ruleset$groups$auto_group$variables, "category")
+  expect_identical(names(test_network$customer_data$ruleset$groups), "auto_group")
+})
+
+test_that("Multiple links can be added to an auto-created group", {
+  add_score_category2 <- add_score_category
+  test_network <- init_network("test_network", projects = "customer_data")
+  test_network$customer_data$link(get_sample_data())
+  test_network$customer_data$link(add_score_category(data = query(customer_data = c("score", "name"))), group = "scores", update = TRUE)
+  # Add another link to the same auto-created group
+  test_network$customer_data$link(add_score_category2(data = query(customer_data = c("score", "name"))), vars = "category2", group = "scores", update = TRUE)
+  expect_equal(test_network$customer_data$ruleset$groups$scores$variables, c("category", "category2"))
+})
+
 test_that("Adding a polluted on_exit context node informs the user with a warning", {
   add_score_category2 <- add_score_category
   pass_through2 <- pass_through
