@@ -65,3 +65,10 @@ test_that("get_queries ignores a xafty state and returns the query from the seco
   expect_identical(test_query, expected_query)
 })
 
+test_that("links preserve other added facts about the query such as renames of variables", {
+  test_link <- test_create_link(add_score_category(query(customer_data = c("renamed_score" = "score", "name"))), vars = character(0))
+  test_query <- test_link$args$data
+  expected_query <- query(customer_data = c("renamed_score" = "score", "name"))
+  expect_identical(test_query, expected_query)
+})
+

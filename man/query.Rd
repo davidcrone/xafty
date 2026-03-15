@@ -14,4 +14,10 @@ A xafty query will be passed to the nascent function in order to retrieve data f
 }
 \examples{
 query(project_name1 = c("col1", "col2"), project_name2 = c("colA"))
+# Tidy-Style selection is also supported
+query(var1)
+# Named vector style for renaming is also supported
+query(table1 = c("Rename" = "var1"), var2)
+# Nested list style is also supported
+query(list(customer_data = "id"))
 }

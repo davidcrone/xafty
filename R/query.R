@@ -4,48 +4,131 @@
 #' @param ... Query value. See examples for creating a simple query
 #' @examples
 #' query(project_name1 = c("col1", "col2"), project_name2 = c("colA"))
+#' # Tidy-Style selection is also supported
+#' query(var1)
+#' # Named vector style for renaming is also supported
+#' query(table1 = c("Rename" = "var1"), var2)
+#' # Nested list style is also supported
+#' query(list(customer_data = "id"))
 #' @export
 query <- function(...) {
-  .list_dots <- tryCatch(
-    list(...),
-    error = \(e) {
-      syms <- rlang::ensyms(...)
-      lapply(syms, \(sym) rlang::as_string(sym))
-    })
+
+  # Capture all arguments as expressions without evaluating
+  all_exprs <- rlang::exprs(...)
+
+  # flatten any list(...) expressions into their elements ---
+  all_exprs <- flatten_list_exprs(all_exprs, env = parent.frame())
 
   li_query_raw <- list()
-  for (i in seq_along(.list_dots)) {
-    li_sub <- .list_dots[i]
-    li_depth <- list_depth(li_sub)
-    project <-  names(li_sub)
-    while (is.null(project) & li_depth > 1) {
-      li_sub <- li_sub[[1]]
-      li_depth <- li_depth - 1
-      project <- names(li_sub)
+
+  for (i in seq_along(all_exprs)) {
+    arg_expr <- all_exprs[[i]]
+    arg_name <- names(all_exprs)[[i]]
+    has_table <- !is.null(arg_name) && arg_name != ""
+
+    if (has_table) {
+      # Named argument — evaluate to get the vector (preserving names)
+      arg_val <- eval(arg_expr, envir = parent.frame())
+      entry <- list(arg_val)
+      names(entry) <- arg_name
+    } else {
+      # Bare symbol — tidy-style, convert to string without evaluating
+      arg_val <- rlang::as_string(arg_expr)
+      entry <- list(arg_val)
+      names(entry) <- NULL
     }
-    li_query_raw <- append(li_query_raw, li_sub)
+
+    li_query_raw <- append(li_query_raw, entry)
   }
+
+  # Build the query list from li_query_raw
   query_list <- lapply(seq_along(li_query_raw), \(i) {
-    li_query <- li_query_raw[i]
-    select <- unlist(li_query, recursive = FALSE, use.names = FALSE)
-    project <- names(li_query)
+    li_query   <- li_query_raw[i]
+    select_raw <- li_query_raw[[i]]
+    rename     <- names(select_raw)
+    select     <- unname(select_raw)
+    project    <- names(li_query)
+
     if (is.null(project) || project == "") {
-      xafty_query<- list(
+      xafty_query <- list(
         select = select,
-        from = "unevaluated")
+        from   = "unevaluated"
+      )
       class(xafty_query) <- c("list", "raw_query")
     } else {
       xafty_query <- list(
         select = select,
-        from = project
+        from   = project
       )
+      # Attach new elements here. Keeps them, if they are not NULL
+      xafty_query$rename <- rename
       class(xafty_query) <- c("list", "xafty_query")
     }
     xafty_query
   })
+
   names(query_list) <- vapply(query_list, \(query) query$from, FUN.VALUE = character(1))
-  query_list <- set_query_list_class(query_list = query_list)
+  class(query_list) <- c("list", "xafty_query_list")
   query_list
+}
+
+
+#' Flatten list-producing call expressions into their constituent named expressions
+#'
+#' Handles three cases:
+#'   1. Literal list() calls           → evaluate and flatten
+#'   2. Other calls returning named lists → evaluate and flatten
+#'   3. Bare symbols (tidy-style)       → pass through unchanged
+#'
+#' @param exprs A named list of expressions as returned by rlang::exprs()
+#' @param env The environment in which to evaluate calls
+#' @return A flat named list of expressions with any list-producing calls unpacked
+#' @noRd
+flatten_list_exprs <- function(exprs, env) {
+  result <- list()
+
+  for (i in seq_along(exprs)) {
+    expr      <- exprs[[i]]
+    expr_name <- names(exprs)[[i]]
+    has_name  <- !is.null(expr_name) && nzchar(expr_name)
+
+    # A bare symbol with no argument name = tidy-style selection, never evaluate
+    is_bare_symbol <- rlang::is_symbol(expr) && !has_name
+
+    if (is_bare_symbol) {
+      # Pass through for tidy-style handling in the main loop
+      entry        <- list(expr)
+      names(entry) <- expr_name
+      result       <- c(result, entry)
+
+    } else if (rlang::is_call(expr) && !has_name) {
+      # An unnamed call — evaluate and check if it returns a named list
+      evaled <- tryCatch(
+        eval(expr, envir = env),
+        error = \(e) NULL
+      )
+
+      if (is.list(evaled) && !is.null(names(evaled))) {
+        # Named list returned — flatten into individual named expressions
+        inner_exprs        <- lapply(evaled, \(val) rlang::expr(!!val))
+        names(inner_exprs) <- names(evaled)
+        result             <- c(result, inner_exprs)
+      } else {
+        # Not a named list — pass through and let the main loop error informatively
+        entry        <- list(expr)
+        names(entry) <- expr_name
+        result       <- c(result, entry)
+      }
+
+    } else {
+      # Named argument (named vector, renamed vector etc.) — pass through unchanged
+      entry        <- list(expr)
+      names(entry) <- expr_name
+      result       <- c(result, entry)
+    }
+  }
+
+  result
 }
 
 #' Specify the Main Project for a Query
@@ -156,7 +239,7 @@ merge_queries <- function(...) {
     merged_query[[proj]]$from <- proj
     class(merged_query[[proj]]) <- c("list", "xafty_query")
   }
-  merged_query <- set_query_list_class(merged_query)
+  class(merged_query) <- c("list", "xafty_query_list")
   merged_query
 }
 
@@ -173,7 +256,6 @@ get_join_projects <- function(query_list) {
 
 dots_to_query <- function(network, ...)  {
   query_raw <- list(...)
-
   # When only the network is provided, the user gets the following error
   # However only providing the network could also be used as a shorthand to query all projects with all columns within the network
   if(length(query_raw) == 0) {
@@ -217,11 +299,6 @@ dots_to_query <- function(network, ...)  {
     join_path = join_path,
     where = get_where(query_tempered)
   )
-}
-
-set_query_list_class <- function(query_list) {
-  class(query_list) <- c("list", "xafty_query_list")
-  query_list
 }
 
 resolve_star_select <- function(query_list, network_env) {

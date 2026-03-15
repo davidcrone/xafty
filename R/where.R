@@ -7,11 +7,17 @@
 where <- function(query_list, ...) {
   expr <- rlang::expr(...)
   where_select <- all.vars(expr)
-  raw_query <- query(lapply(where_select, \(s) s))
   where_query <- list(
     expr = expr
   )
-  raw_query <- lapply(raw_query, \(query) {class(query) <- c("list", "raw_query", "where_query"); query})
+  raw_query <- lapply(where_select, \(select) {
+    where_query <- list(
+      select = select,
+      from = "unevaluated"
+    )
+    class(where_query) <- c("list", "raw_query", "where_query")
+    where_query
+  })
   class(where_query) <- c("list", "where_expr")
   if(inherits(query_list, "xafty_query")) {
     query_list_classes <- class(query_list$query)

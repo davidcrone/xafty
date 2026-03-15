@@ -145,4 +145,18 @@ test_that("Querying a entire porject by name fills the raw query with the projec
   expect_in(test_query[[1]]$from, "customer_data")
 })
 
+test_that("Querying variables with a named vector returns adds a rename entry in the query", {
+  test_query <- query(table1 = c("Rename" = "Name"))
+  expect_in(test_query[[1]]$select, "Name")
+  expect_in(test_query[[1]]$from, "table1")
+  expect_in(test_query[[1]]$rename, "Rename")
+})
 
+test_that("Querying variables with a named vector and tidy-style selection works seamlessly together", {
+  test_query <- query(table1 = c("Rename" = "Name"), var1)
+  expect_in(test_query[[1]]$select, "Name")
+  expect_in(test_query[[1]]$from, "table1")
+  expect_in(test_query[[1]]$rename, "Rename")
+  expect_in(test_query[[2]]$select, "var1")
+  expect_in(test_query[[2]]$from, "unevaluated")
+})
