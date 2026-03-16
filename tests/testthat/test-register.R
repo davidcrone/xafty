@@ -246,3 +246,15 @@ test_that("Registering the same variable name in the same project through differ
   expect_error(network$cars$link(test_add_car_color2(data = query(cars = "Car"))))
   expect_no_error(network$cars$link(test_get_car_data(conn = TRUE), update = TRUE))
 })
+
+test_that("Renaming a variable in query does work seamlessly in register", {
+  add_score_category <- function(data) {
+    data$category <- ifelse(data$points >= 90, "High", "Low")
+    data
+  }
+  test_network <- init_network("test_network")
+  test_network$add_project("customer_data", info = "Customer Names and ID")
+  test_network$customer_data$link(get_sample_data(), group = NULL)
+  test_network$customer_data$link(add_score_category(data = query(customer_data = c(c("points" = "score"), "name"))), group = "test")
+  expect_equal(test_network$customer_data$ruleset$nodes$links$add_score_category$variables, "category")
+})

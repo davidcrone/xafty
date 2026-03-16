@@ -1,3 +1,10 @@
+# xafty 0.4.3
+
+## New Feature
+
+* Renaming variables in a query is now possible and works seamlessly, 
+  simply query(table = c("renamed" = "name")) to rename your variable
+
 # xafty 0.4.2
 
 ## New Features

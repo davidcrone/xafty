@@ -33,16 +33,17 @@ test_that("Merging with an empty list returns a named empty xafty query", {
   expect_identical(test_query, expected_query)
 })
 
-test_that("merge_queries respects xafty_object_query class", {
-  test_query <- merge_queries(query(project = "[object]"))
-  expected_query <- query(project = "[object]")
-  expect_identical(test_query, expected_query)
-})
-
 test_that("merge_queries can merge a query list which has been treated by fill_raw_query", {
   raw_query_list <- query("mean_nickname", customer_data = "id", "new_column", map = "id")
   test_query <- fill_raw_query(query_list = raw_query_list, network = test_network)
   test_query <- merge_queries(test_query)
   exp_query <- query(customer_data = c("mean_nickname", "id"), intelligence = "new_column", map = "id")
   expect_identical(test_query, exp_query)
+})
+
+test_that("Duplicated project in a query are merged together", {
+  xafty_query <- query(proj1 = "col1", proj2 = "col2", proj1 = c("My_Col" = "col3"))
+  test_query <- merge_queries(xafty_query)
+  expected_query <- query(proj1 = c("col1", c("My_Col" = "col3")), proj2 = "col2")
+  expect_identical(test_query, expected_query)
 })

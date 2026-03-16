@@ -7,20 +7,24 @@ scope <- function(data, link, mask) {
   # is masked
   projects <- get_projects(merged_queries)
   for (project in projects) {
+    query <- merged_queries[[project]]
     selection <- merged_queries[[project]]$select
-    for (col in selection) {
+    rename <- fill_rename(query = merged_queries[[project]])
+    for (i in seq_along(selection)) {
+      col <- rename[i]
+      sel <- selection[i]
       pos_col <- which(colnames_dataset %in% col)
-      if(project %in% mask[[col]]) {
+      # If pos_col is length 0 then the variable was already scoped from a joined project
+      if(project %in% mask[[sel]]) {
         # TODO: This can be perhaps replaced instead of the first project with a more cleanly prepared name
-        projects_masked <- mask[[col]]
-        scoped_name <- paste0(projects_masked[1], ".", col)
+        projects_masked <- mask[[sel]]
+        scoped_name <- paste0(projects_masked[1], ".", sel)
       } else {
-        scoped_name <- paste0(project, ".", col)
+        scoped_name <- paste0(project, ".", sel)
       }
       colnames_dataset[pos_col] <- scoped_name
     }
   }
-
   # This part scopes the newly added columns
   variables <- link$variables
   project <- link$project
@@ -45,7 +49,9 @@ unscope <- function(data, link, arg_name, mask) {
   for (query in query_list) {
     selection <- query$select
     project <- query$from
-    for (col in selection) {
+    rename <- get_column_order(list(query))
+    for (i in seq_along(selection)) {
+      col <- selection[i]
       col_scoped <- paste0(project, ".", col)
       if(!col_scoped %in% colnames_data) {
         mask_proj <- mask[[col]]
@@ -53,7 +59,7 @@ unscope <- function(data, link, arg_name, mask) {
         interpolated_mask <- scopes[which(scopes %in% colnames_data)]
         colnames_data[colnames_data == interpolated_mask] <- col_scoped
       }
-      colnames_data[colnames_data == col_scoped] <- col
+      colnames_data[colnames_data == col_scoped] <- rename[i]
     }
   }
   colnames(data) <- colnames_data
@@ -91,9 +97,26 @@ get_project_order <- function(query) {
 
 get_column_order <- function(query) {
   if(length(query) <= 0) return(character(0))
-  cols_vec <- do.call(c, lapply(query, \(q) q$select))
-  names(cols_vec) <- NULL
-  cols_vec
+  cols_vec <- unlist(lapply(query, \(q) q$select), use.names = FALSE, recursive = FALSE)
+  cols_return <- character(length(cols_vec))
+  pos <- 1
+  for (i in seq_along(query)) {
+    q <- query[[i]]
+    vars <- q$select
+    n_vars <- length(vars)
+    rename_vec <- q$rename
+    if(is.null(rename_vec)) {
+      pos2 <- pos + n_vars - 1
+      cols_return[pos:pos2] <- vars
+      pos <- pos2 + 1
+    } else {
+      for (j in seq_along(vars)) {
+        cols_return[pos] <- if (rename_vec[j] == "") vars[j] else rename_vec[j]
+        pos <- pos + 1
+      }
+    }
+  }
+  cols_return
 }
 
 return_unscoped_data <- function(data, query, dag) {
@@ -108,7 +131,7 @@ get_masked_column_names <- function(link) {
   queries <- get_queries(link)
   vec_projects <- do.call(c, lapply(queries, get_project_order))
   names(vec_projects) <- NULL
-  vec_columns <- do.call(c, lapply(queries, get_column_order))
+  vec_columns <- unlist(lapply(queries, \(query) unlist(lapply(query, \(q) q$select), use.names = FALSE, recursive = FALSE)))
   names(vec_columns) <- NULL
   duplicated_columns <- vec_columns[duplicated(vec_columns)]
   sapply(duplicated_columns, \(col) vec_projects[vec_columns == col], simplify = FALSE, USE.NAMES = TRUE)
@@ -119,7 +142,7 @@ interpolate_masks <- function(query, mask, data_cols) {
   cols_present <- data_select %in% data_cols
   if(all(cols_present)) return(data_select)
 
-  column_order <- get_column_order(query)
+  column_order <- unlist(lapply(query, \(q) q$select), use.names = FALSE, recursive = FALSE)
   project_order <- get_project_order(query)
   vec_columns <- column_order[!cols_present]
   vec_projects <- project_order[!cols_present]
@@ -137,4 +160,14 @@ interpolate_masks <- function(query, mask, data_cols) {
   }
   data_select[!cols_present] <- fill_vec
   data_select
+}
+
+fill_rename <- function(query) {
+  select <- query$select
+  rename <- query$rename
+  if(is.null(rename)) return(select)
+  for (i in seq_along(rename)) {
+    if(rename[i] == "") rename[i] <- select[i]
+  }
+  rename
 }

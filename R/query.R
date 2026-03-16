@@ -230,13 +230,17 @@ merge_queries <- function(...) {
     for(i in index) {
       proj <- uq_projects[i]
       pos <- positions[[i]]
-      selection <- do.call(c, lapply(pos, \(p) query[[p]]$select))
+      selection <- unlist(lapply(pos, \(p) query[[p]]$select))
+      rename <- unlist(lapply(pos, \(p) if(is.null(query[[p]]$rename)) character(length(query[[p]]$select)) else query[[p]]$rename))
       merged_query[[proj]]$select <- unique(c(merged_query[[proj]]$select, selection))
+      merged_query[[proj]]$rename <- unique(c(merged_query[[proj]]$rename, rename))
     }
   }
   all_projects <- names(merged_query)
   for (proj in all_projects) {
     merged_query[[proj]]$from <- proj
+    merged_query[[proj]] <- merged_query[[proj]][c("select", "from", "rename")]
+    if(all(merged_query[[proj]]$rename == "")) merged_query[[proj]]$rename <- NULL
     class(merged_query[[proj]]) <- c("list", "xafty_query")
   }
   class(merged_query) <- c("list", "xafty_query_list")

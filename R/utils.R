@@ -480,7 +480,8 @@ get_lead_project <- function(query_list) {
 get_added_variables <- function(link, network) {
   project <- link$project
   dep_queries <- get_queries(link)
-  input_column_names <- do.call(c, lapply(dep_queries, get_column_order))
+  # TODO Check, ob get_column_order hier noch korrekt ist.
+  input_column_names <- unlist(lapply(dep_queries, get_column_order))
   func_output <- execute_function(link = link, network = network)
   output_column_names <- colnames(func_output)
   added_variables <- output_column_names[!output_column_names %in% input_column_names]

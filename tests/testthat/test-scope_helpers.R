@@ -16,6 +16,18 @@ test_that("Column names are returned in correct order", {
   expect_identical(column_order, c("col1", "col2", "col3", "col4"))
 })
 
+test_that("Column names are returned in correct order", {
+  xafty_query <- query(customer_data = "col1", occupations = c("My_Custom_Name" =  "col2", "col3"), customer_data = c("Col100" = "col4"))
+  column_order <- get_column_order(query = xafty_query)
+  expect_identical(column_order, c("col1", "My_Custom_Name", "col3", "Col100"))
+})
+
+test_that("Column names are returned in correct order", {
+  xafty_query <- query(customer_data = "col1", occupations = c("My_Custom_Name" =  "col2", "col3"), customer_data = c("Col100" = "col4"), test = c("var1", "var2"))
+  column_order <- get_column_order(query = xafty_query)
+  expect_identical(column_order, c("col1", "My_Custom_Name", "col3", "Col100", "var1", "var2"))
+})
+
 test_that("Scoped Columns works with empty list and return an empty list", {
   scoped_column_order <- get_scoped_column_order(query = list())
   expect_identical(scoped_column_order, character(0))

@@ -503,3 +503,69 @@ test_that("resolve on_exit can be done iterativly avoiding cycles created when a
   # Verify both contexts applied correctly in proper order
   expect_equal(test_data$Tries, c(5L, 1L, 2L))
 })
+
+test_that("Using rename allows to set variables to custom names to the returned data.frame", {
+  test_data <- query(customer_data = c("identification_number" = "id")) |> nascent(test_network)
+  exp_data <- data.frame(identification_number = c(1L:5L))
+  expect_identical(test_data, exp_data)
+})
+
+
+test_that("Renaming a variable in query does work seamlessly during nascent", {
+  add_score_category <- function(data) {
+    data$category <- ifelse(data$points >= 90, "High", "Low")
+    data
+  }
+  test_network <- init_network("test_network")
+  test_network$add_project("customer_data", info = "Customer Names and ID")
+  test_network$customer_data$link(get_sample_data(), group = NULL)
+  test_network$customer_data$link(add_score_category(data = query(customer_data = c(c("points" = "score"), "name"))), group = "test")
+  test_data <- query(score, category) |> nascent(test_network)
+  exp_data <-structure(list(
+    score = c(85, 92, 78, 90, 88),
+    category = c("Low", "High", "Low", "High", "Low")),
+    row.names = c(NA, -5L), class = "data.frame")
+  expect_identical(test_data, exp_data)
+})
+
+test_that("Renaming a variable also works with masked variable names", {
+  join_datasets <- function(main_data, extra_data) {
+    merged <- merge(main_data, extra_data, by.x = "id_renamed", by.y = "id", all.x = TRUE)
+    merged
+  }
+  test_network <- init_network("test_network")
+  test_network$add_project("customer_data", info = "Customer Names and ID")
+  test_network$customer_data$link(get_sample_data(), group = NULL)
+  test_network$customer_data$link(add_score_category(data = query(customer_data = c("score", "name"))), group = "test")
+  test_network$add_project("occupations")
+  test_network$occupations$link(get_additional_info())
+  test_network$customer_data$link(join_datasets(main_data = query(customer_data = c("id_renamed" = "id")),
+                                                extra_data = query(occupations = "id")), vars = character(0), direction = "both")
+  test_data <- query(department, name, occupations = c("rename" = "id")) |>  from(customer_data) |> nascent(test_network)
+  exp_data <- structure(list(
+    department = c("HR", "IT", "Finance", "Marketing", "Sales"),
+    name = c("Alice", "Bob", "Charlie", "Diana", "Eve"),
+    rename = 1:5), row.names = c(NA, -5L), class = "data.frame")
+  expect_identical(test_data, exp_data)
+})
+
+test_that("Renaming a variable also works with masked variable names when the masked name does not show up anymore", {
+  join_datasets <- function(main_data, extra_data) {
+    merged <- merge(main_data, extra_data, by.y = "id_renamed", by.x = "id", all.x = TRUE)
+    merged
+  }
+  test_network <- init_network("test_network")
+  test_network$add_project("customer_data", info = "Customer Names and ID")
+  test_network$customer_data$link(get_sample_data(), group = NULL)
+  test_network$customer_data$link(add_score_category(data = query(customer_data = c("score", "name"))), group = "test")
+  test_network$add_project("occupations")
+  test_network$occupations$link(get_additional_info())
+  test_network$customer_data$link(join_datasets(main_data = query(customer_data = "id"),
+                                                extra_data = query(occupations = c("id_renamed" = "id"))), vars = character(0), direction = "both")
+  test_data <- query(department, name, customer_data = c("rename" = "id")) |>  from(customer_data) |> nascent(test_network)
+  exp_data <- structure(list(
+    department = c("HR", "IT", "Finance", "Marketing", "Sales"),
+    name = c("Alice", "Bob", "Charlie", "Diana", "Eve"),
+    rename = 1:5), row.names = c(NA, -5L), class = "data.frame")
+  expect_identical(test_data, exp_data)
+})
