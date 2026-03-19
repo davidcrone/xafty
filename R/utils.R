@@ -181,6 +181,25 @@ print.xafty_project <- function(x, ...) {
   cat("\n")
 }
 
+#' Main Namespace Generator
+#' @description
+#' The namespace builds groups in the execution path, allowing for linear transformations
+#' @returns character string of length 1
+build_namespace <- function(link) {
+  vec <- c(link$context, link$project)
+  namespace <- paste0(vec, collapse = ".")
+  namespace
+}
+
+build_fun_code <- function(link) {
+  code <- c(build_namespace(link), link$fun_name)
+  paste0(code, collapse = ".")
+}
+
+build_join_id <- function(projects) {
+  paste0("join.", paste0(sort(c(projects)), collapse = "."))
+}
+
 print_joins <- function(project_env, indent) {
   joined_projects <- names(project_env$ruleset$nodes$joins)
   if(length(joined_projects) == 0) {
@@ -274,7 +293,7 @@ build_dependency_codes <- function(link, network) {
   joins <- list()
   for (i in seq_along(li_joins)) {
     projects <- li_joins[[i]]
-    join_id <- paste0("join.", paste0(sort(projects), collapse = "."))
+    join_id <- build_join_id(projects = projects)
     join_codes[i] <- join_id
     joins[[join_id]] <- projects
   }
@@ -292,7 +311,7 @@ build_on_entry_dependencies <- function(link, network, fun_code) {
   if(is.null(context)) return(character(0))
   on_entry_funcs <- names(network[[project]]$ruleset$contexts[[context]]$on_entry)
   if(is.null(on_entry_funcs)) return(character(0))
-  on_entry_codes <- paste0(context, ".", project, ".", on_entry_funcs)
+  on_entry_codes <- paste0(build_namespace(link), ".", on_entry_funcs)
   # If the fun_code is itself is a wrapper function, it should only get on_entry codes as dependencies
   # that were registered earlier
   if(fun_code %in% on_entry_codes) {
@@ -304,11 +323,11 @@ build_on_entry_dependencies <- function(link, network, fun_code) {
 
 # The function builds the dependencies for on_entry nodes
 build_on_entry_node <- function(link, network, dag) {
-  project <- paste0(link$context, ".", link$project)
+  project <- build_namespace(link)
   li_on_entry_node <- build_dependency_codes(link, network = network)
   on_entry_node <- li_on_entry_node$node
   on_entry_code <- names(on_entry_node)
-  project_dag <- dag[grepl(paste0("^", link$context, "\\.", link$project, "\\."), names(dag))]
+  project_dag <- dag[startsWith(names(dag),  paste0(project, "."))]
   # Adds foreign project nodes that wrapper nodes depend on; unique is necessary since the package toposort cannot work with
   # duplicated dependencies in a single node
   foreign_deps <- unique(get_all_non_project_codes(project = project, codes = project_dag))
@@ -323,15 +342,15 @@ build_on_entry_node <- function(link, network, dag) {
 }
 
 build_on_exit_node <- function(link, network, dag) {
-  project <- paste0(link$context, ".", link$project)
+  namespace <- build_namespace(link)
   li_on_exit_node <- build_dependency_codes(link, network = network)
   on_exit_node <- li_on_exit_node$node
   on_exit_code <- names(on_exit_node)
-  deps_project <- names(dag)[grepl(paste0("^", link$context, "\\.", link$project, "\\."), names(dag))]
+  deps_project <- names(dag)[startsWith(names(dag),  paste0(namespace, "."))]
 
   # Adding on exit functions registered earlier from wrapper project as dependencies
   on_exit_funcs <- names(network[[link$project]]$ruleset$contexts[[link$context]]$on_exit)
-  on_exit_codes <- paste0(project, ".", on_exit_funcs)
+  on_exit_codes <- paste0(namespace, ".", on_exit_funcs)
   pos <- which(on_exit_code == on_exit_codes) - 1
   if(pos == 0) exit_deps <- character(0) else exit_deps <- on_exit_codes[1:pos]
   deps <- unique(c(on_exit_node[[on_exit_code]], deps_project, exit_deps))
@@ -535,11 +554,6 @@ is_query_link <- function(link) {
 
 is_context_link <- function(link) {
   inherits(link, "context_link")
-}
-
-build_fun_code <- function(link) {
-  if(is.null(link$context)) context <- character(0) else context <- paste0(link$context, ".")
-  paste0(context, link$project, ".", link$fun_name)
 }
 
 bfs_traversal <- function(graph, start, end) {

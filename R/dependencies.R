@@ -108,10 +108,6 @@ build_join_bridges <- function(network, dag_sm) {
   dag_sm
 }
 
-build_join_id <- function(projects) {
-  paste0("join.", paste0(sort(c(projects)), collapse = "."))
-}
-
 join_pairs <- function(inderect_joins) {
   lapply(inderect_joins, \(join_projects) {
     pairs <- lapply(seq_len(length(join_projects) - 1), \(i) {

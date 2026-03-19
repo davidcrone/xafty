@@ -92,7 +92,7 @@ build_tree <- function(network) {
     context <- link$context
     if(!length(context) == 0 & inherits(link, "query_link")) {
       project <- link$project
-      name <- paste0(context, ".", project)
+      name <- build_namespace(link)
       tree_env$contexts[[name]] <- list(
         context = context,
         project = project,
