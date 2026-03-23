@@ -91,7 +91,6 @@ partition_variables_by_group <- function(variables, project_env) {
 
 print_variables_by_group <- function(project_env, group_name, group_variables, indent) {
   if (length(group_variables) == 0) return(invisible(NULL))
-
   nodes_variables <- project_env$ruleset$nodes$variables
   nodes_links <- project_env$ruleset$nodes$links
 
@@ -497,13 +496,12 @@ get_lead_project <- function(query_list) {
 }
 
 get_added_variables <- function(link, network) {
-  project <- link$project
   dep_queries <- get_queries(link)
-  # TODO Check, ob get_column_order hier noch korrekt ist.
-  input_column_names <- unlist(lapply(dep_queries, get_column_order))
+  # get_column_order should be correct here, because the function will return the renamed variables
+  input_variables <- unlist(lapply(dep_queries, get_column_order))
   func_output <- execute_function(link = link, network = network)
-  output_column_names <- colnames(func_output)
-  added_variables <- output_column_names[!output_column_names %in% input_column_names]
+  output_variables <- colnames(func_output)
+  added_variables <- setdiff(output_variables, input_variables)
   added_variables
 }
 

@@ -1,6 +1,4 @@
 ## TODO: Adding remove node from Project and other remove functions
-## TODO: Adding Cycle Detection and Revert Register, when Cycle is detected
-
 
 #' Register a Function in a Network
 #' @description
@@ -25,8 +23,7 @@ register <- function(quosure, project, network, link_type, ...) {
   add_to_settings(link = link, network = network, ... = ...)
   add_to_ruleset(link = link, network = network, ... = ...)
   add_to_network(link = link, project = project, network = network, ... = ...)
-  # Check for polluted context
-  check_polluted_context(link = link, network = network)
+  validate_dag_integrity(link = link, network = network)
   invisible(network)
 }
 
@@ -54,10 +51,11 @@ add_to_settings <- function(link, network, ...) {
 }
 
 add_to_ruleset <- function(link, network, ...) {
+  if(!is_query_link(link)) return(invisible(network))
   project <- link$project
   function_name <- link$fun_name
   .dots <- list(...)
-  current_links <- network[[project]]$ruleset$nodes$links
+  links <- network[[project]]$ruleset$nodes$links
 
   if(link_exists(link = link, network = network)) {
     update <- isTRUE(.dots[["update"]])
@@ -72,37 +70,31 @@ add_to_ruleset <- function(link, network, ...) {
     }
     # Check the user input
     if (update) {
-      # Proceed with the update
+      # Get previous link
+      prev_link <- links[[function_name]]
       # remove the previously registered variables
-      current <- current_links[[function_name]]
-      clean_variables <- current$variables
-      for (var in clean_variables) {
-        network[[project]]$ruleset$nodes$variables[[var]] <- NULL
-      }
-
+      remove_variables(link = prev_link, network = network)
       # Remove from group to update group
-      if(!is.null(current$group)) {
-        group <- network[[project]]$ruleset$groups[[current$group]]$variables
-        group_vars <- group[!group %in% clean_variables]
-        network[[project]]$ruleset$groups[[current$group]]$variables <- group_vars
-      }
+      remove_group(link = prev_link, network = network)
 
       if(exists("user_update")) {
         message(paste0("Updated function '", function_name, "'!"))
       }
-      # Add your update code here
     } else {
-      # Abort the function
+      # Abort the register with the function, since nothing has been added to the network, we don't need to clean
+      # anything up
       message(paste0("Function '", link$fun_name, "' exists already in ruleset of project '",
                      paste0(project, collapse = " and "),"'"))
     }
   }
+
+  # Update the project's ruleset with the new link
   network[[project]]$ruleset$nodes$links[[function_name]] <- link
 
   if(!is.null(.dots[["direction"]])) {
     if(.dots[["direction"]] == "both" & link$type == "join") {
       link$project <- get_join_project(link = link)
-      add_to_ruleset(link = link, network = network, update = .dots[["update"]])
+      add_to_ruleset(link = link, network = network, update = .dots[["update"]], direction = NULL)
     }
   }
 
@@ -119,70 +111,13 @@ link_exists <- function(link, network) {
 
 add_to_network <- function(link, project, network, ...) {
   .dots <- list(...)
-  project <- link$project
-  fun_name <- link$fun_name
-  project_env <- network[[project]]
-  group <- link$group
-
-  if (inherits(link, "query_link")) {
-    variables <- link$variables
-    if(link$type == "get" || link$type == "add") {
-      for (var in variables) {
-        network[[project]]$ruleset$nodes$variables[[var]] <- fun_name
-      }
-    } else if(link$type == "join") {
-      from <- link$project
-      to <- get_join_project(link = link)
-      if(length(variables) == 0) {
-        # Here we assume the variables of the project are left joined
-        exported <- names(network[[to]]$ruleset$nodes$variables)
-      } else {
-        exported <- NULL
-      }
-      joins_to <- names(network[[to]]$ruleset$nodes$joins)
-
-      network[[from]]$ruleset$nodes$joins[[to]] <- list(link = link)
-      network <- update_print_join_graph(changed = from, network = network)
-      if(!is.null(.dots[["direction"]])) {
-        if(.dots[["direction"]] == "both") {
-          if(length(variables) == 0) {
-            # Since the join was registered with no variables, we assume it must be an inner or full join
-            exported <- names(network[[from]]$ruleset$nodes$variables)
-          } else {
-            exported <- NULL
-          }
-          link_to <- link
-          link_to$project <- to
-          network[[to]]$ruleset$nodes$joins[[from]] <- list(link = link_to)
-          network <- update_print_join_graph(changed = to, network = network)
-        }
-      }
-    }
-    if(!is.null(group)) {
-      # Auto-create group if it doesn't exist
-      if (is.null(network[[project]]$ruleset$groups[[group]])) {
-        network[[project]]$ruleset$groups[[group]] <- list(variables = NULL)
-      }
-      current_variables <- network[[project]]$ruleset$groups[[group]]$variables
-      network[[project]]$ruleset$groups[[group]]$variables <- c(current_variables, variables)
-    }
+  if (is_query_link(link)) {
+    add_query_link(link = link, network = network, direction = .dots[["direction"]])
   }
-
-  if(inherits(link, "context_link")) {
-    context <- link$context
-    if(link$type == "entry") {
-      li_on_entry <- list(
-        link = link
-      )
-      network[[project]]$ruleset$contexts[[context]]$on_entry[[fun_name]] <- li_on_entry
-    } else if (link$type == "exit") {
-      li_on_exit <- list(
-        link = link
-      )
-      network[[project]]$ruleset$contexts[[context]]$on_exit[[fun_name]] <- li_on_exit
-    }
+  if(is_context_link(link)) {
+    add_context_link(link = link, network = network)
   }
-
+  add_group(link = link, network = network)
   invisible(network)
 }
 
@@ -317,9 +252,15 @@ validate_network_integrity <- function(link, network, ...) {
   check_query_presence(link = link, network = network)
 }
 
+validate_dag_integrity <- function(link, network) {
+
+  # Check for polluted context
+  check_polluted_context(link = link, network = network)
+}
+
 check_context_presence <- function(link, network) {
   # Only check when node is a query link and has a context attached to it
-  if(length(link$context) == 0 || inherits(link, "context_link")) return(invisible(TRUE))
+  if(length(link$context) == 0 || is_context_link(link)) return(invisible(TRUE))
   project <- link$project
   context_name <- link$context
   context <- network[[project]]$ruleset$contexts[[context_name]]
@@ -445,4 +386,125 @@ determine_layer <- function(link, network) {
     layer <- NULL
   }
   layer
+}
+
+remove_variables <- function(link, network) {
+  project <- link$project
+  vars <- link$variables
+  for (var in vars) {
+    network[[project]]$ruleset$nodes$variables[[var]] <- NULL
+  }
+  invisible(network)
+}
+
+remove_group <- function(link, network) {
+  project <- link$project
+  group <- link$group
+  vars <- link$variables
+  if(!is.null(group)) {
+    group_vars <- network[[project]]$ruleset$groups[[group]]$variables
+    remaining <- group_vars[!group_vars %in% vars]
+    if(length(remaining) != 0) {
+      network[[project]]$ruleset$groups[[group]]$variables <- remaining
+    } else {
+      # remove group entirely if no variables remain within the group anymore
+      network[[project]]$ruleset$groups[[group]] <- NULL
+    }
+  }
+  invisible(network)
+}
+
+remove_link <- function(link, network) {
+  project <- link$project
+  fun_name <- link$fun_name
+  network[[project]]$ruleset$nodes$links[[fun_name]] <- NULL
+  network
+}
+
+add_query_link <- function(link, network, direction) {
+  project <- link$project
+  fun_name <- link$fun_name
+  variables <- link$variables
+  type <- link$type
+  if(type == "get" || type == "add") {
+    for (var in variables) {
+      network[[project]]$ruleset$nodes$variables[[var]] <- fun_name
+    }
+  } else if(type == "join") {
+    from <- link$project
+    to <- get_join_project(link = link)
+    if(length(variables) == 0) {
+      # Here we assume the variables of the project are left joined
+      exported <- names(network[[to]]$ruleset$nodes$variables)
+    } else {
+      exported <- NULL
+    }
+    joins_to <- names(network[[to]]$ruleset$nodes$joins)
+
+    network[[from]]$ruleset$nodes$joins[[to]] <- list(link = link)
+    network <- update_print_join_graph(changed = from, network = network)
+    if(!is.null(direction)) {
+      if(direction == "both") {
+        if(length(variables) == 0) {
+          # Since the join was registered with no variables, we assume it must be an inner or full join
+          exported <- names(network[[from]]$ruleset$nodes$variables)
+        } else {
+          exported <- NULL
+        }
+        link_to <- link
+        link_to$project <- to
+        network[[to]]$ruleset$nodes$joins[[from]] <- list(link = link_to)
+        network <- update_print_join_graph(changed = to, network = network)
+      }
+    }
+  }
+  invisible(network)
+}
+
+add_context_link <- function(link, network) {
+  project <- link$project
+  fun_name <- link$fun_name
+  context <- link$context
+  if(link$type == "entry") {
+    li_on_entry <- list(
+      link = link
+    )
+    network[[project]]$ruleset$contexts[[context]]$on_entry[[fun_name]] <- li_on_entry
+  } else if (link$type == "exit") {
+    li_on_exit <- list(
+      link = link
+    )
+    network[[project]]$ruleset$contexts[[context]]$on_exit[[fun_name]] <- li_on_exit
+  }
+  invisible(network)
+}
+
+add_group <- function(link, network) {
+  group <- link$group
+  if(!is.null(group)) {
+    variables <- link$variables
+    project <- link$project
+    # Auto-create group if it doesn't exist
+    if (is.null(network[[project]]$ruleset$groups[[group]])) {
+      network[[project]]$ruleset$groups[[group]] <- list(variables = NULL)
+    }
+    current_variables <- network[[project]]$ruleset$groups[[group]]$variables
+    network[[project]]$ruleset$groups[[group]]$variables <- c(current_variables, variables)
+  }
+  invisible(network)
+}
+
+build_testable_query <- function(link, network) {
+
+}
+
+detect_cycle <- function(link, network) {
+  ## TODO: Adding Cycle Detection and Revert Register, when Cycle is detected
+  # TO detect a cycle, a link must first be made "build able" (through build_dag), so for each link type
+  # we need to get a query which creates the dag object that includes the newly added link
+}
+
+revert_register <- function(link, network) {
+  ## TODO the function simply bundles all remove from register functions and returns the network
+  # It should be fired when one of the functions in check_dag_integrity fails.
 }

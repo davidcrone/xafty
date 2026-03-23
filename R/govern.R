@@ -152,3 +152,26 @@ build_tree <- function(network) {
     resolve_context = resolve_context
   )
 }
+
+#' Tracks changes to the network
+register_state_manager <- function() {
+  state <- new.env()
+
+  set <- function(name, what) {
+    state[[name]] <- what
+  }
+
+  get <- function(name) {
+    state[[name]]
+  }
+
+  contents <- function() {
+    names(state)
+  }
+
+  list(
+    set = set,
+    get = get,
+    contents = contents
+  )
+}

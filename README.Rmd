@@ -41,6 +41,8 @@ Turn your R data pipelines into a scalable and collaborative network graph.
 
 ## Why It Matters
 
+The limiting factor in modern analytics is not compute or tooling, but the inability to accumulate, recombine, and trust distributed analytical knowledge over time.
+
 Most data pipelines are built as one-off scripts: hard to reuse, fragile to change, and difficult for teams to collaborate on. As projects grow, this leads to duplicated logic, inconsistent results, and a constant need to rebuild work that already exists.
 
 xafty treats analytics as a distributed knowledge system rather than a data processing system. It allows organizations to accumulate and recombine analytical knowledge incrementally, without central coordination or pipeline redesign.
