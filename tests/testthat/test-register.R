@@ -214,7 +214,7 @@ test_that("Adding a polluted on_exit context node informs the user with a warnin
   test_network$customer_data$link(add_score_category(data = query(customer_data = "category2")), vars = "category")
 
   expect_warning(test_network$customer_data$add_context("polluted", on_entry = pass_through(data = "{.data}"),
-                                                                    on_exit = pass_through2(data = query(customer_data = "category")), update = TRUE)
+                                                                    on_exit = pass_through2(data = query(customer_data = "category")), update = TRUE, test_dag = TRUE)
                  )
 })
 
@@ -257,4 +257,13 @@ test_that("Renaming a variable in query does work seamlessly in register", {
   test_network$customer_data$link(get_sample_data(), group = NULL)
   test_network$customer_data$link(add_score_category(data = query(customer_data = c(c("points" = "score"), "name"))), group = "test")
   expect_equal(test_network$customer_data$ruleset$nodes$links$add_score_category$variables, "category")
+})
+
+test_that("Register detects when the user creates a cyclic dependency", {
+  exp_link <- test_network$customer_data$ruleset$nodes$links$new_column_from_both_projects
+  expect_error(test_network$customer_data$link(new_column_from_both_projects(
+    query(customer_data = c("mean_nickname", "name"), occupations = "department")),
+    vars = "nickname", update = TRUE))
+  test_link <- test_network$customer_data$ruleset$nodes$links$add_new_nickname$args$data
+  expect_identical(test_link, exp_link)
 })

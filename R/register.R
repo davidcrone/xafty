@@ -15,21 +15,26 @@
 #'   - `update` (logical): Whether to update if the function is already registered.
 #'   - `direction` (character): For joins, "one" or "both" for bidirectional registration.
 #'   - `vars` (character vector): Explicitly specify output variable names.
+#'   - `test_dag`(logical): Whether the newly registered node should be tested for cycles.
 #' @returns A xafty network (invisibly)
 #' @export
 register <- function(quosure, project, network, link_type, ...) {
-  link <- create_link(quosure = quosure, project = project, link_type = link_type, network = network, ... = ...)
+  state <- register_state_manager()
+  link <- create_link(quosure = quosure, project = project, link_type = link_type, network = network, state = state, ... = ...)
   validate_network_integrity(link = link, network = network, ... = ...)
-  add_to_settings(link = link, network = network, ... = ...)
-  add_to_ruleset(link = link, network = network, ... = ...)
+  add_to_settings(link = link, network = network, state = state, ... = ...)
+  add_to_ruleset(link = link, network = network, state = state, ... = ...)
   add_to_network(link = link, project = project, network = network, ... = ...)
-  validate_dag_integrity(link = link, network = network)
+  validate_dag_integrity(link = link, network = network, ... = ...)
   invisible(network)
 }
 
 add_to_settings <- function(link, network, ...) {
   .dots <- list(...)
+  state <- .dots[["state"]]
+  state$set("settings", what = network$settings)
   df_projects <- network$settings$projects$print_order
+
   type <- link$type
   # Root Node registered
   if(type == "get") {
@@ -55,6 +60,8 @@ add_to_ruleset <- function(link, network, ...) {
   project <- link$project
   function_name <- link$fun_name
   .dots <- list(...)
+  state <- .dots[["state"]]
+  state$set("update", FALSE)
   links <- network[[project]]$ruleset$nodes$links
 
   if(link_exists(link = link, network = network)) {
@@ -72,14 +79,12 @@ add_to_ruleset <- function(link, network, ...) {
     if (update) {
       # Get previous link
       prev_link <- links[[function_name]]
+      state$set("update", TRUE)
+      state$set("prev_link", prev_link)
       # remove the previously registered variables
       remove_variables(link = prev_link, network = network)
       # Remove from group to update group
       remove_group(link = prev_link, network = network)
-
-      if(exists("user_update")) {
-        message(paste0("Updated function '", function_name, "'!"))
-      }
     } else {
       # Abort the register with the function, since nothing has been added to the network, we don't need to clean
       # anything up
@@ -94,11 +99,11 @@ add_to_ruleset <- function(link, network, ...) {
   if(!is.null(.dots[["direction"]])) {
     if(.dots[["direction"]] == "both" & link$type == "join") {
       link$project <- get_join_project(link = link)
-      add_to_ruleset(link = link, network = network, update = .dots[["update"]], direction = NULL)
+      add_to_ruleset(link = link, network = network, update = .dots[["update"]], direction = NULL, state = state)
     }
   }
 
-  network
+  invisible(network)
 }
 
 link_exists <- function(link, network) {
@@ -252,10 +257,14 @@ validate_network_integrity <- function(link, network, ...) {
   check_query_presence(link = link, network = network)
 }
 
-validate_dag_integrity <- function(link, network) {
-
-  # Check for polluted context
-  check_polluted_context(link = link, network = network)
+validate_dag_integrity <- function(link, network, ...) {
+  .dots <- list(...)
+  test_dag <- .dots[["test_dag"]]
+  if(test_dag) {
+    dag <- detect_cycle(link = link, network = network)
+    # Check for polluted context
+    check_polluted_context(link = link, network = network)
+  }
 }
 
 check_context_presence <- function(link, network) {
@@ -494,14 +503,36 @@ add_group <- function(link, network) {
   invisible(network)
 }
 
-build_testable_query <- function(link, network) {
-
+build_testable_query <- function(link) {
+  project <- link$project
+  if(is_query_link(link)) {
+    if(link$type == "get" || link$type == "add") {
+      vars <- link$variables
+      el <- setNames(list(vars), project)
+      qu <- do.call(query, el)
+      qu <- do.call(from, list(qu, project = project))
+    } else if (link$type == "join") {
+      qu <- do.call(merge_queries, get_queries(link))
+      qu <- from(qu, project = project)
+    }
+  } else if (is_context_link(link)) {
+    # TODO
+    qu <- list()
+  }
+  qu
 }
 
 detect_cycle <- function(link, network) {
-  ## TODO: Adding Cycle Detection and Revert Register, when Cycle is detected
-  # TO detect a cycle, a link must first be made "build able" (through build_dag), so for each link type
-  # we need to get a query which creates the dag object that includes the newly added link
+  test_query <- build_testable_query(link)
+  if(!length(test_query) == 0) {
+    dag <- tryCatch({
+      build_dag(query = test_query, network = network)
+    }, error = \(e) message(e)
+    )
+  } else (
+    dag <- list()
+  )
+  dag
 }
 
 revert_register <- function(link, network) {

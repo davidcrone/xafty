@@ -85,7 +85,7 @@ create_add_group <- function(project, network) {
 create_add_context <- function(project, network) {
   force(project)
   force(network)
-  add_context <- function(name, on_entry = NULL, on_exit = NULL, update = FALSE, ...) {
+  add_context <- function(name, on_entry = NULL, on_exit = NULL, update = FALSE, test_dag = TRUE, ...) {
     enquo_on_exit <- rlang::enquo(on_exit)
     on_exit <- rlang::quo_get_expr(enquo_on_exit)
     enquo_on_entry <- rlang::enquo(on_entry)
@@ -93,11 +93,11 @@ create_add_context <- function(project, network) {
     if(is.null(on_entry) & is.null(on_exit)) stop("Please provide an on_entry or an on_exit function")
     if(!is.null(on_entry)) {
       register(quosure = enquo_on_entry, link_type = "context", func_type = "entry", network = network,
-               project = project, name = name,  update = update, ...)
+               project = project, name = name,  update = update, test_dag = test_dag, ...)
     }
     if(!is.null(on_exit)) {
       register(quosure = enquo_on_exit, link_type = "context", func_type = "exit", network = network,
-               project = project, name = name, update = update, ...)
+               project = project, name = name, update = update, test_dag = test_dag, ...)
     }
   }
   add_context
@@ -106,12 +106,12 @@ create_add_context <- function(project, network) {
 compose_link_function <- function(project, network, func_type) {
   force(project)
   force(network)
-  link <- function(fun, name = NULL, vars = NULL, attach_context = NULL, group = NULL, update = FALSE, direction = "one", ...) {
+  link <- function(fun, name = NULL, vars = NULL, attach_context = NULL, group = NULL, update = FALSE, direction = "one", test_dag = TRUE, ...) {
     .dots <- list(...)
     quosure <- rlang::enquo(fun)
     register(quosure = quosure, link_type = "query", network = network, project = project,
              vars = vars, name = name, update = update, func_type = func_type, direction = direction,
-             group = group, attach_context = attach_context, ... = .dots)
+             group = group, attach_context = attach_context, test_dag = test_dag, ... = .dots)
   }
   link
 }

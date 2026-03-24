@@ -17,7 +17,7 @@ test_that("print.xafty_project() maintains layer hierarchy within groups", {
   # Layer 0 variable in group
   test_network$customer_data$link(add_score_category(data = query(customer_data = c("score", "name"))), group = "processing", update = TRUE)
   # Layer 1 variable in same group (depends on Layer 0)
-  test_network$customer_data$link(add_score_category(data = query(customer_data = c("category"))), vars = "category_enhanced", group = "processing", update = TRUE)
+  test_network$customer_data$link(add_score_category(data = query(customer_data = c("score"))), vars = "category_enhanced", group = "processing", update = TRUE)
   output <- capture.output(print(test_network$customer_data))
   output_text <- paste0(output, collapse = "\n")
   # Check that both Root and Layer 1 appear within group

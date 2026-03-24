@@ -137,7 +137,12 @@ flatten_list_exprs <- function(exprs, env) {
 #' @export
 #' @returns A xafty Query
 from <- function(query_list, project) {
-  project <- deparse(substitute(project))
+  from_env <- rlang::current_env()
+  project <- tryCatch(
+    eval(project),
+    error = \(e) deparse(substitute(project, env = from_env))
+  )
+  if(!inherits(project, "character")) stop(paste0("Project name must be of class character, but has class", paste0(class(project), collapse = ",")))
   if(length(project) != 1) stop("Project must be of length 1")
   if(inherits(query_list, "state_query")) {
     state_query <- add_to_state_query(name = "main", what = project, state_query = query_list)
