@@ -32,7 +32,7 @@ test_that("dependencies works with an empty list and returns a named empty query
 test_that("dependencies from two projects can be retrieved and hidden dependencies revealed", {
   query_list <- query(customer_data = "category", occupations = "department")
   dag_sm <- build_tree(test_network)
-  globals <- dots_to_query(test_network, query_list)
+  globals <- dots_to_query(query_list = query_list, network = test_network)
   dag_sm$set_main_project("customer_data")
   sm <- resolve_dependencies(query_list = globals$internal, network = test_network, dag_sm = dag_sm)
   expected_query <- query(customer_data = c("category", "score", "name", "id"), occupations = c("department", "id"))

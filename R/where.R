@@ -8,14 +8,10 @@ where <- function(query_list, ...) {
   expr <- rlang::expr(...)
   where_select <- all.vars(expr)
   where_query <- list(
-    expr = expr
+    expr = strip_prefix_from_expr(expr)
   )
   raw_query <- lapply(where_select, \(select) {
-    where_query <- list(
-      select = select,
-      from = "unevaluated"
-    )
-    class(where_query) <- c("list", "raw_query", "where_query")
+    where_query <- split_select(var = select)
     where_query
   })
   class(where_query) <- c("list", "where_expr")
@@ -31,6 +27,47 @@ where <- function(query_list, ...) {
     class(query_list) <- query_list_classes
   }
   query_list
+}
+
+
+strip_prefix_from_expr <- function(expr) {
+  # Base case: if it's a symbol, check if it needs stripping
+  if (rlang::is_symbol(expr)) {
+    name <- rlang::as_string(expr)
+    if (grepl("\\.", name)) {
+      # Take only the part after the last dot
+      new_name <- sub(".*\\.", "", name)
+      return(rlang::sym(new_name))
+    }
+    return(expr)
+  }
+
+  # If it's a call (e.g. `>=`, `&`, `==`, function calls...), recurse into each element
+  if (rlang::is_call(expr)) {
+    new_args <- lapply(as.list(expr), strip_prefix_from_expr)
+    return(as.call(new_args))
+  }
+
+  # For literals (numbers, strings, logicals, NULL, etc.), return as-is
+  expr
+}
+
+split_select <- function(var) {
+  split <- strsplit(x = var, split = ".", fixed = TRUE)[[1]]
+  if(length(split) == 2) {
+    where_query <- list(
+      select = split[2],
+      from = split[1]
+    )
+    class(where_query) <- c("list", "where_query")
+  } else {
+    where_query <- list(
+      select = split,
+      from = "unevaluated"
+    )
+    class(where_query) <- c("list", "raw_query", "where_query")
+  }
+  where_query
 }
 
 create_where_filter <- function(expr) {

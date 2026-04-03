@@ -21,7 +21,7 @@ nascent <- function(query, network) {
 #' @returns A list
 #' @export
 build_dag <- function(query, network, frame = "main") {
-  globals <- dots_to_query(network = network, query)
+  globals <- dots_to_query(query_list = query, network = network)
   dag <- build_query_dag(globals = globals, network = network)
   dag
 }

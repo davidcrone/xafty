@@ -1,4 +1,3 @@
-## TODO: Adding remove node from Project and other remove functions
 
 #' Register a Function in a Network
 #' @description
@@ -24,8 +23,8 @@ register <- function(quosure, project, network, link_type, ...) {
   validate_network_integrity(link = link, network = network, ... = ...)
   add_to_settings(link = link, network = network, state = state, ... = ...)
   add_to_ruleset(link = link, network = network, state = state, ... = ...)
-  add_to_network(link = link, project = project, network = network, ... = ...)
-  validate_dag_integrity(link = link, network = network, ... = ...)
+  add_to_network(link = link, network = network, ... = ...)
+  validate_dag_integrity(link = link, network = network, state = state, ... = ...)
   invisible(network)
 }
 
@@ -81,6 +80,9 @@ add_to_ruleset <- function(link, network, ...) {
       prev_link <- links[[function_name]]
       state$set("update", TRUE)
       state$set("prev_link", prev_link)
+
+      # removes the previously registered link from the network
+      remove_link(link = prev_link, network = network)
       # remove the previously registered variables
       remove_variables(link = prev_link, network = network)
       # Remove from group to update group
@@ -92,9 +94,6 @@ add_to_ruleset <- function(link, network, ...) {
                      paste0(project, collapse = " and "),"'"))
     }
   }
-
-  # Update the project's ruleset with the new link
-  network[[project]]$ruleset$nodes$links[[function_name]] <- link
 
   if(!is.null(.dots[["direction"]])) {
     if(.dots[["direction"]] == "both" & link$type == "join") {
@@ -114,7 +113,7 @@ link_exists <- function(link, network) {
   exists
 }
 
-add_to_network <- function(link, project, network, ...) {
+add_to_network <- function(link, network, ...) {
   .dots <- list(...)
   if (is_query_link(link)) {
     add_query_link(link = link, network = network, direction = .dots[["direction"]])
@@ -262,9 +261,14 @@ validate_dag_integrity <- function(link, network, ...) {
   test_dag <- .dots[["test_dag"]]
   if(test_dag) {
     dag <- detect_cycle(link = link, network = network)
-    # Check for polluted context
-    check_polluted_context(link = link, network = network)
+    if(isFALSE(dag)) {
+      revert_register(link = link, network = network, ... = ...)
+    } else {
+      # Check for polluted context
+      check_polluted_context(link = link, network = network)
+    }
   }
+  invisible(network)
 }
 
 check_context_presence <- function(link, network) {
@@ -439,6 +443,8 @@ add_query_link <- function(link, network, direction) {
     for (var in variables) {
       network[[project]]$ruleset$nodes$variables[[var]] <- fun_name
     }
+    # Update the project's ruleset with the new link
+    network[[project]]$ruleset$nodes$links[[fun_name]] <- link
   } else if(type == "join") {
     from <- link$project
     to <- get_join_project(link = link)
@@ -503,31 +509,32 @@ add_group <- function(link, network) {
   invisible(network)
 }
 
-build_testable_query <- function(link) {
+build_testable_query <- function(link, network) {
   project <- link$project
-  if(is_query_link(link)) {
-    if(link$type == "get" || link$type == "add") {
-      vars <- link$variables
-      el <- setNames(list(vars), project)
-      qu <- do.call(query, el)
-      qu <- do.call(from, list(qu, project = project))
-    } else if (link$type == "join") {
-      qu <- do.call(merge_queries, get_queries(link))
-      qu <- from(qu, project = project)
-    }
-  } else if (is_context_link(link)) {
-    # TODO
-    qu <- list()
+  qu <- list()
+  # links of type get cannot be a cycle
+  if (link$type == "add") {
+    vars <- link$variables
+    el <- setNames(list(vars), project)
+    qu <- do.call(query, el)
+    qu <- do.call(from, list(qu, project = project))
+  } else if (link$type == "join") {
+    qu <- do.call(merge_queries, get_queries(link))
+    qu <- from(qu, project = project)
   }
   qu
 }
 
+# TODO: Build new function that checks the dag for a cycle returning TRUE/FALSE instead of an error upon finding a cycle
 detect_cycle <- function(link, network) {
-  test_query <- build_testable_query(link)
+  test_query <- build_testable_query(link = link, network = network)
   if(!length(test_query) == 0) {
     dag <- tryCatch({
       build_dag(query = test_query, network = network)
-    }, error = \(e) message(e)
+    }, error = \(e) {
+      message(e)
+      return(FALSE)
+      }
     )
   } else (
     dag <- list()
@@ -535,7 +542,21 @@ detect_cycle <- function(link, network) {
   dag
 }
 
-revert_register <- function(link, network) {
-  ## TODO the function simply bundles all remove from register functions and returns the network
-  # It should be fired when one of the functions in check_dag_integrity fails.
+## TODO: Adding remove node from Project and other remove functions build in as methods in the project object
+revert_register <- function(link, network, ...) {
+  .dots <- list(...)
+  # removes the previously registered link from the network
+  remove_link(link = link, network = network)
+  # remove the previously registered variables
+  remove_variables(link = link, network = network)
+  # Remove from group to update group
+  remove_group(link = link, network = network)
+
+  state <- .dots[["state"]]
+  prev_link <- state$get("prev_link")
+  if(!is.null(prev_link)) {
+    add_to_network(link = prev_link, network = network, ... = ...)
+  }
+  cat("Register was rejected")
+  invisible(network)
 }

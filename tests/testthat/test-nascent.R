@@ -6,7 +6,7 @@ test_that("get columns can be retrieved with characters from the network", {
 })
 
 test_that("get columns by can be retrieved with symbols from the network", {
-  table_test <- query(id, name, score) |> nascent(test_network)
+  table_test <- query(id, name, score) |>  from(customer_data) |> nascent(test_network)
   table_expected <- structure(list(id = 1:5, name = c("Alice", "Bob", "Charlie", "Diana", "Eve"),
                                    score = c(85, 92, 78, 90, 88)),
                               class = "data.frame", row.names = c(NA, -5L))
@@ -434,7 +434,7 @@ test_that("Star (*) throws an informative error when no variables are present in
 })
 
 test_that("Simple where filter can be nascented", {
-  data <- query(customer_data = "name") |> where(id == 1) |> nascent(test_network)
+  data <- query(customer_data = "name") |> from(customer_data) |>  where(id == 1) |> nascent(test_network)
   expect_identical(data, data.frame(name = "Alice"))
 })
 
@@ -462,7 +462,7 @@ test_that("Simple where filter can be nascented and filters NA values", {
     data
   }
   test_network$customer_data$link(add_missing_data(query(customer_data = "name")))
-  data <- query(customer_data = "name") |> where(missing) |> nascent(test_network)
+  data <- query(customer_data = "name") |> from(customer_data) |> where(missing) |> nascent(test_network)
   expect_identical(data$name, c("Alice", "Diana"))
 })
 
@@ -520,7 +520,7 @@ test_that("Renaming a variable in query does work seamlessly during nascent", {
   test_network$add_project("customer_data", info = "Customer Names and ID")
   test_network$customer_data$link(get_sample_data(), group = NULL)
   test_network$customer_data$link(add_score_category(data = query(customer_data = c(c("points" = "score"), "name"))), group = "test")
-  test_data <- query(score, category) |> nascent(test_network)
+  test_data <- query(score, category) |> from(customer_data) |> nascent(test_network)
   exp_data <-structure(list(
     score = c(85, 92, 78, 90, 88),
     category = c("Low", "High", "Low", "High", "Low")),
@@ -541,7 +541,7 @@ test_that("Renaming a variable also works with masked variable names", {
   test_network$occupations$link(get_additional_info())
   test_network$customer_data$link(join_datasets(main_data = query(customer_data = c("id_renamed" = "id")),
                                                 extra_data = query(occupations = "id")), vars = character(0), direction = "both")
-  test_data <- query(department, name, occupations = c("rename" = "id")) |>  from(customer_data) |> nascent(test_network)
+  test_data <- query(occupations = "department", name, occupations = c("rename" = "id")) |>  from(customer_data) |> nascent(test_network)
   exp_data <- structure(list(
     department = c("HR", "IT", "Finance", "Marketing", "Sales"),
     name = c("Alice", "Bob", "Charlie", "Diana", "Eve"),
@@ -562,10 +562,26 @@ test_that("Renaming a variable also works with masked variable names when the ma
   test_network$occupations$link(get_additional_info())
   test_network$customer_data$link(join_datasets(main_data = query(customer_data = "id"),
                                                 extra_data = query(occupations = c("id_renamed" = "id"))), vars = character(0), direction = "both")
-  test_data <- query(department, name, customer_data = c("rename" = "id")) |>  from(customer_data) |> nascent(test_network)
+  test_data <- query(occupations = "department", name, customer_data = c("rename" = "id")) |>  from(customer_data) |> nascent(test_network)
   exp_data <- structure(list(
     department = c("HR", "IT", "Finance", "Marketing", "Sales"),
     name = c("Alice", "Bob", "Charlie", "Diana", "Eve"),
     rename = 1:5), row.names = c(NA, -5L), class = "data.frame")
+  expect_identical(test_data, exp_data)
+})
+
+test_that("Renaming variables with the same name from different projects works seamlessly in nascent", {
+  add_combined_score <- function(data) {
+    data$combined_score <- paste0(data$score_numbers, data$score_colors)
+    data
+  }
+  test_network$customer_data$link(add_combined_score(data = query(
+    customer_data = c("score_numbers" = "score"),
+    occupations = c("score_colors" = "score")
+  )))
+  test_data <- query(combined_score) |> from(customer_data) |> nascent(test_network)
+  exp_data <- structure(list(
+    combined_score = c("85Red", "92Blue", "78Yellow", "90Brown", "88Black")),
+    row.names = c(NA, -5L), class = "data.frame")
   expect_identical(test_data, exp_data)
 })

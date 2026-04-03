@@ -167,7 +167,7 @@ from <- function(query_list, project) {
 with_state <- function(query_list, ...) {
   .li_states <- list(...)
   class(.li_states) <- c("list", "xafty_states_list")
-  if(inherits(query_list, "state_query")) {
+  if(inherits(query_list, "xafty_query")) {
     state_query <- add_to_state_query(name = "states", what = .li_states, state_query = query_list)
   } else {
     state_query <- list(
@@ -197,7 +197,7 @@ add_join_path <- function(query_list, ...) {
   .li_states <- list(...)
   class(.li_states) <- c("list", "xafty_join_path")
 
-  if(inherits(query_list, "state_query")) {
+  if(inherits(query_list, "xafty_query")) {
     state_query <- add_to_state_query(name = "join_path", what = .li_states, state_query = query_list)
   } else {
     state_query <- list(
@@ -214,9 +214,9 @@ add_to_state_query <- function(name, what, state_query) {
   state_query
 }
 
-temper_query <- function(query_list, states = NULL, network) {
+temper_query <- function(query_list, main, states = NULL, network) {
   class_input <- class(query_list)
-  query_list <- fill_raw_query(query_list = query_list, network = network)
+  query_list <- fill_raw_query_list(query_list = query_list, main = main, network = network)
   query_list <- resolve_star_select(query_list = query_list, network_env = network)
   query_list <- interpolate_state_in_query(query_list = query_list, states = states)
   class(query_list) <- class_input
@@ -263,39 +263,26 @@ get_join_projects <- function(query_list) {
   li_unique[!is_one]
 }
 
-dots_to_query <- function(network, ...)  {
-  query_raw <- list(...)
+dots_to_query <- function(query_list, network)  {
   # When only the network is provided, the user gets the following error
   # However only providing the network could also be used as a shorthand to query all projects with all columns within the network
-  if(length(query_raw) == 0) {
+  if(length(query_list) == 0) {
     stop("No query provided. Please pass a valid query into the function.")
   }
-  if(inherits(query_raw[[1]], "xafty_query")) {
-    query_list <- query_raw[[1]]$query
-    state_list <- query_raw[[1]]$states
-    join_path <- query_raw[[1]]$join_path
-    main <- query_raw[[1]]$main
-  } else if (inherits(query_raw, "xafty_query")) {
-    query_list <- query_raw$query
-    state_list <- query_raw$states
-    join_path <- query_raw$join_path
-    main <- query_raw[[1]]$main
-  } else if (inherits(query_raw[[1]], what = "xafty_query_list")) {
-    query_list <- query_raw[[1]]
+  if(inherits(query_list, "xafty_query_list")) {
     state_list <- NULL
     join_path <- NULL
     main <- NULL
-  } else if(!inherits(query_raw[[1]], what = "xafty_query_list")) {
-    query_list <- query(query_raw)
-    state_list <- NULL
-    join_path <- NULL
-    main <- NULL
+  } else if (inherits(query_list, "xafty_query")) {
+    state_list <- query_list$states
+    join_path <- query_list$join_path
+    main <- query_list$main
+    query_list <- query_list$query
   } else {
     stop("Could not parse passed query")
   }
   states <- build_states(states = state_list, network = network)
-
-  query_tempered <- temper_query(query_list = query_list, states = states, network = network)
+  query_tempered <- temper_query(query_list = query_list, main = main, states = states, network = network)
   main <- if(is.null(main)) get_lead_project(query_tempered) else main
   query_order <- remove_where_query(query_tempered)
   query_internal <- merge_queries(remove_where_expr(query_tempered))
@@ -351,32 +338,61 @@ interpolate_state_in_query <- function(query_list, states) {
   query_list
 }
 
-fill_raw_query <- function(query_list, network) {
+fill_raw_query_list <- function(query_list, main, network) {
   is_raw_query <- vapply(query_list, \(query) inherits(query, "raw_query"), logical(1))
   if(!any(is_raw_query)) return(query_list)
-  is_project <- vapply(names(network), \(name) inherits(network[[name]], "xafty_project"), FUN.VALUE = logical(1))
-  projects <- names(network)[is_project]
+  centered_graph <- build_centered_graph(queue = main, network = network)
+  foreign_projects <- unlist(centered_graph, use.names = FALSE)
+  all_vars <- sapply(foreign_projects, \(project) names(get_all_variables(project, network)), simplify = FALSE, USE.NAMES = TRUE)
+  projects <- c(main, foreign_projects)
   query_list <- sapply(query_list, \(query) {
     if(inherits(query, "raw_query")) {
-      variables <- query$select
+      select <- query$select
       # Case 1: Querying an entire project by name
-      if(length(variables) == 1 && any(variables %in% projects)) {
-        query$from <-  variables
+      if(length(select) == 1 && any(select %in% projects)) {
+        query$from <-  select
         query$select <- names(get_all_variables(project = query$from, network = network))
         query_classes <- class(query)
         query_classes[query_classes == "raw_query"] <- "xafty_query"
         class(query) <- query_classes
         return(query)
       }
-      # Case 2: Querying single variables
-      for (project in projects) {
-        all_variables <- names(get_all_variables(project = project, network = network))
-        has_variable <- any(variables %in% all_variables)
-        if(has_variable) {
+      # Case 2: Querying single variables from the main project
+      if(is.null(main)) stop("Cannot fill a raw query, without setting an origin project using from")
+      all_variables <- names(get_all_variables(project = main, network = network))
+      has_variable <- any(select %in% all_variables)
+      if(has_variable) {
+        query$from <-  main
+        query_classes <- class(query)
+        query_classes[query_classes == "raw_query"] <- "xafty_query"
+        class(query) <- query_classes
+      } else {
+      # Case 3: Querying a single variable from a foreign project
+        foreign_bool <- logical(length(foreign_projects))
+        for (foreign in foreign_projects) {
+          foreign_vars <- all_vars[[foreign]]
+          contained <- select %in% foreign_vars
+          if(contained) {
+            foreign_bool[foreign_projects == foreign] <- TRUE
+          }
+        }
+        # Counting how many times the variable was found
+        sum_projs <- sum(foreign_bool)
+        if(sum_projs == 1) {
+          # Case 1: found only in one project
+          project <- foreign_projects[foreign_bool]
           query$from <-  project
           query_classes <- class(query)
           query_classes[query_classes == "raw_query"] <- "xafty_query"
           class(query) <- query_classes
+        } else if(sum_projs > 1) {
+          # Case 2: found in more than one project
+          project_with_vars <- foreign_projects[foreign_bool]
+          proj_str <- paste0(project_with_vars, collapse = ", ")
+          stop(paste0("Variable: ", select, " was found in several projects: ", proj_str, "Please specify the desired project."))
+        } else {
+          # Case 3: variable found not at all
+          stop(paste0("Variable: ", select, " is not contained in project: ", main))
         }
       }
     }

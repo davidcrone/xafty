@@ -33,11 +33,11 @@ test_that("Merging with an empty list returns a named empty xafty query", {
   expect_identical(test_query, expected_query)
 })
 
-test_that("merge_queries can merge a query list which has been treated by fill_raw_query", {
-  raw_query_list <- query("mean_nickname", customer_data = "id", "new_column", map = "id")
-  test_query <- fill_raw_query(query_list = raw_query_list, network = test_network)
+test_that("merge_queries can merge a query list which has been treated by fill_raw_query_list", {
+  raw_query_list <- query("mean_nickname", customer_data = "id", map = "id")
+  test_query <- fill_raw_query_list(query_list = raw_query_list, main = "customer_data", network = test_network)
   test_query <- merge_queries(test_query)
-  exp_query <- query(customer_data = c("mean_nickname", "id"), intelligence = "new_column", map = "id")
+  exp_query <- query(customer_data = c("mean_nickname", "id"), map = "id")
   expect_identical(test_query, exp_query)
 })
 
@@ -46,4 +46,10 @@ test_that("Duplicated project in a query are merged together", {
   test_query <- merge_queries(xafty_query)
   expected_query <- query(proj1 = c("col1", c("My_Col" = "col3")), proj2 = "col2")
   expect_identical(test_query, expected_query)
+})
+
+test_that("fill_raw_query_list throws an error when the variable is not contained in the main project", {
+  raw_query_list <- query("mean_nickname", customer_data = "id", map = "id", "unknown_column")
+  expect_error(fill_raw_query_list(query_list = raw_query_list, main = "customer_data", network = test_network),
+                             regexp = "unknown_column")
 })

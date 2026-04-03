@@ -21,6 +21,7 @@ get_additional_info <- function() {
   data.frame(
     id = c(1, 2, 3, 4, 5),
     department = c("HR", "IT", "Finance", "Marketing", "Sales"),
+    score = c("Red", "Blue", "Yellow", "Brown", "Black"),
     stringsAsFactors = FALSE
   )
 }

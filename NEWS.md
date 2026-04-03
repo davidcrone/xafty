@@ -2,9 +2,11 @@
 
 ## New Feature
 
-* Renaming variables in a query is now possible and works seamlessly, 
-  simply query(table = c("renamed" = "name")) to rename your variable
-
+* Renaming variables in a query is now possible and works seamlessly, simply query(table = c("renamed" = "name")) 
+  to rename your variable
+* Added cycle detection. Upon registering a node that would result in a cycle, the register is reverted as well as
+  providing an informative error on the detected cycle
+  
 # xafty 0.4.2
 
 ## New Features

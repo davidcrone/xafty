@@ -10,8 +10,8 @@ test_that("where correctly disects an expression", {
 
 
 test_that("where correctly disects an expression", {
-  query_list <- query(test = "col1") |> where(score >= 10)
-  filled_query <- fill_raw_query(query_list, test_network)
+  query_list <- query(score) |> from(customer_data) |> where(score >= 10)
+  filled_query <- fill_raw_query_list(query_list$query, main = "customer_data", test_network)
   query_test <- filled_query[[2]]
   expr_test <- filled_query[[3]]
   expect_identical(query_test$select, "score")
@@ -22,8 +22,8 @@ test_that("where correctly disects an expression", {
 })
 
 test_that("where correctly disects an expression with two variables", {
-  query_list <- query(test = "col1") |> where(score >= 10 & new_column == 10)
-  filled_query <- fill_raw_query(query_list, test_network)
+  query_list <- query(score) |> from(customer_data) |> where(score >= 10 & intelligence.new_column == 10)
+  filled_query <- fill_raw_query_list(query_list$query, main = "customer_data", test_network)
   query_test1 <- filled_query[[2]]
   query_test2 <- filled_query[[3]]
   expr_test <- filled_query[[4]]

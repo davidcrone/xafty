@@ -128,18 +128,18 @@ test_that("query with multiples of the same project presevers the variables", {
 })
 
 test_that("A raw query is correctly filled with a project", {
-  raw_query_list <- query("mean_nickname", customer_data = "id", "new_column", map = "id")
-  test_query <- fill_raw_query(query_list = raw_query_list, network = test_network)
+  raw_query_list <- query("mean_nickname", customer_data = "id", map = "id")
+  test_query <- fill_raw_query_list(query_list = raw_query_list, main = "customer_data", network = test_network)
   tets_projects <- vapply(test_query, \(query) query$from, character(1), USE.NAMES = FALSE)
   tets_variables <- vapply(test_query, \(query) query$select, character(1), USE.NAMES = FALSE)
-  expect_identical(tets_projects, c("customer_data", "customer_data", "intelligence", "map"))
-  expect_identical(tets_variables, c("mean_nickname", "id", "new_column", "id"))
+  expect_identical(tets_projects, c("customer_data", "customer_data", "map"))
+  expect_identical(tets_variables, c("mean_nickname", "id", "id"))
   expect_s3_class(test_query, "xafty_query_list")
 })
 
 test_that("Querying a entire porject by name fills the raw query with the project's variables", {
   raw_query_list <- query("customer_data")
-  test_query <- fill_raw_query(query_list = raw_query_list, network = test_network)
+  test_query <- fill_raw_query_list(query_list = raw_query_list, main = "customer_data", network = test_network)
   exp <- names((get_all_variables(project = "customer_data", network = test_network)))
   expect_in(test_query[[1]]$select, exp)
   expect_in(test_query[[1]]$from, "customer_data")
