@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">xafty</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -82,6 +82,7 @@
 <div class="section level2">
 <h2 id="why-it-matters">Why It Matters<a class="anchor" aria-label="anchor" href="#why-it-matters"></a>
 </h2>
+<p>The limiting factor in modern analytics is not compute or tooling, but the inability to accumulate, recombine, and trust distributed analytical knowledge over time.</p>
 <p>Most data pipelines are built as one-off scripts: hard to reuse, fragile to change, and difficult for teams to collaborate on. As projects grow, this leads to duplicated logic, inconsistent results, and a constant need to rebuild work that already exists.</p>
 <p>xafty treats analytics as a distributed knowledge system rather than a data processing system. It allows organizations to accumulate and recombine analytical knowledge incrementally, without central coordination or pipeline redesign.</p>
 </div>
@@ -233,7 +234,6 @@ Diagram illustrating a network pipeline, where each step is a node connected acc
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; 📊 example_network </span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; 🌲 Projects (2):</span></span>
 <span><span class="co">#&gt;    ├📁 mtcars</span></span>
 <span><span class="co">#&gt;    │   └  12🌱 | 1🔗 | 0🧩 </span></span>
@@ -252,7 +252,7 @@ Diagram illustrating a network pipeline, where each step is a node connected acc
 <span></span>
 <span><span class="co"># Pull data as needed from the network in the desired column order</span></span>
 <span><span class="fu"><a href="reference/query.html">query</a></span><span class="op">(</span><span class="va">hp</span>, <span class="va">wt</span>, <span class="va">vs</span>, <span class="va">type</span>, <span class="va">power_to_weight</span><span class="op">)</span> <span class="op">|&gt;</span>  </span>
-<span>  <span class="fu"><a href="reference/from.html">from</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu"><a href="reference/from.html">from</a></span><span class="op">(</span><span class="st">"mtcars"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="reference/nascent.html">nascent</a></span><span class="op">(</span><span class="va">xafty_network</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    hp    wt vs    type power_to_weight</span></span>
@@ -272,7 +272,7 @@ Diagram illustrating a network pipeline, where each step is a node connected acc
 </ol>
 <p>For example, if we use the above network to query the following variables:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="reference/query.html">query</a></span><span class="op">(</span><span class="va">type</span>, <span class="va">hp</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="reference/from.html">from</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="reference/nascent.html">nascent</a></span><span class="op">(</span><span class="va">xafty_network</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="reference/query.html">query</a></span><span class="op">(</span><span class="va">type</span>, <span class="va">hp</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="reference/from.html">from</a></span><span class="op">(</span><span class="st">"mtcars"</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="reference/nascent.html">nascent</a></span><span class="op">(</span><span class="va">xafty_network</span><span class="op">)</span></span></code></pre></div>
 <p><strong>The resulting pipeline can be represented as follows:</strong></p>
 <figure><img src="reference/figures/Example_Sub_Pipeline.png" alt="Diagram illustrating the “collapsed” pipeline from a xafty network"><figcaption aria-hidden="true">
 Diagram illustrating the “collapsed” pipeline from a xafty network

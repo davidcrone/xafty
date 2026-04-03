@@ -6,6 +6,8 @@
   : Add a Predefined Join Path to a Query
 - [`build_dag()`](https://davidcrone.github.io/xafty/reference/build_dag.md)
   : Build an 'Evaluable' Data Pipeline Object
+- [`build_namespace()`](https://davidcrone.github.io/xafty/reference/build_namespace.md)
+  : Main Namespace Generator
 - [`evaluate_dag()`](https://davidcrone.github.io/xafty/reference/evaluate_dag.md)
   : Evaluate a Network Pipeline
 - [`from()`](https://davidcrone.github.io/xafty/reference/from.md) :
@@ -26,6 +28,8 @@
   Build a xafty Query
 - [`register()`](https://davidcrone.github.io/xafty/reference/register.md)
   : Register a Function in a Network
+- [`register_state_manager()`](https://davidcrone.github.io/xafty/reference/register_state_manager.md)
+  : Tracks changes to the network
 - [`set_project_print_order()`](https://davidcrone.github.io/xafty/reference/set_project_print_order.md)
   : Set or Change the Print Order of Projects
 - [`to_script()`](https://davidcrone.github.io/xafty/reference/to_script.md)

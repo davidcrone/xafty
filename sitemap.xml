@@ -9,6 +9,7 @@
 <url><loc>https://davidcrone.github.io/xafty/news/index.html</loc></url>
 <url><loc>https://davidcrone.github.io/xafty/reference/add_join_path.html</loc></url>
 <url><loc>https://davidcrone.github.io/xafty/reference/build_dag.html</loc></url>
+<url><loc>https://davidcrone.github.io/xafty/reference/build_namespace.html</loc></url>
 <url><loc>https://davidcrone.github.io/xafty/reference/evaluate_dag.html</loc></url>
 <url><loc>https://davidcrone.github.io/xafty/reference/from.html</loc></url>
 <url><loc>https://davidcrone.github.io/xafty/reference/get_function_package.html</loc></url>
@@ -20,6 +21,7 @@
 <url><loc>https://davidcrone.github.io/xafty/reference/print.xafty_project.html</loc></url>
 <url><loc>https://davidcrone.github.io/xafty/reference/query.html</loc></url>
 <url><loc>https://davidcrone.github.io/xafty/reference/register.html</loc></url>
+<url><loc>https://davidcrone.github.io/xafty/reference/register_state_manager.html</loc></url>
 <url><loc>https://davidcrone.github.io/xafty/reference/set_project_print_order.html</loc></url>
 <url><loc>https://davidcrone.github.io/xafty/reference/to_script.html</loc></url>
 <url><loc>https://davidcrone.github.io/xafty/reference/where.html</loc></url>

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">xafty</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -71,6 +71,61 @@
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $from</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "project_name2"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> attr(,"class")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "list"        "xafty_query"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> attr(,"class")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "list"             "xafty_query_list"</span>
+<span class="r-in"><span><span class="co"># Tidy-Style selection is also supported</span></span></span>
+<span class="r-in"><span><span class="fu">query</span><span class="op">(</span><span class="va">var1</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $unevaluated</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $select</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "var1"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $from</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "unevaluated"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> attr(,"class")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "list"      "raw_query"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> attr(,"class")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "list"             "xafty_query_list"</span>
+<span class="r-in"><span><span class="co"># Named vector style for renaming is also supported</span></span></span>
+<span class="r-in"><span><span class="fu">query</span><span class="op">(</span>table1 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Rename"</span> <span class="op">=</span> <span class="st">"var1"</span><span class="op">)</span>, <span class="va">var2</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $table1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $select</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "var1"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $from</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "table1"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $rename</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "Rename"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> attr(,"class")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "list"        "xafty_query"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $unevaluated</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $select</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "var2"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $from</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "unevaluated"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> attr(,"class")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "list"      "raw_query"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> attr(,"class")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "list"             "xafty_query_list"</span>
+<span class="r-in"><span><span class="co"># Nested list style is also supported</span></span></span>
+<span class="r-in"><span><span class="fu">query</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>customer_data <span class="op">=</span> <span class="st">"id"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $customer_data</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $select</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "id"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $from</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "customer_data"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> attr(,"class")</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "list"        "xafty_query"</span>

@@ -39,7 +39,8 @@ register(quosure, project, network, link_type, ...)
   wrapper. - \`update\` (logical): Whether to update if the function is
   already registered. - \`direction\` (character): For joins, "one" or
   "both" for bidirectional registration. - \`vars\` (character vector):
-  Explicitly specify output variable names.
+  Explicitly specify output variable names. - \`test_dag\`(logical):
+  Whether the newly registered node should be tested for cycles.
 
 ## Value
 

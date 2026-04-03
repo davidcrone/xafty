@@ -90,13 +90,13 @@ network
 #>        └  11🌱 | 0🔗 | 0🧩
 
 # Querying a project by its name, will return all variables from that project
-mtcars <- query("mtcars") |> nascent(network)
+mtcars <- query("mtcars") |> from("mtcars") |> nascent(network)
 
 # Querying variables will only return the declared variables
 data <- query(mtcars = c("carb", "gear")) |> nascent(network)
 
 # Querying can also be done via unquoted symbols
-data <- query(carb, gear) |> nascent(network)
+data <- query(carb, gear) |> from("mtcars") |> nascent(network)
 
 head(data)
 #>                   carb gear
@@ -124,7 +124,7 @@ network$mtcars
 #> 🔗  Joins: (None)
 
 # 2. retrieve data from the network
-data <- query(mtcars = c("hp", "wt")) |> nascent(network)
+data <- query(mtcars = c("hp", "wt")) |> from("mtcars") |> nascent(network)
 
 # 3. write the transformation step
 add_power_to_weight <- function(data) {
@@ -387,6 +387,7 @@ function:
 
 ``` r
 data <- query(mtcars = "mean_hp_per_gear", engine = "type") |> 
+  from("mtcars") |> 
   xafty::where(type == "Straight") |> 
   nascent(network)
 
@@ -492,6 +493,7 @@ when constructing the query:
 ``` r
 
 data <- query(am, mean_hp_per_gear, date) |> 
+  from("mtcars") |> 
   with_state(date_state = "2026-02-02") |> 
   nascent(network)
 head(data, n = 3)
@@ -523,6 +525,7 @@ predefined join path to a query using
 ``` r
 
 data <- query(mtcars = "power_to_weight", engine = "type") |> 
+  from("mtcars") |> 
   add_join_path(path = c("mtcars", "engine")) |> 
   nascent(network)
 

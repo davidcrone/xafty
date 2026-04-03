@@ -34,6 +34,10 @@ xafty](https://davidcrone.github.io/xafty/articles/xafty.html)
 
 ## Why It Matters
 
+The limiting factor in modern analytics is not compute or tooling, but
+the inability to accumulate, recombine, and trust distributed analytical
+knowledge over time.
+
 Most data pipelines are built as one-off scripts: hard to reuse, fragile
 to change, and difficult for teams to collaborate on. As projects grow,
 this leads to duplicated logic, inconsistent results, and a constant
@@ -236,7 +240,6 @@ xafty_network
 #> ---
 #> 📊 example_network 
 #> 
-#> 
 #> 🌲 Projects (2):
 #>    ├📁 mtcars
 #>    │   └  12🌱 | 1🔗 | 0🧩 
@@ -255,7 +258,7 @@ xafty_network$mtcars
 
 # Pull data as needed from the network in the desired column order
 query(hp, wt, vs, type, power_to_weight) |>  
-  from(mtcars) |> 
+  from("mtcars") |> 
   nascent(xafty_network) |> 
   head()
 #>    hp    wt vs    type power_to_weight
@@ -287,7 +290,7 @@ For example, if we use the above network to query the following
 variables:
 
 ``` r
-query(type, hp) |> from(mtcars) |> nascent(xafty_network)
+query(type, hp) |> from("mtcars") |> nascent(xafty_network)
 ```
 
 **The resulting pipeline can be represented as follows:**

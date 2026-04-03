@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">xafty</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -132,13 +132,13 @@ the network for our desired variables:</p>
 <span><span class="co">#&gt;        └  11🌱 | 0🔗 | 0🧩</span></span>
 <span></span>
 <span><span class="co"># Querying a project by its name, will return all variables from that project</span></span>
-<span><span class="va">mtcars</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/query.html">query</a></span><span class="op">(</span><span class="st">"mtcars"</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/nascent.html">nascent</a></span><span class="op">(</span><span class="va">network</span><span class="op">)</span></span>
+<span><span class="va">mtcars</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/query.html">query</a></span><span class="op">(</span><span class="st">"mtcars"</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/from.html">from</a></span><span class="op">(</span><span class="st">"mtcars"</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/nascent.html">nascent</a></span><span class="op">(</span><span class="va">network</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Querying variables will only return the declared variables</span></span>
 <span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/query.html">query</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"carb"</span>, <span class="st">"gear"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/nascent.html">nascent</a></span><span class="op">(</span><span class="va">network</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Querying can also be done via unquoted symbols</span></span>
-<span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/query.html">query</a></span><span class="op">(</span><span class="va">carb</span>, <span class="va">gear</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/nascent.html">nascent</a></span><span class="op">(</span><span class="va">network</span><span class="op">)</span></span>
+<span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/query.html">query</a></span><span class="op">(</span><span class="va">carb</span>, <span class="va">gear</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/from.html">from</a></span><span class="op">(</span><span class="st">"mtcars"</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/nascent.html">nascent</a></span><span class="op">(</span><span class="va">network</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">data</span><span class="op">)</span></span>
 <span><span class="co">#&gt;                   carb gear</span></span>
@@ -164,7 +164,7 @@ register the function again into the network:</p>
 <span><span class="co">#&gt; 🔗  Joins: (None)</span></span>
 <span></span>
 <span><span class="co"># 2. retrieve data from the network</span></span>
-<span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/query.html">query</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"hp"</span>, <span class="st">"wt"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/nascent.html">nascent</a></span><span class="op">(</span><span class="va">network</span><span class="op">)</span></span>
+<span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/query.html">query</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"hp"</span>, <span class="st">"wt"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/from.html">from</a></span><span class="op">(</span><span class="st">"mtcars"</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/nascent.html">nascent</a></span><span class="op">(</span><span class="va">network</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># 3. write the transformation step</span></span>
 <span><span class="va">add_power_to_weight</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">data</span><span class="op">)</span> <span class="op">{</span></span>
@@ -397,6 +397,7 @@ semantic meaning, purpose, or transformation stage.</p>
 function:</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/query.html">query</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="st">"mean_hp_per_gear"</span>, engine <span class="op">=</span> <span class="st">"type"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu"><a href="../reference/from.html">from</a></span><span class="op">(</span><span class="st">"mtcars"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu">xafty</span><span class="fu">::</span><span class="fu"><a href="../reference/where.html">where</a></span><span class="op">(</span><span class="va">type</span> <span class="op">==</span> <span class="st">"Straight"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="../reference/nascent.html">nascent</a></span><span class="op">(</span><span class="va">network</span><span class="op">)</span></span>
 <span></span>
@@ -485,6 +486,7 @@ its name wrapped in curly braces:</p>
 <div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/query.html">query</a></span><span class="op">(</span><span class="va">am</span>, <span class="va">mean_hp_per_gear</span>, <span class="va">date</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu"><a href="../reference/from.html">from</a></span><span class="op">(</span><span class="st">"mtcars"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="../reference/with_state.html">with_state</a></span><span class="op">(</span>date_state <span class="op">=</span> <span class="st">"2026-02-02"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="../reference/nascent.html">nascent</a></span><span class="op">(</span><span class="va">network</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">data</span>, n <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span>
@@ -512,6 +514,7 @@ predefined join path to a query using
 <div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/query.html">query</a></span><span class="op">(</span>mtcars <span class="op">=</span> <span class="st">"power_to_weight"</span>, engine <span class="op">=</span> <span class="st">"type"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu"><a href="../reference/from.html">from</a></span><span class="op">(</span><span class="st">"mtcars"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="../reference/add_join_path.html">add_join_path</a></span><span class="op">(</span>path <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"mtcars"</span>, <span class="st">"engine"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="../reference/nascent.html">nascent</a></span><span class="op">(</span><span class="va">network</span><span class="op">)</span></span>
 <span></span>
