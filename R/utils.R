@@ -183,6 +183,7 @@ print.xafty_project <- function(x, ...) {
 #' Main Namespace Generator
 #' @description
 #' The namespace builds groups in the execution path, allowing for linear transformations
+#' @param link (list) A link object
 #' @returns character string of length 1
 build_namespace <- function(link) {
   vec <- c(link$context, link$project)

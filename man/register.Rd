@@ -22,7 +22,8 @@ register(quosure, project, network, link_type, ...)
 - `attach_context` (character): Attach the node to a context wrapper.
 - `update` (logical): Whether to update if the function is already registered.
 - `direction` (character): For joins, "one" or "both" for bidirectional registration.
-- `vars` (character vector): Explicitly specify output variable names.}
+- `vars` (character vector): Explicitly specify output variable names.
+- `test_dag`(logical): Whether the newly registered node should be tested for cycles.}
 }
 \value{
 A xafty network (invisibly)
