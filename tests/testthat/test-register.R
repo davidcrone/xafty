@@ -214,7 +214,8 @@ test_that("Adding a polluted on_exit context node informs the user with a warnin
   test_network$customer_data$link(add_score_category(data = query(customer_data = "category2")), vars = "category")
 
   expect_warning(test_network$customer_data$add_context("polluted", on_entry = pass_through(data = "{.data}"),
-                                                                    on_exit = pass_through2(data = query(customer_data = "category")), update = TRUE, test_dag = TRUE)
+                                                                    on_exit = pass_through2(data = query(customer_data = "category")),
+                                                        update = TRUE, test_dag = TRUE)
                  )
 })
 

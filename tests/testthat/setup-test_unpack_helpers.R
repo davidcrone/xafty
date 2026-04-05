@@ -24,7 +24,7 @@ test_build_wrapper_list <- function(network) {
     contexts <- names(network[[project]]$ruleset$contexts)
     if(length(contexts) == 0) next
     for (context in contexts) {
-      name <- paste0(context, ".", project)
+      name <- paste0(project, ".", context)
       li_wrappers[[name]] <- list(
         project = project,
         context = context

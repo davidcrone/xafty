@@ -102,13 +102,13 @@ test_that("clean_wrapper keeps the execution order as is when the project functi
   dag <- list(
     projectA.get_data = character(0),
     group.projectB.group_by_relation = c("projectA.get_data"),
-    group.projectB.add_variable_A = c("projectA.get_data", "group.projectB.group_by_relation"),
-    group.projectB.ungroup = c("group.projectB.add_variable_A", "group.projectB.group_by_relation"),
-    projectC.add_variable_B = c("group.projectB.add_variable_A", "projectB.ungroup")
+    group.projectB.add_variable_A = c("projectA.get_data", "projectB.group.group_by_relation"),
+    group.projectB.ungroup = c("projectB.group.add_variable_A", "projectB.group.group_by_relation"),
+    projectC.add_variable_B = c("projectB.group.add_variable_A", "projectB.ungroup")
   )
-  execution_order_input <- c("projectA.get_data", "group.projectB.group_by_relation", "group.projectB.add_variable_A", "group.projectB.ungroup", "projectC.add_variable_B")
+  execution_order_input <- c("projectA.get_data", "projectB.group.group_by_relation", "projectB.group.add_variable_A", "projectB.group.ungroup", "projectC.add_variable_B")
   test_order <- clean_wrapper(project = "projectB", group = "group", order = execution_order_input, dag = dag, contexts = NULL, network = context_network_1)
-  expected_order <- c("projectA.get_data", "group.projectB.group_by_relation", "group.projectB.add_variable_A", "group.projectB.ungroup", "projectC.add_variable_B")
+  expected_order <- c("projectA.get_data", "projectB.group.group_by_relation", "projectB.group.add_variable_A", "projectB.group.ungroup", "projectC.add_variable_B")
   expect_identical(test_order, expected_order)
   expect_identical(clean_all_wrappers(wrappers = test_build_wrapper_list(context_network_1), order = execution_order_input, dag = dag, network = context_network_1), expected_order)
 })
@@ -118,12 +118,12 @@ test_that("clean_wrapper reorders execution order when the function in the wrapp
     projectA.get_data = character(0),
     group.projectB.group_by_relation = c("projectA.get_data"),
     projectC.add_variable_B = c("projectA.get_data"),
-    group.projectB.add_variable_A = c("projectA.get_data", "group.projectB.group_by_relation"),
-    group.projectB.ungroup = c("group.projectB.add_variable_A", "group.projectB.group_by_relation")
+    group.projectB.add_variable_A = c("projectA.get_data", "projectB.group.group_by_relation"),
+    group.projectB.ungroup = c("projectB.group.add_variable_A", "projectB.group.group_by_relation")
   )
-  execution_order_input <- c("projectA.get_data", "group.projectB.group_by_relation", "projectC.add_variable_B", "group.projectB.add_variable_A", "group.projectB.ungroup")
+  execution_order_input <- c("projectA.get_data", "projectB.group.group_by_relation", "projectC.add_variable_B", "projectB.group.add_variable_A", "projectB.group.ungroup")
   test_order <- clean_wrapper(project = "projectB", group = "group", order = execution_order_input, dag = dag, contexts = NULL, network = context_network_1)
-  expected_order <- c("projectA.get_data", "group.projectB.group_by_relation", "group.projectB.add_variable_A", "group.projectB.ungroup", "projectC.add_variable_B")
+  expected_order <- c("projectA.get_data", "projectB.group.group_by_relation", "projectB.group.add_variable_A", "projectB.group.ungroup", "projectC.add_variable_B")
   expect_identical(test_order, expected_order)
   expect_identical(clean_all_wrappers(wrappers = test_build_wrapper_list(context_network_1), order = execution_order_input, dag = dag, network = context_network_1), expected_order)
 })
@@ -132,13 +132,13 @@ test_that("clean_wrapper reorders a function to the end of the context when the 
   dag <- list(
     projectA.get_data = character(0),
     group.projectB.group_by_relation = c("projectA.get_data"),
-    group.projectB.add_variable_A = c("projectA.get_data", "group.projectB.group_by_relation"),
-    projectC.add_variable_B = c("group.projectB.add_variable_A"),
-    group.projectB.ungroup = c("group.projectB.add_variable_A", "group.projectB.group_by_relation")
+    group.projectB.add_variable_A = c("projectA.get_data", "projectB.group.group_by_relation"),
+    projectC.add_variable_B = c("projectB.group.add_variable_A"),
+    group.projectB.ungroup = c("projectB.group.add_variable_A", "projectB.group.group_by_relation")
   )
-  execution_order_input <- c("projectA.get_data", "group.projectB.group_by_relation", "group.projectB.add_variable_A", "projectC.add_variable_B", "group.projectB.ungroup")
+  execution_order_input <- c("projectA.get_data", "projectB.group.group_by_relation", "projectB.group.add_variable_A", "projectC.add_variable_B", "projectB.group.ungroup")
   test_order <- clean_wrapper(project = "projectB", group = "group",order = execution_order_input, dag = dag, contexts = NULL, network = context_network_1)
-  expected_order <- c("projectA.get_data", "group.projectB.group_by_relation", "group.projectB.add_variable_A", "group.projectB.ungroup", "projectC.add_variable_B")
+  expected_order <- c("projectA.get_data", "projectB.group.group_by_relation", "projectB.group.add_variable_A", "projectB.group.ungroup", "projectC.add_variable_B")
   expect_identical(test_order, expected_order)
   expect_identical(clean_all_wrappers(wrappers = test_build_wrapper_list(context_network_1), order = execution_order_input, dag = dag, network = context_network_1), expected_order)
 })
@@ -146,16 +146,17 @@ test_that("clean_wrapper reorders a function to the end of the context when the 
 test_that("clean_wrapper duplicates a context when a function within the context is broken up", {
   dag <- list(
     projectA.get_data = character(0),
-    group.projectB.group_by_relation = c("projectA.get_data"),
-    group.projectB.add_variable_A = c("projectA.get_data", "group.projectB.group_by_relation"),
-    projectC.add_variable_B = c("group.projectB.add_variable_A"),
-    group.projectB.add_variable_C = c("projectC.add_variable_B", "group.projectB.group_by_relation"),
-    group.projectB.ungroup = c("group.projectB.add_variable_A", "group.projectB.group_by_relation")
+    projectB.group.group_by_relation = c("projectA.get_data"),
+    projectB.group.add_variable_A = c("projectA.get_data", "projectB.group.group_by_relation"),
+    projectC.add_variable_B = c("projectB.group.add_variable_A"),
+    projectB.group.add_variable_C = c("projectC.add_variable_B", "projectB.group.group_by_relation"),
+    projectB.group.ungroup = c("projectB.group.add_variable_A", "projectB.group.group_by_relation")
   )
-  execution_order_input <- c("projectA.get_data", "group.projectB.group_by_relation", "group.projectB.add_variable_A", "projectC.add_variable_B", "group.projectB.add_variable_C", "group.projectB.ungroup")
+  execution_order_input <- c("projectA.get_data", "projectB.group.group_by_relation", "projectB.group.add_variable_A",
+                             "projectC.add_variable_B", "projectB.group.add_variable_C", "projectB.group.ungroup")
   test_order <- clean_wrapper(project = "projectB", group = "group", order = execution_order_input, dag = dag, contexts = NULL, network = context_network_1)
-  expected_order <- c("projectA.get_data", "group.projectB.group_by_relation", "group.projectB.add_variable_A", "group.projectB.ungroup", "projectC.add_variable_B",
-                      "group.projectB.group_by_relation", "group.projectB.add_variable_C", "group.projectB.ungroup")
+  expected_order <- c("projectA.get_data", "projectB.group.group_by_relation", "projectB.group.add_variable_A", "projectB.group.ungroup", "projectC.add_variable_B",
+                      "projectB.group.group_by_relation", "projectB.group.add_variable_C", "projectB.group.ungroup")
   expect_identical(test_order, expected_order)
   expect_identical(clean_all_wrappers(wrappers = test_build_wrapper_list(context_network_1), order = execution_order_input, dag = dag, network = context_network_1), expected_order)
 })
@@ -163,21 +164,21 @@ test_that("clean_wrapper duplicates a context when a function within the context
 test_that("clean_wrapper handles different context with interwoven foreign projects correctly", {
   dag <- list(
     projectA.get_data = character(0),
-    group.projectB.group_by_relation = c("projectA.get_data"),
-    group.projectB.add_variable_A = c("projectA.get_data", "group.projectB.group_by_relation"),
-    projectC.add_variable_B = c("group.projectB.add_variable_A"),
+    projectB.group.group_by_relation = c("projectA.get_data"),
+    projectB.group.add_variable_A = c("projectA.get_data", "projectB.group.group_by_relation"),
+    projectC.add_variable_B = c("projectB.group.add_variable_A"),
     projectC.add_variable_E = c("projectA.get_data"),
-    projectC.add_variable_D = c("group.projectB.add_variable_A"),
-    group.projectB.add_variable_C = c("projectC.add_variable_B", "group.projectB.group_by_relation"),
-    group.projectB.ungroup = c("group.projectB.add_variable_A", "group.projectB.group_by_relation"),
+    projectC.add_variable_D = c("projectB.group.add_variable_A"),
+    projectB.group.add_variable_C = c("projectC.add_variable_B", "projectB.group.group_by_relation"),
+    projectB.group.ungroup = c("projectB.group.add_variable_A", "projectB.group.group_by_relation"),
     projectD.compute_last = c("projectA.get_data", "projectC.add_variable_D")
   )
-  execution_order_input <- c("projectA.get_data", "group.projectB.group_by_relation", "group.projectB.add_variable_A", "projectC.add_variable_B", "projectC.add_variable_E",
-                             "projectC.add_variable_D", "group.projectB.add_variable_C", "group.projectB.ungroup", "projectD.compute_last")
+  execution_order_input <- c("projectA.get_data", "projectB.group.group_by_relation", "projectB.group.add_variable_A", "projectC.add_variable_B", "projectC.add_variable_E",
+                             "projectC.add_variable_D", "projectB.group.add_variable_C", "projectB.group.ungroup", "projectD.compute_last")
   test_order <- clean_wrapper(project = "projectB", group = "group", order = execution_order_input, dag = dag, contexts = NULL, network = context_network_1)
-  expected_order <- c("projectA.get_data", "group.projectB.group_by_relation", "group.projectB.add_variable_A", "group.projectB.ungroup",
+  expected_order <- c("projectA.get_data", "projectB.group.group_by_relation", "projectB.group.add_variable_A", "projectB.group.ungroup",
                       "projectC.add_variable_B", "projectC.add_variable_E", "projectC.add_variable_D",
-                      "group.projectB.group_by_relation", "group.projectB.add_variable_C", "group.projectB.ungroup",
+                      "projectB.group.group_by_relation", "projectB.group.add_variable_C", "projectB.group.ungroup",
                       "projectD.compute_last")
   expect_identical(test_order, expected_order)
   expect_identical(clean_all_wrappers(wrappers = test_build_wrapper_list(context_network_1), order = execution_order_input, dag = dag, network = context_network_1), expected_order)
@@ -187,16 +188,16 @@ test_that("clean_wrapper handles multiple foreign nodes interleaved in project c
   names(context_network_1$projectB$ruleset$contexts$group$on_entry) <- "group"
   dag <- list(
     projectA.base = character(0),
-    group.projectB.group = "projectA.base",
-    group.projectB.add_1 = c("projectA.base", "group.projectB.group"),
+    projectB.group.group = "projectA.base",
+    projectB.group.add_1 = c("projectA.base", "projectB.group.group"),
     projectC.temp1 = "projectA.base",
-    group.projectB.add_2 = c("projectA.base", "group.projectB.group"),
-    projectD.temp2 = c("group.projectB.add_2", "group.projectB.add_1"),
-    group.projectB.ungroup = c("group.projectB.add_2", "group.projectB.group")
+    projectB.group.add_2 = c("projectA.base", "projectB.group.group"),
+    projectD.temp2 = c("projectB.group.add_2", "projectB.group.add_1"),
+    projectB.group.ungroup = c("projectB.group.add_2", "projectB.group.group")
   )
-  order <- c("projectA.base", "group.projectB.group", "group.projectB.add_1", "projectC.temp1", "group.projectB.add_2", "projectD.temp2", "group.projectB.ungroup")
+  order <- c("projectA.base", "projectB.group.group", "projectB.group.add_1", "projectC.temp1", "projectB.group.add_2", "projectD.temp2", "projectB.group.ungroup")
   test <- clean_wrapper("projectB", group = "group", order = order, dag = dag, contexts = NULL, network = context_network_1)
-  expected <- c("projectA.base", "group.projectB.group", "group.projectB.add_1", "group.projectB.add_2", "group.projectB.ungroup", "projectC.temp1", "projectD.temp2")
+  expected <- c("projectA.base", "projectB.group.group", "projectB.group.add_1", "projectB.group.add_2", "projectB.group.ungroup", "projectC.temp1", "projectD.temp2")
   expect_identical(test, expected)
   expect_identical(clean_all_wrappers(wrappers = test_build_wrapper_list(context_network_1), order = order, dag = dag, network = context_network_1), expected)
 })
@@ -204,15 +205,15 @@ test_that("clean_wrapper handles multiple foreign nodes interleaved in project c
 test_that("clean_wrapper only manipulates the specified project", {
   dag <- list(
     projectA.start = character(0),
-    group.projectB.group = "projectA.start",
-    group.projectB.add_x = "group.projectB.group",
-    group.projectB.ungroup = "group.projectB.add_x",
-    group.projectC.group = "projectA.start",
-    group.projectC.add_y = "group.projectC.group",
-    group.projectC.ungroup = "group.projectC.add_y"
+    projectB.group.group = "projectA.start",
+    projectB.group.add_x = "projectB.group.group",
+    projectB.group.ungroup = "projectB.group.add_x",
+    projectC.group.group = "projectA.start",
+    projectC.group.add_y = "projectC.group.group",
+    projectC.group.ungroup = "projectC.group.add_y"
   )
-  order <- c("projectA.start", "group.projectB.group", "group.projectB.add_x", "group.projectB.ungroup",
-             "group.projectC.group", "group.projectC.add_y", "group.projectC.ungroup")
+  order <- c("projectA.start", "projectB.group.group", "projectB.group.add_x", "projectB.group.ungroup",
+             "projectC.group.group", "projectC.group.add_y", "projectC.group.ungroup")
   expect_identical(clean_wrapper("projectB", group = "group", order = order, dag = dag, contexts = NULL, network = context_network_2), order)
   expect_identical(clean_wrapper("projectC", group = "group", order = order, dag = dag, contexts = NULL, network = context_network_2), order)
   expect_identical(clean_all_wrappers(wrappers = test_build_wrapper_list(context_network_2), order = order, dag = dag, network = context_network_2), order)
@@ -221,16 +222,16 @@ test_that("clean_wrapper only manipulates the specified project", {
 test_that("clean_wrapper correctly entangles interleaved contexts from different projects", {
   dag <- list(
     projectA.start = character(0),
-    group.projectC.group = "projectA.start",
-    group.projectB.group = c("projectA.start", "group.projectB.add_x"),
-    group.projectB.add_x = "group.projectB.group",
-    group.projectB.ungroup = "group.projectB.add_x",
-    group.projectC.add_y = c("group.projectC.group", "group.projectB.add_x"),
-    group.projectC.ungroup = "group.projectC.add_y"
+    projectC.group.group = "projectA.start",
+    projectB.group.group = c("projectA.start", "projectB.group.add_x"),
+    projectB.group.add_x = "projectB.group.group",
+    projectB.group.ungroup = "projectB.group.add_x",
+    projectC.group.add_y = c("projectC.group.group", "projectB.group.add_x"),
+    projectC.group.ungroup = "projectC.group.add_y"
   )
-  order <- c("projectA.start", "group.projectC.group", "group.projectB.group", "group.projectB.add_x", "group.projectC.add_y", "group.projectB.ungroup", "group.projectC.ungroup")
-  epx_orderB <- c("projectA.start", "group.projectC.group", "group.projectB.group", "group.projectB.add_x", "group.projectB.ungroup", "group.projectC.add_y", "group.projectC.ungroup")
-  exp_orderC <- c("projectA.start", "group.projectB.group", "group.projectB.add_x", "group.projectB.ungroup", "group.projectC.group", "group.projectC.add_y", "group.projectC.ungroup")
+  order <- c("projectA.start", "projectC.group.group", "projectB.group.group", "projectB.group.add_x", "projectC.group.add_y", "projectB.group.ungroup", "projectC.group.ungroup")
+  epx_orderB <- c("projectA.start", "projectC.group.group", "projectB.group.group", "projectB.group.add_x", "projectB.group.ungroup", "projectC.group.add_y", "projectC.group.ungroup")
+  exp_orderC <- c("projectA.start", "projectB.group.group", "projectB.group.add_x", "projectB.group.ungroup", "projectC.group.group", "projectC.group.add_y", "projectC.group.ungroup")
   expect_identical(clean_wrapper("projectB", group = "group", order = order, dag = dag, contexts = NULL, network = context_network_2), epx_orderB)
   expect_identical(clean_all_wrappers(wrappers = test_build_wrapper_list(context_network_2), order = order, dag = dag, network = context_network_2), exp_orderC)
 })
@@ -238,69 +239,69 @@ test_that("clean_wrapper correctly entangles interleaved contexts from different
 test_that("clean_all_wrappers correctly entangles interleaved contexts from different projects", {
   dag <- list(
     projectA.start = character(0),
-    group.projectC.group = "projectA.start",
-    group.projectB.group = c("projectA.start"),
-    group.projectB.add_x = "group.projectB.group",
-    group.projectB.ungroup = "group.projectB.add_x",
-    group.projectC.add_y = c("group.projectC.group", "group.projectB.add_x"),
-    group.projectB.add_z = c("group.projectC.add_y", "group.projectB.group"),
-    group.projectC.ungroup = "group.projectC.add_y"
+    projectC.group.group = "projectA.start",
+    projectB.group.group = c("projectA.start"),
+    projectB.group.add_x = "projectB.group.group",
+    projectB.group.ungroup = "projectB.group.add_x",
+    projectC.group.add_y = c("projectC.group.group", "projectB.group.add_x"),
+    projectB.group.add_z = c("projectC.group.add_y", "projectB.group.group"),
+    projectC.group.ungroup = "projectC.group.add_y"
   )
-  order <- c("projectA.start", "group.projectC.group", "group.projectB.group", "group.projectB.add_x",
-             "group.projectC.add_y", "group.projectB.add_z", "group.projectB.ungroup", "group.projectC.ungroup")
-  exp_order <- c("projectA.start", "group.projectB.group", "group.projectB.add_x", "group.projectB.ungroup",
-                 "group.projectC.group", "group.projectC.add_y", "group.projectC.ungroup",
-                 "group.projectB.group", "group.projectB.add_z", "group.projectB.ungroup")
+  order <- c("projectA.start", "projectC.group.group", "projectB.group.group", "projectB.group.add_x",
+             "projectC.group.add_y", "projectB.group.add_z", "projectB.group.ungroup", "projectC.group.ungroup")
+  exp_order <- c("projectA.start", "projectB.group.group", "projectB.group.add_x", "projectB.group.ungroup",
+                 "projectC.group.group", "projectC.group.add_y", "projectC.group.ungroup",
+                 "projectB.group.group", "projectB.group.add_z", "projectB.group.ungroup")
   order_test <- clean_all_wrappers(wrappers = test_build_wrapper_list(context_network_2), order = order, dag = dag, network = context_network_2)
   expect_identical(order_test, exp_order)
 })
 
-test_that("clean_all_wrappers correctly entangles interleaved contexts with two on_entry functions", {
-  context_network_2$projectB$ruleset$contexts$group$on_entry <-   list(group = list(), filter = list())
-
+test_that("clean_all_wrappers correctly disentangles interleaved contexts with two on_entry functions", {
+  context_network_2$projectB$ruleset$contexts$group$on_entry <- list(group = list(), filter = list())
   dag <- list(
     projectA.start = character(0),
-    group.projectC.group = "projectA.start",
-    group.projectB.group = c("projectA.start"),
-    group.projectB.filter = c("projectA.start", "group.projectB.group"),
-    group.projectB.add_x = "group.projectB.group",
-    group.projectB.ungroup = "group.projectB.add_x",
-    group.projectC.add_y = c("group.projectC.group", "group.projectB.add_x"),
-    group.projectB.add_z = c("group.projectC.add_y", "group.projectB.group"),
-    group.projectC.ungroup = "group.projectC.add_y"
+    projectC.group.group = "projectA.start",
+    projectB.group.group = c("projectA.start"),
+    projectB.group.filter = c("projectA.start", "projectB.group.group"),
+    projectB.group.add_x = "projectB.group.group",
+    projectB.group.ungroup = "projectB.group.add_x",
+    projectC.group.add_y = c("projectC.group.group", "projectB.group.add_x"),
+    projectB.group.add_z = c("projectC.group.add_y", "projectB.group.group"),
+    projectC.group.ungroup = "projectC.group.add_y"
   )
-  order <- c("projectA.start", "group.projectC.group", "group.projectB.group", "group.projectB.filter", "group.projectB.add_x",
-             "group.projectC.add_y", "group.projectB.add_z", "group.projectB.ungroup", "group.projectC.ungroup")
-  exp_order <- c("projectA.start", "group.projectB.group", "group.projectB.filter", "group.projectB.add_x",
-                 "group.projectB.ungroup", "group.projectC.group", "group.projectC.add_y", "group.projectC.ungroup",
-                 "group.projectB.group", "group.projectB.filter", "group.projectB.add_z", "group.projectB.ungroup")
+  order <- c("projectA.start", "projectC.group.group", "projectB.group.group", "projectB.group.filter", "projectB.group.add_x",
+             "projectC.group.add_y", "projectB.group.add_z", "projectB.group.ungroup", "projectC.group.ungroup")
+  exp_order <- c("projectA.start", "projectB.group.group", "projectB.group.filter", "projectB.group.add_x",
+                 "projectB.group.ungroup", "projectC.group.group", "projectC.group.add_y", "projectC.group.ungroup",
+                 "projectB.group.group", "projectB.group.filter", "projectB.group.add_z", "projectB.group.ungroup")
   order_test <- clean_all_wrappers(wrappers = test_build_wrapper_list(context_network_2), order = order, dag = dag, network = context_network_2)
   expect_identical(order_test, exp_order)
 })
+
 
 test_that("clean_all_wrappers correctly entangles interleaved contexts with three projects", {
-  context_network_2$projectB$ruleset$contexts$group$on_entry <-   list(group = list(), filter = list())
+  context_network_2$projectB$ruleset$contexts$group$on_entry <- list(group = list(), filter = list())
   dag <- list(
     projectA.start = character(0),
-    group.projectC.group = "projectA.start",
-    group.projectB.group = c("projectA.start"),
-    group.projectB.filter = c("projectA.start", "group.projectB.group"),
-    group.projectB.add_x = "group.projectB.group",
-    group.projectD.group = c("projectA.start"),
-    group.projectD.add_var = c("group.projectB.add_x"),
-    group.projectD.ungroup = c("group.projectD.add_var"),
-    group.projectC.add_y = c("group.projectC.group", "group.projectB.add_x"),
-    group.projectB.add_z = c("group.projectC.add_y", "group.projectB.group"),
-    group.projectB.ungroup = "group.projectB.add_x",
-    group.projectC.ungroup = "group.projectC.add_y"
+    projectC.group.group = "projectA.start",
+    projectB.group.group = c("projectA.start"),
+    projectB.group.filter = c("projectA.start", "projectB.group.group"),
+    projectB.group.add_x = "projectB.group.group",
+    projectD.group.group = c("projectA.start"),
+    projectD.group.add_var = c("projectB.group.add_x"),
+    projectD.group.ungroup = c("projectD.group.add_var"),
+    projectC.group.add_y = c("projectC.group.group", "projectB.group.add_x"),
+    projectB.group.add_z = c("projectC.group.add_y", "projectB.group.group"),
+    projectB.group.ungroup = "projectB.group.add_x",
+    projectC.group.ungroup = "projectC.group.add_y"
   )
-  order <- c("projectA.start", "group.projectC.group", "group.projectB.group", "group.projectB.filter", "group.projectB.add_x",
-             "group.projectD.group", "group.projectD.add_var", "group.projectD.ungroup", "group.projectC.add_y", "group.projectB.add_z", "group.projectB.ungroup", "group.projectC.ungroup")
+  order <- c("projectA.start", "projectC.group.group", "projectB.group.group", "projectB.group.filter", "projectB.group.add_x",
+             "projectD.group.group", "projectD.group.add_var", "projectD.group.ungroup", "projectC.group.add_y", "projectB.group.add_z", "projectB.group.ungroup", "projectC.group.ungroup")
   exp_order <- c("projectA.start",
-                 "group.projectB.group", "group.projectB.filter", "group.projectB.add_x", "group.projectB.ungroup",
-                 "group.projectD.group", "group.projectD.add_var", "group.projectD.ungroup",
-                 "group.projectC.group", "group.projectC.add_y", "group.projectC.ungroup",
-                 "group.projectB.group", "group.projectB.filter", "group.projectB.add_z", "group.projectB.ungroup")
+                 "projectB.group.group", "projectB.group.filter", "projectB.group.add_x", "projectB.group.ungroup",
+                 "projectD.group.group", "projectD.group.add_var", "projectD.group.ungroup",
+                 "projectC.group.group", "projectC.group.add_y", "projectC.group.ungroup",
+                 "projectB.group.group", "projectB.group.filter", "projectB.group.add_z", "projectB.group.ungroup")
   order_test <- clean_all_wrappers(wrappers = test_build_wrapper_list(context_network_2), order = order, dag = dag, network = context_network_2)
   expect_identical(order_test, exp_order)
 })
@@ -309,20 +310,21 @@ test_that("clean_all_wrappers correctly keeps minimal context compuation when it
   context_network_2$projectB$ruleset$contexts$group$on_entry <-   list(group = list(), filter = list())
   dag <- list(
     projectA.start = character(0),
-    group.projectC.group = "projectA.start",
-    group.projectB.group = c("projectA.start"),
-    group.projectB.filter = c("projectA.start", "group.projectB.group"),
-    group.projectB.add_x = "group.projectB.group",
-    group.projectC.add_y = c("group.projectC.group", "group.projectB.add_x"),
-    group.projectB.add_z = c("group.projectB.group"),
-    group.projectB.ungroup = "group.projectB.add_x",
-    group.projectC.ungroup = "group.projectC.add_y"
+    projectC.group.group = "projectA.start",
+    projectB.group.group = c("projectA.start"),
+    projectB.group.filter = c("projectA.start", "projectB.group.group"),
+    projectB.group.add_x = "projectB.group.group",
+    projectC.group.add_y = c("projectC.group.group", "projectB.group.add_x"),
+    projectB.group.add_z = c("projectB.group.group"),
+    projectB.group.ungroup = "projectB.group.add_x",
+    projectC.group.ungroup = "projectC.group.add_y"
   )
 
-  order <- c("projectA.start", "group.projectC.group", "group.projectB.group", "group.projectB.filter", "group.projectB.add_x", "group.projectC.add_y", "group.projectB.add_z", "group.projectB.ungroup", "group.projectC.ungroup")
+  order <- c("projectA.start", "projectC.group.group", "projectB.group.group", "projectB.group.filter",
+             "projectB.group.add_x", "projectC.group.add_y", "projectB.group.add_z", "projectB.group.ungroup", "projectC.group.ungroup")
   exp_order <- c("projectA.start",
-                 "group.projectB.group", "group.projectB.filter", "group.projectB.add_x", "group.projectB.add_z", "group.projectB.ungroup",
-                 "group.projectC.group", "group.projectC.add_y", "group.projectC.ungroup")
+                 "projectB.group.group", "projectB.group.filter", "projectB.group.add_x", "projectB.group.add_z", "projectB.group.ungroup",
+                 "projectC.group.group", "projectC.group.add_y", "projectC.group.ungroup")
   order_test <- clean_all_wrappers(wrappers = test_build_wrapper_list(context_network_2), order = order, dag = dag, network = context_network_2)
   expect_identical(order_test, exp_order)
 })
@@ -331,13 +333,13 @@ test_that("clean_wrapper moves the functions together even if only an on_entry c
   network <- list(projectB = list(ruleset = list(contexts = list(group = list(on_entry = list(order = list()), on_exit  = list())))))
   dag <- list(
     projectA.get_data = character(0),
-    group.projectB.order = c("projectA.get_data"),
-    group.projectB.add_variable_A = c("projectA.get_data", "group.projectB.order"),
-    projectC.add_variable_B = c("group.projectB.add_variable_A"),
-    group.projectB.add_variable_C = c("group.projectB.order")
+    projectB.group.order = c("projectA.get_data"),
+    projectB.group.add_variable_A = c("projectA.get_data", "projectB.group.order"),
+    projectC.add_variable_B = c("projectB.group.add_variable_A"),
+    projectB.group.add_variable_C = c("projectB.group.order")
   )
-  execution_order_input <- c("projectA.get_data", "group.projectB.order", "group.projectB.add_variable_A", "projectC.add_variable_B", "group.projectB.add_variable_C")
-  expected_order <- c("projectA.get_data", "group.projectB.order", "group.projectB.add_variable_A", "group.projectB.add_variable_C", "projectC.add_variable_B")
+  execution_order_input <- c("projectA.get_data", "projectB.group.order", "projectB.group.add_variable_A", "projectC.add_variable_B", "projectB.group.add_variable_C")
+  expected_order <- c("projectA.get_data", "projectB.group.order", "projectB.group.add_variable_A", "projectB.group.add_variable_C", "projectC.add_variable_B")
   expect_identical(clean_wrapper(project = "projectB", group = "group", order = execution_order_input, dag = dag, contexts = NULL, network = network), expected_order)
   expect_identical(clean_all_wrappers(wrappers = test_build_wrapper_list(network), order = execution_order_input, dag = dag, network = network), expected_order)
 })
@@ -346,13 +348,13 @@ test_that("clean_wrapper moves the functions together even if only an on_exit co
   network <- list(projectB = list(ruleset = list(contexts = list(group = list(on_entry = list(), on_exit  = list(order = list()))))))
   dag <- list(
     projectA.get_data = character(0),
-    group.projectB.add_variable_A = c("projectA.get_data", "group.projectB.order"),
-    projectC.add_variable_B = c("group.projectB.add_variable_A"),
-    group.projectB.add_variable_C = c("group.projectB.order"),
-    group.projectB.order = c("projectA.get_data")
+    projectB.group.add_variable_A = c("projectA.get_data", "projectB.group.order"),
+    projectC.add_variable_B = c("projectB.group.add_variable_A"),
+    projectB.group.add_variable_C = c("projectB.group.order"),
+    projectB.group.order = c("projectA.get_data")
   )
-  execution_order_input <- c("projectA.get_data", "group.projectB.order", "group.projectB.add_variable_A", "projectC.add_variable_B", "group.projectB.add_variable_C")
-  expected_order <- c("projectA.get_data", "group.projectB.add_variable_A", "group.projectB.add_variable_C", "group.projectB.order", "projectC.add_variable_B")
+  execution_order_input <- c("projectA.get_data", "projectB.group.order", "projectB.group.add_variable_A", "projectC.add_variable_B", "projectB.group.add_variable_C")
+  expected_order <- c("projectA.get_data", "projectB.group.add_variable_A", "projectB.group.add_variable_C", "projectB.group.order", "projectC.add_variable_B")
   expect_identical(clean_wrapper(project = "projectB", group = "group", order = execution_order_input, dag = dag, contexts = NULL, network = network), expected_order)
   expect_identical(clean_all_wrappers(wrappers = test_build_wrapper_list(network), order = execution_order_input, dag = dag, network = network), expected_order)
 })
@@ -360,15 +362,15 @@ test_that("clean_wrapper moves the functions together even if only an on_exit co
 test_that("clean_wrapper mvoes foreign nodes after the context if they depend on a node within the context", {
   dag <- list(
     projectA.get_data = character(0),
-    group.projectB.group_by_relation = c("projectA.get_data"),
-    group.projectB.add_variable_A = c("projectA.get_data", "group.projectB.group_by_relation"),
-    projectC.add_variable_B = c("group.projectB.add_variable_A"),
+    projectB.group.group_by_relation = c("projectA.get_data"),
+    projectB.group.add_variable_A = c("projectA.get_data", "projectB.group.group_by_relation"),
+    projectC.add_variable_B = c("projectB.group.add_variable_A"),
     projectC.add_variable_Y = c("projectC.add_variable_B"),
-    group.projectB.ungroup = c("group.projectB.add_variable_A", "group.projectB.group_by_relation")
+    projectB.group.ungroup = c("projectB.group.add_variable_A", "projectB.group.group_by_relation")
   )
-  execution_order_input <- c("projectA.get_data", "group.projectB.group_by_relation", "group.projectB.add_variable_A", "projectC.add_variable_B", "projectC.add_variable_Y", "group.projectB.ungroup")
+  execution_order_input <- c("projectA.get_data", "projectB.group.group_by_relation", "projectB.group.add_variable_A", "projectC.add_variable_B", "projectC.add_variable_Y", "projectB.group.ungroup")
   test_order <- clean_wrapper(project = "projectB", group = "group", order = execution_order_input, dag = dag, network = context_network_1)
-  expected_order <- c("projectA.get_data", "group.projectB.group_by_relation", "group.projectB.add_variable_A", "group.projectB.ungroup", "projectC.add_variable_B", "projectC.add_variable_Y")
+  expected_order <- c("projectA.get_data", "projectB.group.group_by_relation", "projectB.group.add_variable_A", "projectB.group.ungroup", "projectC.add_variable_B", "projectC.add_variable_Y")
   expect_identical(test_order, expected_order)
   expect_identical(clean_all_wrappers(wrappers = test_build_wrapper_list(context_network_1), order = execution_order_input, dag = dag, network = context_network_1), expected_order)
 })
@@ -376,18 +378,18 @@ test_that("clean_wrapper mvoes foreign nodes after the context if they depend on
 test_that("clean_wrapper duplicates a context when a function within the context is broken up", {
   dag <- list(
     projectA.get_data = character(0),
-    group.projectB.group_by_relation = c("projectA.get_data"),
-    group.projectB.add_variable_A = c("projectA.get_data", "group.projectB.group_by_relation"),
-    projectC.add_variable_B = c("group.projectB.add_variable_A"),
+    projectB.group.group_by_relation = c("projectA.get_data"),
+    projectB.group.add_variable_A = c("projectA.get_data", "projectB.group.group_by_relation"),
+    projectC.add_variable_B = c("projectB.group.add_variable_A"),
     projectC.add_variable_Y = c("projectC.add_variable_B"),
-    group.projectB.add_variable_C = c("projectC.add_variable_B", "group.projectB.group_by_relation"),
-    group.projectB.ungroup = c("group.projectB.add_variable_A", "group.projectB.group_by_relation")
+    projectB.group.add_variable_C = c("projectC.add_variable_B", "projectB.group.group_by_relation"),
+    projectB.group.ungroup = c("projectB.group.add_variable_A", "projectB.group.group_by_relation")
   )
-  execution_order_input <- c("projectA.get_data", "group.projectB.group_by_relation", "group.projectB.add_variable_A", "projectC.add_variable_B",
-                             "projectC.add_variable_Y", "group.projectB.add_variable_C", "group.projectB.ungroup")
+  execution_order_input <- c("projectA.get_data", "projectB.group.group_by_relation", "projectB.group.add_variable_A", "projectC.add_variable_B",
+                             "projectC.add_variable_Y", "projectB.group.add_variable_C", "projectB.group.ungroup")
   test_order <- clean_wrapper(project = "projectB", group = "group", order = execution_order_input, dag = dag, contexts = NULL, network = context_network_1)
-  expected_order <- c("projectA.get_data", "group.projectB.group_by_relation", "group.projectB.add_variable_A", "group.projectB.ungroup", "projectC.add_variable_B", "projectC.add_variable_Y",
-                      "group.projectB.group_by_relation", "group.projectB.add_variable_C", "group.projectB.ungroup")
+  expected_order <- c("projectA.get_data", "projectB.group.group_by_relation", "projectB.group.add_variable_A", "projectB.group.ungroup", "projectC.add_variable_B", "projectC.add_variable_Y",
+                      "projectB.group.group_by_relation", "projectB.group.add_variable_C", "projectB.group.ungroup")
   expect_identical(test_order, expected_order)
   expect_identical(clean_all_wrappers(wrappers = test_build_wrapper_list(context_network_1), order = execution_order_input, dag = dag, network = context_network_1), expected_order)
 })
@@ -408,22 +410,22 @@ test_that("clean_wrappers can resolve a dependency on exit", {
 })
 
 test_that("clean_all_wrappers resolves a nested group, that is 'cross-nested'", {
-  context_network_2$projectB$ruleset$contexts$group$on_entry <-   list(group = list(), filter = list())
+  context_network_2$projectB$ruleset$contexts$group$on_entry <- list(group = list(), filter = list())
   dag <- list(
     projectA.start = character(0),
-    group.projectC.group = "projectA.start",
-    group.projectC.add_y = c("group.projectC.group"),
-    group.projectB.group = c("projectA.start", "group.projectC.add_y"),
-    group.projectB.filter = c("projectA.start", "group.projectB.group"),
-    group.projectB.add_x = "group.projectB.group",
-    group.projectB.add_z = c("group.projectB.group", "group.projectC.add_y"),
-    group.projectC.ungroup = "group.projectC.add_y",
-    group.projectB.ungroup = "group.projectB.add_x"
+    projectC.group.group = "projectA.start",
+    projectC.group.add_y = c("projectC.group.group"),
+    projectB.group.group = c("projectA.start", "projectC.group.add_y"),
+    projectB.group.filter = c("projectA.start", "projectB.group.group"),
+    projectB.group.add_x = "projectB.group.group",
+    projectB.group.add_z = c("projectB.group.group", "projectC.group.add_y"),
+    projectC.group.ungroup = "projectC.group.add_y",
+    projectB.group.ungroup = "projectB.group.add_x"
   )
-  order <- c("projectA.start", "group.projectC.group", "group.projectC.add_y", "group.projectB.group", "group.projectB.filter",
-             "group.projectB.add_x", "group.projectB.add_z", "group.projectB.ungroup", "group.projectC.ungroup")
-  exp_order <- c("projectA.start", "group.projectC.group", "group.projectC.add_y", "group.projectC.ungroup",
-                 "group.projectB.group", "group.projectB.filter", "group.projectB.add_x", "group.projectB.add_z", "group.projectB.ungroup")
+  order <- c("projectA.start", "projectC.group.group", "projectC.group.add_y", "projectB.group.group", "projectB.group.filter",
+             "projectB.group.add_x", "projectB.group.add_z", "projectB.group.ungroup", "projectC.group.ungroup")
+  exp_order <- c("projectA.start", "projectC.group.group", "projectC.group.add_y", "projectC.group.ungroup",
+                 "projectB.group.group", "projectB.group.filter", "projectB.group.add_x", "projectB.group.add_z", "projectB.group.ungroup")
   order_test <- clean_all_wrappers(wrappers = test_build_wrapper_list(context_network_2), order = order, dag = dag, network = context_network_2)
   expect_identical(order_test, exp_order)
 })
@@ -431,14 +433,14 @@ test_that("clean_all_wrappers resolves a nested group, that is 'cross-nested'", 
 test_that("clean_all_wrappers resolves a polluted context by cloaking the polluted node'", {
   dag <- list(
     projectA.start = character(0),
-    group.projectB.group = c("projectA.start"),
-    group.projectB.add_x = "group.projectB.group",
-    projectC.add_y = c("projectA.start", "group.projectB.add_x"),
-    group.projectB.add_z = c("group.projectB.group"),
-    group.projectB.ungroup = c("group.projectB.add_x", "projectC.add_y")
+    projectB.group.group = c("projectA.start"),
+    projectB.group.add_x = "projectB.group.group",
+    projectC.add_y = c("projectA.start", "projectB.group.add_x"),
+    projectB.group.add_z = c("projectB.group.group"),
+    projectB.group.ungroup = c("projectB.group.add_x", "projectC.add_y")
   )
-  order <- c("projectA.start", "group.projectB.group", "group.projectB.add_x", "projectC.add_y", "group.projectB.add_z", "group.projectB.ungroup")
-  exp_order <- c("projectA.start",  "group.projectB.group", "group.projectB.add_x", "projectC.add_y", "group.projectB.add_z", "group.projectB.ungroup")
+  order <- c("projectA.start", "projectB.group.group", "projectB.group.add_x", "projectC.add_y", "projectB.group.add_z", "projectB.group.ungroup")
+  exp_order <- c("projectA.start", "projectB.group.group", "projectB.group.add_x", "projectC.add_y", "projectB.group.add_z", "projectB.group.ungroup")
   order_test <- clean_all_wrappers(wrappers = test_build_wrapper_list(context_network_2), order = order, dag = dag, network = context_network_2)
   expect_identical(order_test, exp_order)
 })

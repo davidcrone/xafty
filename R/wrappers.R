@@ -5,7 +5,7 @@ clean_wrapper <- function(project, group, order, dag, contexts, network) {
   exit_funcs <- names(network[[project]]$ruleset$contexts[[group]]$on_exit)
   # Early exit when no wrapper functions are available
   if (length(entry_funcs) == 0 && length(exit_funcs) == 0) return(order)
-  prefix <- paste0(group, ".", project, ".")
+  prefix <- paste0(project, ".", group, ".")
   is_project <- which(startsWith(order, prefix))
   start_pos <- min(is_project)
   end_pos <- max(is_project)
@@ -80,7 +80,6 @@ clean_all_wrappers <- function(wrappers, order, dag, network) {
   # Step 1: find all context ranges (entry .. exit)
   context_names <- names(wrappers)
   if(length(context_names) == 0) return(order)
-
   li_ranges <- lapply(context_names, function(p) {
     project. <- paste0(p, ".")
     project_start <- startsWith(order, project.)
@@ -114,7 +113,7 @@ clean_all_wrappers <- function(wrappers, order, dag, network) {
 }
 
 pack_project_wrappers <- function(project, group, order, contexts = NULL) {
-  project <- paste0(group, ".", project)
+  project <- paste0(project, ".", group)
   if(is.null(contexts)) {
     contexts <- list()
   }
@@ -252,7 +251,7 @@ uncloak <- function(order, cloak, original) {
 # Here we classify the foreign dependencies of on exit functions, which need to be treated differently from
 # other foreign nodes since a foreign function does not
 classify_foreign_dependencies <- function(project, group, dag, targets, contexts = NULL, stop_at = character(0), network = NULL) {
-  prefix <- paste0(group, ".", project, ".")
+  prefix <- paste0(project, ".",group , ".")
 
   # To sort the dag topologically correct, the on_exit nodes get all dependencies which are part of the group.
   # This leads however for the algorithm to incorrectly detect polluted projects, since the on_exit nodes dependends
@@ -260,7 +259,7 @@ classify_foreign_dependencies <- function(project, group, dag, targets, contexts
   # be placed before the topological sort and rather should be applied after.
   if(!is.null(network)) {
     for (target in targets) {
-      name <- gsub(paste0("^", group, "\\.", project, "\\."), replacement = "", x = target)
+      name <- gsub(paste0("^", project, "\\.", group, "\\."), replacement = "", x = target)
       link <- network[[project]]$ruleset$contexts[[group]]$on_exit[[name]]$link
       if(is.null(link)) next # Is done for tests in "resolve_dependencies"
       node <- build_dependency_codes(link = link, network = network)$node

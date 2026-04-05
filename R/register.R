@@ -340,7 +340,7 @@ check_polluted_context <- function(link, network) {
   exit_node <- build_fun_code(link)
   dag <- build_dag(exit_query[[1]], network)
   order <- dag$execution_order
-  prefix <- paste0(context, ".", project, ".")
+  prefix <- paste0(build_namespace(link), ".")
   is_project <- which(startsWith(order, prefix))
   if(length(is_project) == 0) return(invisible(TRUE))
   start_pos <- min(is_project)

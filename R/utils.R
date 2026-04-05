@@ -186,7 +186,7 @@ print.xafty_project <- function(x, ...) {
 #' @param link (list) A link object
 #' @returns character string of length 1
 build_namespace <- function(link) {
-  vec <- c(link$context, link$project)
+  vec <- c(link$project, link$context)
   namespace <- paste0(vec, collapse = ".")
   namespace
 }
