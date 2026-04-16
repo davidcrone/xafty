@@ -428,12 +428,12 @@ the assembled pipeline.
 
 ``` r
   dag$execution_order
-#> [1] "mtcars.get_mtcars"                   
-#> [2] "engine.get_engine_details"           
+#> [1] "engine.get_engine_details"           
+#> [2] "mtcars.get_mtcars"                   
 #> [3] "mtcars.join_engine_details"          
-#> [4] "per_gear.mtcars.group_by_gear"       
-#> [5] "per_gear.mtcars.add_mean_hp_per_gear"
-#> [6] "per_gear.mtcars.ungroup_data"
+#> [4] "mtcars.per_gear.group_by_gear"       
+#> [5] "mtcars.per_gear.add_mean_hp_per_gear"
+#> [6] "mtcars.per_gear.ungroup_data"
 ```
 
 xafty also supports a digestible way how contents of a network are
