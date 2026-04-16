@@ -8,7 +8,7 @@ where <- function(query_list, ...) {
   expr <- rlang::expr(...)
   where_select <- all.vars(expr)
   where_query <- list(
-    expr = strip_prefix_from_expr(expr)
+    expr = strip_prefix_from_expr(expr, variables = where_select)
   )
   raw_query <- lapply(where_select, \(select) {
     where_query <- split_select(var = select)
@@ -30,12 +30,12 @@ where <- function(query_list, ...) {
 }
 
 
-strip_prefix_from_expr <- function(expr) {
+strip_prefix_from_expr <- function(expr, variables) {
   # Base case: if it's a symbol, check if it needs stripping
   if (rlang::is_symbol(expr)) {
     name <- rlang::as_string(expr)
-    if (grepl("\\.", name)) {
-      # Take only the part after the last dot
+    # Only sub string variables and not function, e.g. is.na
+    if (grepl("\\.", name) & name %in% variables) {
       new_name <- sub(".*\\.", "", name)
       return(rlang::sym(new_name))
     }
@@ -44,7 +44,7 @@ strip_prefix_from_expr <- function(expr) {
 
   # If it's a call (e.g. `>=`, `&`, `==`, function calls...), recurse into each element
   if (rlang::is_call(expr)) {
-    new_args <- lapply(as.list(expr), strip_prefix_from_expr)
+    new_args <- lapply(as.list(expr), strip_prefix_from_expr, variables = variables)
     return(as.call(new_args))
   }
 

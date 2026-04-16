@@ -620,3 +620,14 @@ build_states <- function(states, network) {
   states$xafty_global_default <- network$settings$state$global_default
   states
 }
+
+build_direct_graph <- function(join_path) {
+  direct_graph <- list()
+  for (path in join_path) {
+    on <- path[1]
+    from <- path[2]
+    direct_graph[[on]] <- c(direct_graph[[on]], from)
+    direct_graph[[from]] <- c(direct_graph[[from]], character(0))
+  }
+  direct_graph
+}

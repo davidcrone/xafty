@@ -36,3 +36,17 @@ test_that("where correctly disects an expression with two variables", {
   expect_identical(expr_test$expr, quote(score >= 10 & new_column == 10))
 })
 
+test_that("where does not remove the first value of a function even if it has a dot e.g. is.na", {
+  query_list <- query(score) |> from(customer_data) |> where(is.na(customer_data.score) & intelligence.new_column == 10)
+  test_expr <- query_list$query[[4]]$expr
+  expt_expr <- quote(is.na(score) & new_column == 10)
+  query_test1 <- query_list$query[[2]]
+  query_test2 <- query_list$query[[3]]
+  expect_identical(query_test1$select, "score")
+  expect_identical(query_test1$from, "customer_data")
+  expect_identical(query_test2$select, "new_column")
+  expect_identical(query_test2$from, "intelligence")
+  expect_s3_class(query_test1, c("where_query"))
+  expect_s3_class(query_test2, c("where_query"))
+  expect_identical(test_expr, expt_expr)
+})

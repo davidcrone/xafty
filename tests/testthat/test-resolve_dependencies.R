@@ -53,7 +53,7 @@ test_that("resolve_dependencies can correctly resolve a column that depends on t
   expect_in(query[["occupations"]]$select, c("department", "id"))
   expect_in(projects, c("customer_data", "occupations"))
   execution_order <- resolve_function_stack(dag_sm = sm, network = test_network)
-  expect_equal(execution_order, c("customer_data.get_sample_data", "occupations.get_additional_info", "customer_data.add_score_category",
+  expect_equal(execution_order, c("occupations.get_additional_info", "customer_data.get_sample_data", "customer_data.add_score_category",
                                   "customer_data.join_datasets", "customer_data.new_column_from_both_projects"))
 })
 
@@ -70,15 +70,14 @@ test_that("resolve_dependencies can correctly resolve a column that depends on t
   expect_in(query[["occupations"]]$select, c("department", "id"))
   expect_in(projects, c("customer_data", "occupations"))
   execution_order <- resolve_function_stack(dag_sm = sm, network = test_network)
-  expect_equal(execution_order, c("customer_data.get_sample_data", "occupations.get_additional_info", "customer_data.add_score_category",
+  expect_equal(execution_order, c( "occupations.get_additional_info", "customer_data.get_sample_data", "customer_data.add_score_category",
                                   "customer_data.join_datasets", "customer_data.new_column_from_both_projects"))
 })
 
 
-test_that("resolve_dependencies can correctly resolve a column that depends on two projects, but only pulls from one project", {
+test_that("resolve_dependencies can correctly find intermediary tables (map) to resolve compelx queries", {
   network <- test_network
-  query <- query(occupations = "department", intelligence = "intelligence", customer_data = c("name", "nickname")) |>
-    add_join_path(path1= c("customer_data", "occupations"), path2 = c("intelligence", "map"), path3 = c("customer_data", "map"))
+  query <- query(occupations = "department", intelligence = "intelligence", customer_data = c("name", "nickname")) |> from(customer_data)
   dag_sm <- build_tree(network)
   globals <- dots_to_query(query, network)
   dag_sm$set_main_project(globals$main)
@@ -92,9 +91,11 @@ test_that("resolve_dependencies can correctly resolve a column that depends on t
   expect_in(query[["map"]]$select, c("id", "secret_id"))
   expect_in(projects, c("customer_data", "occupations", "map", "intelligence"))
   execution_order <- resolve_function_stack(dag_sm = sm, network = test_network)
-  expect_in(execution_order, c("occupations.get_additional_info", "intelligence.intelligence_date", "customer_data.get_sample_data", "customer_data.add_score_category",
-                               "customer_data.join_datasets", "customer_data.new_column_from_both_projects", "map.mapping_data", "intelligence.join_datasets_map",
-                               "map.add_decoded_id", "customer_data.join_intelligence"))
+  expect_equal(execution_order, c("occupations.get_additional_info",
+                                  "intelligence.intelligence_date",
+                                  "map.mapping_data", "map.join_datasets_map", "map.add_decoded_id",
+                                  "customer_data.get_sample_data",  "customer_data.add_score_category", "customer_data.join_datasets",
+                                  "customer_data.join_intelligence", "customer_data.new_column_from_both_projects"))
   expect_length(execution_order, 10)
 })
 

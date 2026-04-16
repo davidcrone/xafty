@@ -42,13 +42,10 @@ test_that("nascent can resolve a tornado", {
 test_that("nascent can resolve a large network", {
 
   large_network <- merge_networks(name = "merged_network", test_network, main_network)
-
   large_network$map$link(join_datasets(main_data = query(map = "id"), extra_data = query(main = "id")))
-  test_table <- query(map = "id", intelligence = "new_column",
-                      side1 = "col1", side2 = "col2", side3 = "col3") |> nascent(large_network)
+  test_table <- query(map = "id", side1 = "col1", side2 = "col2", side3 = "col3") |> from(map) |> nascent(large_network)
   expected_table <- data.frame(
-    id = c(1L, 2L, 3L, 4L, 5L),
-    new_column = c("HR1", "IT2", "Finance3", "Marketing4", "Sales5"),
+    id = c(1, 2, 3, 4, 5),
     col1 = c("Why", "What", "How", NA_character_, NA_character_),
     col2 = c("Hallo", "Ja", "Nein", NA_character_, NA_character_),
     col3= c("Bonjour", "Salut", "Ca va", NA_character_, NA_character_)

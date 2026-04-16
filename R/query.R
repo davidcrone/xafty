@@ -144,7 +144,7 @@ from <- function(query_list, project) {
   )
   if(!inherits(project, "character")) stop(paste0("Project name must be of class character, but has class", paste0(class(project), collapse = ",")))
   if(length(project) != 1) stop("Project must be of length 1")
-  if(inherits(query_list, "state_query")) {
+  if(inherits(query_list, "xafty_query")) {
     state_query <- add_to_state_query(name = "main", what = project, state_query = query_list)
   } else {
     state_query <- list(
@@ -164,6 +164,7 @@ from <- function(query_list, project) {
 #' @param ... Declaration of the states e.g. state_name = TRUE
 #' @returns A list state_query which is a query bundled with a state
 #' @export
+
 with_state <- function(query_list, ...) {
   .li_states <- list(...)
   class(.li_states) <- c("list", "xafty_states_list")

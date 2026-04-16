@@ -160,3 +160,8 @@ test_that("Querying variables with a named vector and tidy-style selection works
   expect_in(test_query[[2]]$select, "var1")
   expect_in(test_query[[2]]$from, "unevaluated")
 })
+
+test_that("Adding different query vocabulary does add them correctly to the xafty_query list", {
+  qry <- query(test) |> with_state(year = 2021) |> from("test_that") |> add_join_path(path_1 = c("test", "tets2"))
+  expect_equal(names(qry), c("query", "states", "main", "join_path"))
+})

@@ -2,6 +2,12 @@
 
 ## New Feature
 
+* Project names with a dot are now not allowed and creating a project with a dot, will raise an error
+
+# xafty 0.4.3
+
+## New Feature
+
 * Renaming variables in a query is now possible and works seamlessly, simply query(table = c("renamed" = "name")) 
   to rename your variable
 * Added cycle detection. Upon registering a node that would result in a cycle, the register is reverted as well as

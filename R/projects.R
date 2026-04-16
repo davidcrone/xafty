@@ -152,13 +152,14 @@ merge_networks <- function(name, ...) {
 }
 
 validate_project_name <- function(name, network) {
-  if(length(name) == 0 | length(name) > 1) stop("Please enter the project's name.")
+  if(length(name) == 0 || length(name) > 1) stop("Please enter the project's name. The name must be a character of length 1")
   if(!identical(name, make.names(name))) stop("Please enter a valid project name")
+  if(grepl("\\.", name)) stop("Please enter a project name without using a dot")
   reserved_names <- c("save", "add_project", "query", "settings")
   if(name %in% reserved_names) stop(paste0("Please don't use any of the following reserved names as project names: ", paste0(reserved_names, collapse = ", "), "."))
   names_network <- names(network)
   existing_projects <- names_network[vapply(names_network, \(project) is.environment(network[[project]]), FUN.VALUE = logical(1))]
-  if(any(name %in% existing_projects)) stop(paste0("Project '", name, "' exists already in network"))
+  if(any(name %in% existing_projects)) stop(paste0("Project '", name, "' exists already in the network"))
 }
 
 create_add_state <- function(network) {

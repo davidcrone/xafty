@@ -57,7 +57,8 @@ resolve_function_stack <- function(dag_sm, network) {
   stack_sorted <- toposort::topological_sort(dag, dependency_type = "follows")
   stack_prepared <- remove_join_helpers(stack_sorted)
   correct_wrappers <- clean_all_wrappers(wrappers = contexts, order = stack_prepared, dag = dag, network = network)
-  correct_wrappers
+  correct_joins <- sort_join_buckets(order = correct_wrappers, join_path = dag_sm$get_join_path())
+  correct_joins
 }
 
 remove_join_helpers <- function(stack_sorted) {
@@ -322,4 +323,13 @@ resolve_on_exit <- function(group, project, network, dag_sm) {
   }
   on_exit_query_list <- do.call(merge_queries, get_dependend_queries(links))
   on_exit_query_list
+}
+
+sort_join_buckets <- function(order, join_path) {
+  if(length(join_path) == 0) return(order)
+  direct_graph <- build_direct_graph(join_path)
+  join_buckets <- toposort::stable_topological_sort(direct_graph, dependency_type = "follows")
+
+  buckets <- sapply(join_buckets, \(bucket) order[grepl(paste0("^", bucket, "\\."), order)])
+  unlist(buckets, use.names = FALSE)
 }
